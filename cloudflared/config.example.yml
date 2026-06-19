@@ -1,0 +1,17 @@
+# Copy to %USERPROFILE%\.cloudflared\config.yml after setup (see scripts/tunnel-setup.ps1)
+#
+# 1. cloudflared tunnel login
+# 2. cloudflared tunnel create vogo-by-fame
+# 3. cloudflared tunnel route dns vogo-by-fame vogo.example.com
+# 4. Replace <TUNNEL-UUID> and hostname below, then: npm run tunnel:run
+
+tunnel: <TUNNEL-UUID>
+credentials-file: C:\Users\MY-PC\.cloudflared\<TUNNEL-UUID>.json
+
+ingress:
+  - hostname: vogo.example.com
+    service: http://localhost:3000
+    originRequest:
+      noTLSVerify: false
+      httpHostHeader: localhost:3000
+  - service: http_status:404

@@ -1,0 +1,118 @@
+{
+  "Navbar": {
+    "collection": "Collection",
+    "story": "Our Story",
+    "wedding": "The Groom",
+    "contact": "Contact Us"
+  },
+  "Hero": {
+    "tagline": "Dressed for the moment that defines you.",
+    "subtitle": "PRIME by VOGO — The ultimate boutique for distinguished men seeking flawless custom tailoring and luxury groom suits in Amman.",
+    "ctaShop": "Shop Collection",
+    "ctaStory": "Our Story",
+    "scroll": "Scroll Down"
+  },
+  "Collection": {
+    "title": "The Flagship Collection",
+    "subtitle": "Impeccably tailored garments for the modern gentleman.",
+    "currency": "JOD",
+    "view": "View Details",
+    "close": "Close",
+    "inquire": "Inquire via WhatsApp",
+    "inquireMessage": "Hello PRIME by VOGO, I am interested in the {product} ({price} JOD). Please share more details.",
+    "modalFeature1": "Bespoke tailoring with premium Italian & English fabrics",
+    "modalFeature2": "Private fitting and consultation in Amman",
+    "modalFeature3": "Delivered within 10–14 business days",
+    "modalLabel": "Product Details",
+    "carouselHint": "Scroll to explore · Tap a piece for full details",
+    "carouselHintMobile": "Swipe to explore · Tap for full details",
+    "products": {
+      "classicBlack": {
+        "name": "The Classic Black Gala Suit",
+        "description": "The epitome of timeless evening elegance, crafted in a sharp Italian cut."
+      },
+      "navyWedding": {
+        "name": "Royal Navy Wedding Tuxedo",
+        "description": "A magnificent statement piece with black silk shawl lapels for a memorable wedding day."
+      },
+      "businessGray": {
+        "name": "Charcoal Double-Breasted Pinstripe",
+        "description": "Authoritative presence for corporate leaders, rendered in superfine 150s wool."
+      },
+      "burgundyEvening": {
+        "name": "Burgundy Velvet Evening Jacket",
+        "description": "Bold, tactile sophistication designed to capture every gaze at special evenings."
+      },
+      "ivorySummer": {
+        "name": "Premium Ivory Linen Blazer",
+        "description": "Light, unstructured Mediterranean luxury designed to keep you cool and elegant."
+      }
+    }
+  },
+  "Story": {
+    "title": "The Art of Tailoring",
+    "subtitle": "Born in Amman. Worn at the moments that matter.",
+    "p1": "Deep in the heart of Amman, where historical depth meets contemporary architecture, we shape the silhouettes of Jordan's most distinguished men. VOGO is not just clothing; it is a statement of stature, dignity, and Jordanian luxury.",
+    "p2": "Every suit passing through our atelier is handcrafted by master tailors using exclusive Italian and British wools. We believe that true tailoring is not seen — it is felt. It is in the perfect roll of a lapel, the clean drape of a trouser, and the effortless movement of fabric.",
+    "p3": "From real silk threads to natural horn buttons, every component is curated with precision to harmonize with your stance, empowering you at the defining moments of your life.",
+    "stat1": "+500",
+    "label1": "Orders Delivered",
+    "stat2": "+5",
+    "label2": "Years of Craft",
+    "stat3": "100%",
+    "label3": "Jordanian Passion"
+  },
+  "Wedding": {
+    "title": "The Groom's Room",
+    "subtitle": "Your big day deserves absolute perfection.",
+    "description": "Because your wedding is the ultimate personal milestone, we offer our bespoke tuxedo and wedding suit consultation. A premium, private tailoring experience ensuring you look and feel extraordinary on your wedding day.",
+    "cta": "Book a Private Wedding Fitting via WhatsApp"
+  },
+  "Testimonials": {
+    "title": "Voices of Distinction",
+    "subtitle": "What the men who choose VOGO say",
+    "reviews": [
+      {
+        "name": "Tareq Haddad",
+        "city": "Amman",
+        "quote": "The wedding tuxedo was absolutely perfect. The precision in fit and weight of the Italian wool is unlike anything else in Jordan."
+      },
+      {
+        "name": "Faisal Al-Jabor",
+        "city": "Zarqa",
+        "quote": "Wearing VOGO's double-breasted gray suit to my board meeting immediately shifted the room's energy. Highly recommended."
+      },
+      {
+        "name": "Omar Al-Shaboul",
+        "city": "Irbid",
+        "quote": "The velvet burgundy jacket was a masterpiece. It turned heads all evening, and the fit was comfortable enough to wear for hours."
+      },
+      {
+        "name": "Yazan Aqrabawi",
+        "city": "Aqaba",
+        "quote": "The ivory linen blazer was my summer savior. Lightweight, breathable, and yet kept a structured, upscale profile."
+      }
+    ]
+  },
+  "Contact": {
+    "title": "Connect With Us",
+    "subtitle": "Visit our boutique or book an exclusive consultation session.",
+    "phone": "Phone",
+    "whatsapp": "Direct WhatsApp",
+    "address": "Boutique Location",
+    "addressDetail": "Amman, Jordan — 7th Circle, Medical City Street",
+    "formTitle": "Send An Inquiry",
+    "name": "Full Name",
+    "namePlaceholder": "Enter your name",
+    "phoneLabel": "Phone Number",
+    "phonePlaceholder": "e.g., 0797226984",
+    "message": "Your Inquiry",
+    "messagePlaceholder": "Tell us about the suit or occasion you are preparing for...",
+    "submit": "Submit Request",
+    "success": "Your inquiry has been successfully received. We will contact you within 24 hours.",
+    "whatsappMsg": "Hello VOGO, I would like to book a private tailoring consultation."
+  },
+  "Footer": {
+    "rights": "All Rights Reserved. VOGO BY FAME."
+  }
+}

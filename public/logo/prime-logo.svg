@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80" fill="none">
+  <!-- Gold Fleur-de-lis Emblem -->
+  <g transform="translate(5, 0)">
+    <!-- Center petal -->
+    <path d="M35 15 C33 23, 29 30, 23 33 C27 36, 33 43, 35 50 C37 43, 43 36, 47 33 C41 30, 37 23, 35 15 Z" fill="url(#gold-grad)"/>
+    <!-- Left petal -->
+    <path d="M35 36 C27 36, 20 30, 17 23 C15 33, 20 43, 30 46 C32 40, 33 37, 35 36 Z" fill="url(#gold-grad)"/>
+    <!-- Right petal -->
+    <path d="M35 36 C43 36, 50 30, 53 23 C55 33, 50 43, 40 46 C38 40, 37 37, 35 36 Z" fill="url(#gold-grad)"/>
+    <!-- Horizontal band -->
+    <path d="M23 48 L47 48 C47 48, 43 52, 35 52 C27 52, 23 48, 23 48 Z" fill="#8A6E2F"/>
+    <!-- Bottom base -->
+    <path d="M35 54 C31 59, 26 62, 22 63 C28 65, 42 65, 48 63 C44 62, 39 59, 35 54 Z" fill="url(#gold-grad)"/>
+  </g>
+
+  <!-- PRIME Wordmark -->
+  <text x="80" y="42" fill="url(#gold-grad)" font-family="'Cormorant Garamond', 'Noto Serif Arabic', serif" font-size="28" font-weight="500" letter-spacing="8">PRIME</text>
+  <text x="82" y="58" fill="#A89E8E" font-family="'Outfit', 'IBM Plex Sans Arabic', sans-serif" font-size="8" font-weight="400" letter-spacing="4">BY VOGO BY FAME</text>
+
+  <!-- Gradient definition -->
+  <defs>
+    <linearGradient id="gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C9A84C" />
+      <stop offset="50%" stop-color="#E2C572" />
+      <stop offset="100%" stop-color="#8A6E2F" />
+    </linearGradient>
+  </defs>
+</svg>

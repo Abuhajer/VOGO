@@ -1,0 +1,77 @@
+import { ReactNode } from "react";
+import { notFound } from "next/navigation";
+import { hasLocale, NextIntlClientProvider } from "next-intl";
+import { getMessages, setRequestLocale } from "next-intl/server";
+import { ThemeProvider } from "@/context/ThemeProvider";
+import { routing } from "@/i18n/routing";
+import Navbar from "@/components/navigation/Navbar";
+import { siteImages } from "@/lib/images";
+
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
+
+export async function generateMetadata({ params: { locale } }: { params: { locale: string } }) {
+  const isAr = locale === "ar";
+  return {
+    title: isAr ? "ڤوچو — فخامة ملابس الرجال الرسمية وبدلات العرسان في الأردن" : "PRIME by VOGO — Premium Men's Luxury Suits & Groom Tuxedos in Amman",
+    description: isAr 
+      ? "ڤوچو — الخيار الأول لكل رجل مميز يبحث عن الأناقة والفخامة والجودة لبدلات العرسان والملابس الرسمية بأرقى التصاميم وأحدث الموديلات in عمّان، الأردن."
+      : "Discover PRIME by VOGO, Amman's premier digital flagship for high-end luxury menswear. Handcrafted custom wedding tuxedos, formal blazers, and luxury suits.",
+    metadataBase: new URL("https://vogobyfame.com"),
+    icons: {
+      icon: "/logo/prime-favicon.svg",
+    },
+    alternates: {
+      canonical: `/${locale}`,
+      languages: {
+        ar: "/ar",
+        en: "/en",
+      },
+    },
+    openGraph: {
+      title: isAr ? "ڤوچو — فخامة ملابس الرجال الرسمية وبدلات العرسان" : "PRIME by VOGO — Premium Men's Luxury Suits",
+      description: isAr 
+        ? "ڤوچو — بدلات زفاف مصممة للمناسبة التي تميزك. تفصيل فاخر وأقمشة إيطالية حصرية في الأردن."
+        : "Impeccably tailored luxury menswear in Amman. Explore our flagship collection.",
+      images: [
+        {
+          url: siteImages.og,
+          width: 1200,
+          height: 630,
+          alt: "PRIME by VOGO BY FAME",
+        },
+      ],
+    },
+  };
+}
+
+export default async function LocaleLayout({
+  children,
+  params: { locale },
+}: {
+  children: ReactNode;
+  params: { locale: string };
+}) {
+  if (!hasLocale(routing.locales, locale)) {
+    notFound();
+  }
+
+  setRequestLocale(locale);
+
+  const messages = await getMessages();
+
+  return (
+    <ThemeProvider>
+      <NextIntlClientProvider messages={messages}>
+        {/* Film Grain Texture overlay */}
+        <div className="grain-overlay" aria-hidden="true" />
+        <Navbar />
+        <div className="relative min-h-screen flex flex-col overflow-x-hidden">
+          {children}
+        </div>
+      </NextIntlClientProvider>
+    </ThemeProvider>
+  );
+}
+
