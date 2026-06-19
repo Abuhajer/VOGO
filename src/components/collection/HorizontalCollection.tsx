@@ -83,7 +83,9 @@ function getInnerQuickTweens(inner: HTMLElement): InnerQuickCache {
   return tweens;
 }
 
+const PRODUCTS_COUNT = PRODUCTS_DATA.length;
 const MOBILE_MQ = "(max-width: 767px)";
+const DESKTOP_MQ = "(min-width: 768px)";
 
 function isMobileViewport() {
   return window.matchMedia(MOBILE_MQ).matches;
@@ -197,24 +199,35 @@ export default function HorizontalCollection() {
 
     const mm = gsap.matchMedia();
 
-    mm.add("(min-width: 768px)", () => {
-      const getScrollAmount = () => {
-        const trackWidth = track.scrollWidth;
-        const windowWidth = window.innerWidth;
-        return Math.max(trackWidth - windowWidth + 200, 0);
-      };
+    mm.add(DESKTOP_MQ, () => {
+      const getHorizontalTravel = () =>
+        Math.max(track.scrollWidth - window.innerWidth, 0);
+
+      // Shorter vertical pin than full track width — same horizontal travel, faster exit
+      const getPinScrollLength = () =>
+        window.innerHeight * (PRODUCTS_COUNT - 1) * 0.48;
 
       scrollTween = gsap.to(track, {
-        x: () => -getScrollAmount(),
+        x: () => -getHorizontalTravel(),
         ease: "none",
         scrollTrigger: {
-          trigger: sectionRef.current,
+          trigger: pin,
           start: "top top",
-          end: () => `+=${getScrollAmount()}`,
-          pin,
-          scrub: 0.8,
+          end: () => `+=${getPinScrollLength()}`,
+          pin: true,
+          pinSpacing: true,
+          scrub: true,
           invalidateOnRefresh: true,
-          anticipatePin: 1,
+          anticipatePin: 0,
+          snap: {
+            snapTo: (progress) => {
+              const steps = PRODUCTS_COUNT - 1;
+              if (steps <= 0) return progress;
+              return Math.round(progress * steps) / steps;
+            },
+            duration: { min: 0.1, max: 0.22 },
+            ease: "power1.out",
+          },
           onUpdate: handle3DUpdate,
         },
       });
@@ -307,7 +320,7 @@ export default function HorizontalCollection() {
 
       <div
         ref={snapRef}
-        className="collection-snap-track relative z-10 w-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth touch-pan-x py-2 md:overflow-hidden md:snap-none md:touch-auto"
+        className="collection-snap-track relative z-10 w-full overflow-x-auto overflow-y-hidden snap-x snap-proximity scroll-smooth py-2 md:overflow-hidden md:snap-none"
       >
         <div
           ref={trackRef}
@@ -317,7 +330,7 @@ export default function HorizontalCollection() {
           {PRODUCTS_DATA.map((p, index) => (
             <div
               key={p.id}
-              className="product-card-3d group flex-shrink-0 snap-center snap-always will-change-transform"
+              className="product-card-3d group flex-shrink-0 snap-center will-change-transform"
               style={{ transformStyle: "preserve-3d" }}
             >
               {renderProduct(p, index)}
@@ -342,15 +355,15 @@ export default function HorizontalCollection() {
     <>
       <section
         ref={sectionRef}
-        className="relative bg-void w-full py-10 sm:py-14 md:py-0"
+        className="relative bg-void w-full py-10 sm:py-14 md:pt-16 md:pb-0"
         id="collection"
       >
+        {header}
+
         <div
           ref={pinRef}
-          className="w-full flex flex-col md:min-h-screen md:justify-center md:overflow-hidden"
+          className="w-full md:min-h-[72vh] md:flex md:flex-col md:justify-center md:overflow-hidden"
         >
-          {header}
-
           {!useCarousel3D ? (
             <div
               className="container mx-auto px-4 sm:px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"

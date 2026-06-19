@@ -64,9 +64,9 @@
   },
   "Wedding": {
     "title": "The Groom's Room",
-    "subtitle": "Your big day deserves absolute perfection.",
+    "subtitle": "Your Wedding. Your Suit. Your Prime Moment.",
     "description": "Because your wedding is the ultimate personal milestone, we offer our bespoke tuxedo and wedding suit consultation. A premium, private tailoring experience ensuring you look and feel extraordinary on your wedding day.",
-    "cta": "Book a Private Wedding Fitting via WhatsApp"
+    "cta": "Book a Consultation"
   },
   "Testimonials": {
     "title": "Voices of Distinction",
@@ -91,6 +91,11 @@
         "name": "Yazan Aqrabawi",
         "city": "Aqaba",
         "quote": "The ivory linen blazer was my summer savior. Lightweight, breathable, and yet kept a structured, upscale profile."
+      },
+      {
+        "name": "Khalid Masri",
+        "city": "Amman",
+        "quote": "From the first fitting to the final stitch, the team treated my wedding suit like a work of art. Worth every dinar."
       }
     ]
   },
@@ -100,7 +105,10 @@
     "phone": "Phone",
     "whatsapp": "Direct WhatsApp",
     "address": "Boutique Location",
-    "addressDetail": "Amman, Jordan — 7th Circle, Medical City Street",
+    "addressDetail": "Wasfi Al-Tal St., Amman 11118",
+    "mapLabel": "Find Us On The Map",
+    "mapTitle": "PRIME by VOGO — Wasfi Al-Tal St., Amman",
+    "openInMaps": "Open in Google Maps",
     "formTitle": "Send An Inquiry",
     "name": "Full Name",
     "namePlaceholder": "Enter your name",
@@ -113,6 +121,12 @@
     "whatsappMsg": "Hello VOGO, I would like to book a private tailoring consultation."
   },
   "Footer": {
-    "rights": "All Rights Reserved. VOGO BY FAME."
+    "rights": "© 2026 Prime by VOGO BY FAME",
+    "legalAr": "جميع الحقوق محفوظة"
+  },
+  "NotFound": {
+    "title": "This page has stepped off the runway",
+    "description": "The page you are looking for does not exist or may have moved.",
+    "cta": "Return Home"
   }
 }

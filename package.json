@@ -3,11 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node node_modules/next/dist/bin/next dev",
     "dev:clean": "node scripts/dev-clean.mjs",
     "build": "next build",
     "start": "next start",
-    "start:clean": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\" && next build && next start",
+    "start:clean": "node scripts/start-clean.mjs",
     "lint": "next lint",
     "tunnel": "node scripts/tunnel-quick.mjs",
     "tunnel:run": "cloudflared tunnel run vogo-by-fame"

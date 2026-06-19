@@ -3,10 +3,7 @@
 import Image from "next/image";
 import { useTranslations, useLocale } from "next-intl";
 import { scrollToSection } from "@/lib/scroll";
-import { FacebookIcon, LinkedInIcon } from "@/components/icons/Icons";
-
-const SOCIAL_LINK_CLASS =
-  "group flex h-10 w-10 items-center justify-center rounded-full border border-gold-muted/40 bg-surface/50 text-gold transition-all duration-300 hover:border-transparent hover:text-white light:border-gold-muted/50 light:bg-surface light:text-[#4A453F] light:hover:text-white";
+import SocialLinks from "@/components/icons/SocialLinks";
 
 export default function Footer() {
   const t = useTranslations("Footer");
@@ -60,27 +57,7 @@ export default function Footer() {
         </nav>
 
         {/* Social Links */}
-        <div className="flex gap-4 mb-8">
-          <a
-            href="https://www.facebook.com/vogobyfame"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`${SOCIAL_LINK_CLASS} hover:bg-[#1877F2]`}
-            aria-label={isArabic ? "فيسبوك" : "Facebook"}
-          >
-            <FacebookIcon size={18} className="shrink-0" />
-          </a>
-
-          <a
-            href="https://www.linkedin.com/company/vogobyfame"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`${SOCIAL_LINK_CLASS} hover:bg-[#0A66C2]`}
-            aria-label={isArabic ? "لينكدإن" : "LinkedIn"}
-          >
-            <LinkedInIcon size={18} className="shrink-0" />
-          </a>
-        </div>
+        <SocialLinks className="mb-8" isArabic={isArabic} />
 
         {/* Separator line */}
         <div className="w-24 h-[1px] bg-gold-glow/20 mb-6" />
@@ -88,11 +65,7 @@ export default function Footer() {
         {/* Legal Rights & Branding */}
         <div className="text-[10px] tracking-wider text-ivory-faint font-sans space-y-1">
           <p>{t("rights")}</p>
-          <p className="opacity-70">
-            {locale === "ar"
-              ? "مُصمَّم للحظة التي تُعرّفك. ڤوچو — الخيار الأول للبدلات والملابس الرسمية."
-              : "Dressed for the moment that defines you. Flagship digital boutique."}
-          </p>
+          <p>{t("legalAr")}</p>
         </div>
       </div>
     </footer>

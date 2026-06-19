@@ -74,13 +74,29 @@ export default function GroomSection() {
         },
       }
     );
+
+    gsap.fromTo(
+      ".groom-cta",
+      { y: 24, opacity: 0, scale: 0.92 },
+      {
+        y: 0,
+        opacity: 1,
+        scale: 1,
+        duration: 0.9,
+        ease: "back.out(1.4)",
+        scrollTrigger: {
+          trigger: ".groom-cta",
+          start: "top 85%",
+        },
+      }
+    );
   }, { scope: containerRef, dependencies: [prefersReducedMotion] });
 
   // WhatsApp link generator
   const encodedText = encodeURIComponent(
     locale === "ar"
-      ? "مرحباً ڤوچو، أرغب في حجز جلسة استشارة لتصميم بدلة زفاف خاصة للعريس."
-      : "Hello VOGO, I would like to book a private wedding tuxedo consultation session."
+      ? "مرحباً، أريد حجز استشارة لبدلة العرس"
+      : "Hello, I would like to book a wedding suit consultation."
   );
   const whatsappUrl = `https://wa.me/962797226984?text=${encodedText}`;
 
@@ -157,10 +173,10 @@ export default function GroomSection() {
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2.5 px-6 py-4 bg-[#25D366] hover:bg-[#20ba5a] text-white font-sans text-[11px] uppercase tracking-[0.2em] font-semibold rounded-sm transition-all duration-300 hover:shadow-[0_4px_15px_rgba(37,211,102,0.35)]"
+            className="groom-cta inline-flex items-center justify-center gap-2.5 px-6 py-4 bg-gold hover:bg-gold-muted text-[#0E0D12] font-sans text-[11px] uppercase tracking-[0.2em] font-semibold rounded-sm transition-all duration-300 hover:shadow-[0_4px_20px_rgba(201,168,76,0.35)]"
           >
             <WhatsAppIcon size={18} className="shrink-0" />
-            <span>{locale === "ar" ? "احجز استشارتك مجاناً" : "Book Free Session"}</span>
+            <span>{t("cta")}</span>
           </a>
         </div>
       </div>

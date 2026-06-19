@@ -8,7 +8,6 @@ import { useGSAP } from "@gsap/react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { siteImages } from "@/lib/images";
 import { scrollToSection } from "@/lib/scroll";
-import SectionLabel from "@/components/icons/SectionLabel";
 import { PrimeMarkIcon } from "@/components/icons/Icons";
 
 type HeroSectionProps = {
@@ -228,12 +227,11 @@ export default function HeroSection({ introReady = true }: HeroSectionProps) {
               event.preventDefault();
               scrollToSection("#collection");
             }}
-            className={`group relative px-8 py-3.5 overflow-hidden rounded-sm bg-gold text-[#0E0D12] font-sans text-xs font-semibold transition-all duration-300 hover:shadow-[0_0_25px_rgba(201,168,76,0.3)] ${
+            className={`group px-8 py-3.5 rounded-sm border border-gold-muted text-gold font-sans text-xs font-medium transition-all duration-300 hover:bg-gold/10 ${
               isArabic ? "" : "uppercase tracking-[0.2em]"
             }`}
           >
-            <span className="relative z-10">{t("ctaShop")}</span>
-            <span className="absolute inset-0 bg-ivory scale-x-0 origin-left transition-transform duration-500 ease-fabric group-hover:scale-x-100" />
+            {t("ctaShop")}
           </a>
           <a
             href="#story"
@@ -241,11 +239,12 @@ export default function HeroSection({ introReady = true }: HeroSectionProps) {
               event.preventDefault();
               scrollToSection("#story");
             }}
-            className={`group px-8 py-3.5 rounded-sm border border-gold-muted text-gold font-sans text-xs font-medium transition-all duration-300 hover:bg-gold/10 ${
+            className={`group relative px-8 py-3.5 overflow-hidden rounded-sm bg-gold text-[#0E0D12] font-sans text-xs font-semibold transition-all duration-300 hover:shadow-[0_0_25px_rgba(201,168,76,0.3)] ${
               isArabic ? "" : "uppercase tracking-[0.2em]"
             }`}
           >
-            {t("ctaStory")}
+            <span className="relative z-10">{t("ctaStory")}</span>
+            <span className="absolute inset-0 bg-ivory scale-x-0 origin-left transition-transform duration-500 ease-fabric group-hover:scale-x-100" />
           </a>
         </div>
       </div>
@@ -266,31 +265,10 @@ export default function HeroSection({ introReady = true }: HeroSectionProps) {
         >
           {t("scroll")}
         </span>
-        <div className="w-[1px] h-12 bg-gold-glow relative overflow-hidden">
-          {/* Scrolling line animation */}
-          <div
-            className="absolute top-0 left-0 right-0 h-1/2 bg-gold"
-            style={{
-              animation: "scrollDown 2.2s infinite ease-in-out",
-            }}
-          />
+        <div className="w-[1px] h-12 bg-gold relative">
+          <div className="absolute bottom-0 left-0 right-0 h-3 bg-gold hero-scroll-line" />
         </div>
       </a>
-
-      {/* CSS Animation for Scroll Line */}
-      <style jsx global>{`
-        @keyframes scrollDown {
-          0% {
-            transform: translateY(-100%);
-          }
-          50% {
-            transform: translateY(0%);
-          }
-          100% {
-            transform: translateY(200%);
-          }
-        }
-      `}</style>
     </section>
   );
 }

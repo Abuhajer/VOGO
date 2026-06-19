@@ -1,9 +1,9 @@
 import { execSync, spawn } from "child_process";
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
+import { getNextBin, getProjectRoot } from "./lib/next-bin.mjs";
 
-const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
+const root = getProjectRoot();
 
 function killPort(port) {
   try {
@@ -33,18 +33,39 @@ function killPort(port) {
   }
 }
 
+function clearBuildCaches() {
+  for (const dir of [".next", path.join("node_modules", ".cache")]) {
+    const target = path.join(root, dir);
+
+    if (!fs.existsSync(target)) {
+      continue;
+    }
+
+    try {
+      fs.rmSync(target, {
+        recursive: true,
+        force: true,
+        maxRetries: 5,
+        retryDelay: 300,
+      });
+      console.log(`Cleared ${dir}`);
+    } catch (error) {
+      console.warn(`Could not fully clear ${dir} (continuing anyway):`, error.message);
+    }
+  }
+}
+
 for (const port of [3000, 3001]) {
   killPort(port);
 }
 
-fs.rmSync(path.join(root, ".next"), { recursive: true, force: true });
-console.log("Cleared .next cache");
+clearBuildCaches();
+
 console.log("Starting dev server on http://localhost:3000 ...\n");
 
-const child = spawn("next", ["dev"], {
+const child = spawn(process.execPath, [getNextBin(), "dev", "-p", "3000"], {
   cwd: root,
   stdio: "inherit",
-  shell: true,
 });
 
 child.on("exit", (code) => process.exit(code ?? 0));

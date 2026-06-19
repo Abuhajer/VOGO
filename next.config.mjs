@@ -6,6 +6,14 @@ const withNextIntl = createNextIntlPlugin(
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Avoid stale dev vendor-chunks when next-intl/webpack cache gets out of sync.
+  webpack: (config, { dev, isServer }) => {
+    if (dev && isServer) {
+      config.cache = { type: 'memory' };
+    }
+
+    return config;
+  },
   images: {
     remotePatterns: [
       {

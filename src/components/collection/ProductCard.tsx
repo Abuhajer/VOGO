@@ -59,7 +59,7 @@ export default function ProductCard({
                 ? "(max-width: 640px) 78vw, (max-width: 768px) 290px, 320px"
                 : "(max-width: 640px) 100vw, 400px"
             }
-            priority={carousel3d}
+            priority={carousel3d || index < 2}
             loading={carousel3d ? "eager" : "lazy"}
             fetchPriority={carousel3d ? "high" : "auto"}
             className={`object-cover object-center ${

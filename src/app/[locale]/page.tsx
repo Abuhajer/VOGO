@@ -23,8 +23,8 @@ export default function Home() {
       <main>
         <HeroSection introReady={introDone} />
         <HorizontalCollection />
-        <GroomSection />
         <StorySection />
+        <GroomSection />
         <TestimonialCarousel />
         <ContactSection />
         <Footer />

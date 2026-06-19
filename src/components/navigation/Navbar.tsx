@@ -28,6 +28,17 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileMenuOpen(false);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [mobileMenuOpen]);
+
   const navLinks = [
     { label: t("collection"), href: "#collection" },
     { label: t("story"), href: "#story" },
@@ -57,6 +68,13 @@ export default function Navbar() {
 
   return (
     <>
+      <a
+        href="#hero"
+        onClick={(event) => handleHashClick(event, "#hero")}
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:start-4 focus:z-[100] focus:px-4 focus:py-2 focus:bg-gold focus:text-[#0E0D12] focus:text-xs focus:font-semibold focus:rounded-sm"
+      >
+        {locale === "ar" ? "تخطي إلى المحتوى" : "Skip to content"}
+      </a>
       {/* Navbar Container */}
       <header
         dir={locale === "ar" ? "rtl" : "ltr"}
@@ -107,7 +125,7 @@ export default function Navbar() {
               className={`text-[10px] text-gold font-semibold font-sans px-2.5 py-1 border border-gold/30 hover:border-gold hover:bg-gold/10 rounded-sm transition-all duration-300 ${
                 locale === "ar" ? "" : "tracking-[0.15em] uppercase"
               }`}
-              aria-label="Switch Language"
+              aria-label={locale === "ar" ? "تبديل اللغة" : "Switch language"}
             >
               {locale === "ar" ? "English" : "العربية"}
             </button>
@@ -116,7 +134,7 @@ export default function Navbar() {
             <button
               onClick={toggleTheme}
               className="text-ivory-muted hover:text-gold transition-colors duration-300 text-sm focus:outline-none"
-              aria-label="Toggle Theme"
+              aria-label={locale === "ar" ? "تبديل المظهر" : "Toggle theme"}
             >
               {theme === "dark" ? (
                 <SunIcon size={18} />
@@ -129,7 +147,8 @@ export default function Navbar() {
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="flex flex-col justify-between w-6 h-4 lg:hidden focus:outline-none"
-              aria-label="Toggle Mobile Menu"
+              aria-label={locale === "ar" ? "فتح القائمة" : "Open menu"}
+              aria-expanded={mobileMenuOpen}
             >
               <span
                 className={`w-full h-[1.5px] bg-ivory rounded-full transition-all duration-300 ${

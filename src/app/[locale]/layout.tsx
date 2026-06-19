@@ -5,7 +5,9 @@ import { getMessages, setRequestLocale } from "next-intl/server";
 import { ThemeProvider } from "@/context/ThemeProvider";
 import { routing } from "@/i18n/routing";
 import Navbar from "@/components/navigation/Navbar";
+import SiteChrome from "@/components/SiteChrome";
 import { siteImages } from "@/lib/images";
+import { getOrganizationSchema } from "@/lib/structured-data";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -42,6 +44,16 @@ export async function generateMetadata({ params: { locale } }: { params: { local
           alt: "PRIME by VOGO BY FAME",
         },
       ],
+      locale: isAr ? "ar_JO" : "en_US",
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: isAr ? "ڤوچو — فخامة ملابس الرجال الرسمية" : "PRIME by VOGO — Luxury Menswear",
+      description: isAr
+        ? "بدلات زفاف وتفصيل فاخر في عمّان، الأردن."
+        : "Bespoke suits and groom tuxedos in Amman, Jordan.",
+      images: [siteImages.og],
     },
   };
 }
@@ -60,16 +72,24 @@ export default async function LocaleLayout({
   setRequestLocale(locale);
 
   const messages = await getMessages();
+  const organizationSchema = getOrganizationSchema(locale);
 
   return (
     <ThemeProvider>
       <NextIntlClientProvider messages={messages}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+          suppressHydrationWarning
+        />
         {/* Film Grain Texture overlay */}
         <div className="grain-overlay" aria-hidden="true" />
         <Navbar />
-        <div className="relative min-h-screen flex flex-col overflow-x-hidden">
-          {children}
-        </div>
+        <SiteChrome>
+          <div className="relative min-h-screen flex flex-col overflow-x-hidden">
+            {children}
+          </div>
+        </SiteChrome>
       </NextIntlClientProvider>
     </ThemeProvider>
   );

@@ -52,14 +52,26 @@ export function LinkedInIcon({ size = 20, className, ...props }: IconProps) {
   );
 }
 
-/** Official Instagram brand mark (Simple Icons) */
+/** Official Instagram brand mark — stroke style for clarity at small sizes */
 export function InstagramIcon({ size = 20, className, ...props }: IconProps) {
   return (
-    <svg {...iconProps({ size, className, ...props })}>
-      <path
-        fill="currentColor"
-        d="M12 0C8.74 0 8.333.015 7.053.072 2.695.272.273 2.69.073 7.051C.014 8.333 0 8.74 0 12s.014 3.667.072 4.947c.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.74 24 12 24s3.667-.014 4.947-.072c4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.947s-.014-3.667-.072-4.947c-.196-4.354-2.617-6.78-6.979-6.98C15.667.014 15.26 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"
-      />
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      {...props}
+    >
+      <rect x="3" y="3" width="18" height="18" rx="5" ry="5" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="17" cy="7" r="0.75" fill="currentColor" stroke="none" />
     </svg>
   );
 }

@@ -4,6 +4,9 @@ import React, { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import SectionLabel from "@/components/icons/SectionLabel";
 import { WhatsAppIcon } from "@/components/icons/Icons";
+import { getGoogleMapsLink, getLocationAddress } from "@/lib/location";
+import SocialLinks from "@/components/icons/SocialLinks";
+import ContactMap from "@/components/contact/ContactMap";
 
 export default function ContactSection() {
   const t = useTranslations("Contact");
@@ -79,10 +82,17 @@ export default function ContactSection() {
               <span className="text-[9px] uppercase tracking-wider text-ivory-faint mb-1">
                 {t("address")}
               </span>
-              <span className="text-ivory leading-relaxed text-sm md:text-base font-light">
-                {t("addressDetail")}
-              </span>
+              <a
+                href={getGoogleMapsLink(locale)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-ivory leading-relaxed text-sm md:text-base font-light hover:text-gold transition-colors duration-300 w-fit"
+              >
+                {getLocationAddress(locale)}
+              </a>
             </div>
+
+            <ContactMap />
 
             {/* Direct WhatsApp Call to Action */}
             <div className="pt-4">
@@ -95,6 +105,14 @@ export default function ContactSection() {
                 <WhatsAppIcon size={18} className="shrink-0" />
                 <span>{t("whatsapp")}</span>
               </a>
+            </div>
+
+            {/* Social */}
+            <div className="flex flex-col pt-2">
+              <span className="text-[9px] uppercase tracking-wider text-ivory-faint mb-3">
+                {locale === "ar" ? "تابعنا" : "Follow Us"}
+              </span>
+              <SocialLinks isArabic={locale === "ar"} />
             </div>
           </div>
         </div>
