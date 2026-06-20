@@ -8,8 +8,6 @@ import { useGSAP } from "@gsap/react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { siteImages } from "@/lib/images";
 import { scrollToSection } from "@/lib/scroll";
-import { PrimeMarkIcon } from "@/components/icons/Icons";
-
 type HeroSectionProps = {
   introReady?: boolean;
 };
@@ -20,6 +18,7 @@ export default function HeroSection({ introReady = true }: HeroSectionProps) {
   const isArabic = locale === "ar";
   const sectionRef = useRef<HTMLDivElement>(null);
   const bgRef = useRef<HTMLDivElement>(null);
+  const grainRef = useRef<HTMLDivElement>(null);
   const textContainerRef = useRef<HTMLDivElement>(null);
   const lineRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
@@ -27,14 +26,10 @@ export default function HeroSection({ introReady = true }: HeroSectionProps) {
   const prefersReducedMotion = useReducedMotion();
 
   useGSAP(() => {
-    const headlineSelector = isArabic ? ".hero-headline" : ".hero-word";
+    const headlineSelector = ".hero-word";
 
     if (!introReady) {
-      if (isArabic) {
-        gsap.set(headlineSelector, { opacity: 0, y: 24 });
-      } else {
-        gsap.set(".hero-word", { y: "100%", opacity: 0 });
-      }
+      gsap.set(headlineSelector, { y: "100%", opacity: 0 });
       gsap.set(".hero-sub", { opacity: 0, y: 15 });
       gsap.set(lineRef.current, { scaleX: 0 });
       gsap.set(ctaRef.current, { opacity: 0, y: 20 });
@@ -44,12 +39,7 @@ export default function HeroSection({ introReady = true }: HeroSectionProps) {
     if (!prefersReducedMotion) {
       const tl = gsap.timeline({ delay: 0.2 });
 
-      if (isArabic) {
-        gsap.set(headlineSelector, { opacity: 0, y: 24 });
-      } else {
-        gsap.set(".hero-word", { y: "100%", opacity: 0 });
-      }
-
+      gsap.set(headlineSelector, { y: "100%", opacity: 0 });
       gsap.set(".hero-sub", { opacity: 0, y: 15 });
       gsap.set(lineRef.current, { scaleX: 0 });
       gsap.set(ctaRef.current, { opacity: 0, y: 20 });
@@ -62,15 +52,13 @@ export default function HeroSection({ introReady = true }: HeroSectionProps) {
 
       tl.to(
         headlineSelector,
-        isArabic
-          ? { opacity: 1, y: 0, duration: 1.1, ease: "power3.out" }
-          : {
-              y: 0,
-              opacity: 1,
-              stagger: 0.08,
-              duration: 1.2,
-              ease: "power3.out",
-            },
+        {
+          y: 0,
+          opacity: 1,
+          stagger: 0.08,
+          duration: 1.2,
+          ease: "power3.out",
+        },
         "-=0.6"
       );
 
@@ -88,11 +76,7 @@ export default function HeroSection({ introReady = true }: HeroSectionProps) {
         "-=0.6"
       );
     } else {
-      if (isArabic) {
-        gsap.set(".hero-headline", { opacity: 1, y: 0 });
-      } else {
-        gsap.set(".hero-word", { y: 0, opacity: 1 });
-      }
+      gsap.set(".hero-word", { y: 0, opacity: 1 });
       gsap.set(".hero-sub", { opacity: 1, y: 0 });
       gsap.set(lineRef.current, { scaleX: 1 });
       gsap.set(ctaRef.current, { opacity: 1, y: 0 });
@@ -103,23 +87,42 @@ export default function HeroSection({ introReady = true }: HeroSectionProps) {
       gsap.to(bgRef.current, {
         yPercent: 18,
         ease: "none",
+        force3D: true,
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
           end: "bottom top",
-          scrub: true,
+          scrub: 0.5,
+          fastScrollEnd: true,
         },
       });
+
+      if (grainRef.current) {
+        gsap.to(grainRef.current, {
+          yPercent: 28,
+          ease: "none",
+          force3D: true,
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: 0.5,
+            fastScrollEnd: true,
+          },
+        });
+      }
 
       gsap.to(textContainerRef.current, {
         yPercent: -8,
         opacity: 0.2,
         ease: "none",
+        force3D: true,
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
           end: "bottom 30%",
-          scrub: true,
+          scrub: 0.5,
+          fastScrollEnd: true,
         },
       });
     }
@@ -127,20 +130,23 @@ export default function HeroSection({ introReady = true }: HeroSectionProps) {
 
   const renderHeadline = (text: string) => {
     if (isArabic) {
-      return (
-        <span className="hero-headline block font-serif text-gold font-normal leading-[1.5]">
-          {text}
+      return text.split(" ").map((word, idx) => (
+        <span key={idx} className="inline-block overflow-hidden ms-[0.2em] first:ms-0">
+          <span className="hero-word inline-block font-serif text-gold font-normal leading-[1.5]">
+            {word}
+          </span>
         </span>
-      );
+      ));
     }
 
-    return text.split(" ").map((word, idx) => (
-      <span key={idx} className="inline-block overflow-hidden me-[0.25em]">
-        <span className="hero-word inline-block font-serif italic text-gold font-light">
-          {word}
+    // English: one connected line — per-word clip boxes distort italic serifs
+    return (
+      <span className="inline-block overflow-hidden max-w-4xl">
+        <span className="hero-word block font-serif text-gold font-light not-italic leading-[1.15] tracking-normal">
+          {text}
         </span>
       </span>
-    ));
+    );
   };
 
   return (
@@ -152,7 +158,7 @@ export default function HeroSection({ introReady = true }: HeroSectionProps) {
       {/* Parallax Background Container */}
       <div
         ref={bgRef}
-        className="absolute inset-0 w-full h-[120%] -top-[10%] z-0"
+        className="absolute inset-0 w-full h-[120%] -top-[10%] z-0 will-change-transform"
       >
         {/* Dark overlay for text readability */}
         <div className="absolute inset-0 bg-[#050508]/40 z-10 pointer-events-none" />
@@ -167,14 +173,20 @@ export default function HeroSection({ introReady = true }: HeroSectionProps) {
         {/* Next.js Optimized Background Image */}
         <Image
           src={siteImages.hero}
-          alt="PRIME Bespoke Suit"
+          alt="VOGO BY FAME bespoke suit"
           fill
           priority
-          quality={92}
+          quality={85}
           sizes="100vw"
-          className="object-cover object-center scale-105"
+          className="object-cover object-center"
         />
       </div>
+
+      <div
+        ref={grainRef}
+        className="hero-grain-layer absolute inset-0 z-[5] pointer-events-none"
+        aria-hidden
+      />
 
       {/* Decorative vertical lines */}
       <div className="absolute left-[10%] top-0 bottom-0 w-[1px] bg-gold-glow opacity-10 z-10 hidden md:block" />
@@ -185,17 +197,12 @@ export default function HeroSection({ introReady = true }: HeroSectionProps) {
         ref={textContainerRef}
         className="relative z-25 container mx-auto px-6 md:px-12 flex flex-col items-center text-center mt-8"
       >
-        {/* Minimal crown indicator */}
-        <span className="inline-flex items-center gap-3 text-[10px] tracking-[0.6em] uppercase text-gold font-light mb-4 hero-sub">
-          <PrimeMarkIcon size={12} className="text-gold" />
-          PRIME
-          <PrimeMarkIcon size={12} className="text-gold" />
-        </span>
-
         {/* Cinematic Headline */}
         <h1
-          className={`text-4xl md:text-6xl lg:text-7xl font-light max-w-4xl text-balance ${
-            isArabic ? "leading-[1.5]" : "tracking-wide leading-[1.25]"
+          className={`font-light max-w-4xl text-balance ${
+            isArabic
+              ? "text-5xl md:text-7xl lg:text-[5.25rem] leading-[1.45]"
+              : "text-4xl md:text-6xl lg:text-7xl leading-[1.15]"
           }`}
           dir={isArabic ? "rtl" : "ltr"}
         >
@@ -210,7 +217,9 @@ export default function HeroSection({ introReady = true }: HeroSectionProps) {
 
         {/* Brand Statement Subtitle */}
         <p
-          className="hero-sub text-sm md:text-base max-w-xl text-ivory-muted font-sans leading-relaxed text-balance"
+          className={`hero-sub max-w-xl text-ivory-muted font-sans leading-relaxed text-balance ${
+            isArabic ? "text-base md:text-lg" : "text-sm md:text-base"
+          }`}
           dir={isArabic ? "rtl" : "ltr"}
         >
           {t("subtitle")}

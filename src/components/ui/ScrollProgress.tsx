@@ -1,25 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRef } from "react";
+import { useRafScroll } from "@/hooks/useRafScroll";
 
 export default function ScrollProgress() {
-  const [progress, setProgress] = useState(0);
+  const barRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const update = () => {
-      const scrollTop = window.scrollY;
-      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      setProgress(docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0);
-    };
+  useRafScroll(() => {
+    const bar = barRef.current;
+    if (!bar) return;
 
-    update();
-    window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
-    return () => {
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-    };
-  }, []);
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = docHeight > 0 ? Math.min(window.scrollY / docHeight, 1) : 0;
+    bar.style.transform = `scaleX(${progress})`;
+  });
 
   return (
     <div
@@ -27,8 +21,9 @@ export default function ScrollProgress() {
       aria-hidden
     >
       <div
-        className="h-full bg-gold origin-left transition-[transform] duration-150 ease-out"
-        style={{ transform: `scaleX(${progress})` }}
+        ref={barRef}
+        className="h-full w-full bg-gold origin-left will-change-transform"
+        style={{ transform: "scaleX(0)" }}
       />
     </div>
   );

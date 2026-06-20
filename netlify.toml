@@ -1,10 +1,9 @@
 [build]
   command = "npm run build"
-  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "20"
-  NPM_FLAGS = "--legacy-peer-deps"
+  # Set DATABASE_URL, AUTH_SECRET, and optional Stripe/analytics keys in Netlify UI.
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"

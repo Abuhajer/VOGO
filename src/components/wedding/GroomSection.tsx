@@ -77,11 +77,12 @@ export default function GroomSection() {
 
     gsap.fromTo(
       ".groom-cta",
-      { y: 24, opacity: 0, scale: 0.92 },
+      { y: 24, opacity: 0, scaleX: 0.92, scaleY: 0.92 },
       {
         y: 0,
         opacity: 1,
-        scale: 1,
+        scaleX: 1,
+        scaleY: 1,
         duration: 0.9,
         ease: "back.out(1.4)",
         scrollTrigger: {
@@ -118,7 +119,7 @@ export default function GroomSection() {
           fill
           quality={92}
           sizes="(max-width: 768px) 100vw, 50vw"
-          className="object-cover object-top scale-105"
+          className="object-cover object-[center_20%] scale-105"
         />
 
         {/* Ambient Overlay Tag */}

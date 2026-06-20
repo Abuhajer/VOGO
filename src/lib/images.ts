@@ -1,15 +1,18 @@
-/** Local VOGO brand photography — high-res PNGs (slider products unchanged) */
+/** Local VOGO brand photography */
 export const siteImages = {
+  /** Editorial sections — professional lifestyle / craft photography */
   hero: "/images/hero/hero_suit_man.png",
-  groom: "/images/products/suit_navy_wedding.png",
-  story: "/images/products/suit_classic_black.png",
-  fabric: "/images/products/suit_charcoal_business.png",
+  groom: "/images/editorial/groom.jpg",
+  story: "/images/editorial/story.jpg",
+  fabric: "/images/editorial/fabric.jpg",
   og: "/images/hero/hero_suit_man.png",
+
+  /** Collection slider — product renders (unchanged) */
   products: {
-    classicBlack: "/images/products/suit_classic_black.png",
-    navyWedding: "/images/products/suit_navy_wedding.png",
-    businessGray: "/images/products/suit_charcoal_business.png",
-    burgundyEvening: "/images/products/suit_burgundy_evening.png",
-    ivorySummer: "/images/products/suit_ivory_summer.png",
+    classicBlack: "/images/products/classic-black-tuxedo.png",
+    navyWedding: "/images/products/royal-navy-wedding-tuxedo.png",
+    businessGray: "/images/products/charcoal-double-breasted.png",
+    burgundyEvening: "/images/products/burgundy-velvet-blazer.png",
+    ivorySummer: "/images/products/ivory-linen-blazer.png",
   },
 } as const;

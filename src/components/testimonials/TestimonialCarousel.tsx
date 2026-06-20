@@ -69,7 +69,7 @@ export default function TestimonialCarousel() {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="absolute w-[400px] h-[400px] rounded-full bg-gold-glow filter blur-[100px] pointer-events-none opacity-20 z-0" />
+      <div className="absolute w-[320px] h-[320px] rounded-full bg-gold-glow filter blur-[60px] pointer-events-none opacity-15 z-0" />
 
       <div
         className="container mx-auto px-6 text-center mb-12 md:mb-16 z-10"

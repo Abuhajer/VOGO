@@ -3,11 +3,12 @@
 import { useRef } from "react";
 import Image from "next/image";
 import { useTranslations, useLocale } from "next-intl";
-import { gsap } from "@/lib/gsap";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { useGSAP } from "@gsap/react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { siteImages } from "@/lib/images";
-import SectionLabel from "@/components/icons/SectionLabel";
+import { formatNumber } from "@/lib/format";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { PrimeMarkIcon } from "@/components/icons/Icons";
 
 export default function StorySection() {
@@ -23,12 +24,13 @@ export default function StorySection() {
   useGSAP(() => {
     if (prefersReducedMotion) return;
 
-    // 1. Zoom/reveal image on scroll enter
+    // 1. Zoom/reveal image on scroll enter (wrapper only — never tween Next/Image directly)
     gsap.fromTo(
-      ".story-image",
-      { scale: 1.15, opacity: 0.8 },
+      ".story-image-wrap",
+      { scaleX: 1.15, scaleY: 1.15, opacity: 0.8 },
       {
-        scale: 1,
+        scaleX: 1.05,
+        scaleY: 1.05,
         opacity: 1,
         ease: "power2.out",
         scrollTrigger: {
@@ -40,23 +42,41 @@ export default function StorySection() {
       }
     );
 
-    // 2. Scrollytelling reveal for paragraphs
-    gsap.fromTo(
-      ".story-p",
-      { y: 30, opacity: 0, filter: "blur(2px)" },
-      {
-        y: 0,
-        opacity: 1,
-        filter: "blur(0px)",
-        stagger: 0.25,
-        duration: 0.9,
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: ".story-text-col",
-          start: "top 75%",
-        },
-      }
-    );
+    // 2. Line-by-line scrollytelling (scrub per paragraph)
+    gsap.utils.toArray<HTMLElement>(".story-p").forEach((paragraph) => {
+      gsap.fromTo(
+        paragraph,
+        { y: 36, opacity: 0, filter: "blur(3px)" },
+        {
+          y: 0,
+          opacity: 1,
+          filter: "blur(0px)",
+          ease: "none",
+          scrollTrigger: {
+            trigger: paragraph,
+            start: "top 88%",
+            end: "top 58%",
+            scrub: 0.45,
+          },
+        }
+      );
+    });
+
+    // Pin editorial image while story text scrolls (desktop)
+    ScrollTrigger.matchMedia({
+      "(min-width: 1024px)": () => {
+        const pin = ScrollTrigger.create({
+          trigger: imageContainerRef.current,
+          start: "top 96px",
+          endTrigger: ".story-text-col",
+          end: "bottom bottom",
+          pin: imageContainerRef.current,
+          pinSpacing: false,
+        });
+
+        return () => pin.kill();
+      },
+    });
 
     // 3. CountUp animation for stats
     const stats = [
@@ -80,12 +100,8 @@ export default function StorySection() {
           toggleActions: "play none none none",
         },
         onUpdate: () => {
-          // Render localized numbers if Arabic, else standard
           const numberValue = Math.round(obj.val);
-          const formattedNumber = locale === "ar" 
-            ? numberValue.toLocaleString("ar-JO", { useGrouping: false }) 
-            : numberValue.toString();
-          
+          const formattedNumber = formatNumber(numberValue, locale);
           el.innerText = `${stat.prefix || ""}${formattedNumber}${stat.suffix || ""}`;
         },
       });
@@ -120,7 +136,7 @@ export default function StorySection() {
         dir={locale === "ar" ? "rtl" : "ltr"}
       >
         {/* Sticky Editorial Column (Left on LTR, Right on RTL) */}
-        <div className="lg:col-span-5 flex flex-col justify-start lg:sticky lg:top-24 h-fit">
+        <div className="lg:col-span-5 flex flex-col justify-start h-fit">
           <div
             ref={imageContainerRef}
             className="relative aspect-[3/4] w-full overflow-hidden bg-obsidian border border-gold-glow/10 rounded-sm"
@@ -128,14 +144,16 @@ export default function StorySection() {
             {/* Overlay border details */}
             <div className="absolute inset-4 border border-gold/15 z-10 pointer-events-none" />
             
-            <Image
-              src={siteImages.story}
-              alt="Bespoke Tailoring Craft"
-              fill
-              quality={92}
-              sizes="(max-width: 1024px) 100vw, 40vw"
-              className="story-image object-cover object-center scale-110"
-            />
+            <div className="story-image-wrap absolute inset-0 overflow-hidden">
+              <Image
+                src={siteImages.story}
+                alt="Bespoke Tailoring Craft"
+                fill
+                quality={92}
+                sizes="(max-width: 1024px) 100vw, 40vw"
+                className="object-cover object-center"
+              />
+            </div>
           </div>
           <span className="inline-flex items-center gap-2 text-[9px] uppercase tracking-[0.25em] text-ivory-faint mt-3 text-center lg:text-start">
             <PrimeMarkIcon size={10} className="text-gold shrink-0" />
@@ -147,10 +165,7 @@ export default function StorySection() {
         <div className="story-text-col lg:col-span-7 flex flex-col justify-center">
           {/* Header */}
           <div className="mb-8">
-            <SectionLabel className="mb-2 text-gold font-light">{t("title")}</SectionLabel>
-            <h2 className="text-3xl md:text-5xl font-serif font-light text-ivory leading-tight">
-              {t("subtitle")}
-            </h2>
+            <SectionHeading label={t("title")} title={t("subtitle")} />
           </div>
 
           {/* Copy block */}
@@ -211,6 +226,7 @@ export default function StorySection() {
         <div className="endcap-bg absolute inset-0 w-full h-[140%] -top-[20%] z-0">
           <div className="absolute inset-0 bg-[#050508]/85 z-10 mix-blend-multiply" />
           <div className="absolute inset-0 bg-gradient-to-t from-void via-transparent to-void z-15" />
+          <div className="story-endcap-noise absolute inset-0 z-15 pointer-events-none" aria-hidden />
           <Image
             src={siteImages.fabric}
             alt="Premium Fabric Texture"

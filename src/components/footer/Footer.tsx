@@ -3,7 +3,10 @@
 import Image from "next/image";
 import { useTranslations, useLocale } from "next-intl";
 import { scrollToSection } from "@/lib/scroll";
+import { NAV_SECTIONS } from "@/lib/navigation";
 import SocialLinks from "@/components/icons/SocialLinks";
+import NewsletterSignup from "@/components/marketing/NewsletterSignup";
+import { BRAND_LOGO } from "@/lib/brand";
 
 export default function Footer() {
   const t = useTranslations("Footer");
@@ -11,12 +14,10 @@ export default function Footer() {
   const locale = useLocale();
   const isArabic = locale === "ar";
 
-  const navLinks = [
-    { label: tNav("collection"), href: "#collection" },
-    { label: tNav("story"), href: "#story" },
-    { label: tNav("wedding"), href: "#wedding" },
-    { label: tNav("contact"), href: "#contact" },
-  ];
+  const navLinks = NAV_SECTIONS.map(({ key, href }) => ({
+    label: tNav(key),
+    href,
+  }));
 
   return (
     <footer className="relative w-full bg-void pt-16 pb-8 border-t border-gold-glow/10 z-10">
@@ -26,13 +27,13 @@ export default function Footer() {
         dir={locale === "ar" ? "rtl" : "ltr"}
       >
         {/* Brand Logo (Centered) */}
-        <div className="mb-8 relative w-48 h-12">
+        <div className="mb-8 relative w-36 h-28 md:w-40 md:h-32">
           <Image
-            src="/logo/prime-logo.svg"
-            alt="PRIME BY VOGO"
+            src={BRAND_LOGO.path}
+            alt={BRAND_LOGO.alt}
             fill
             sizes="200px"
-            className="object-contain filter brightness-100"
+            className="object-contain"
           />
         </div>
 
@@ -55,6 +56,14 @@ export default function Footer() {
             ))}
           </ul>
         </nav>
+
+        {/* Newsletter */}
+        <div className="mb-8 w-full max-w-md">
+          <p className="text-[10px] uppercase tracking-wider text-ivory-faint mb-3">
+            {isArabic ? "اشترك في نشرتنا" : "Join our newsletter"}
+          </p>
+          <NewsletterSignup />
+        </div>
 
         {/* Social Links */}
         <SocialLinks className="mb-8" isArabic={isArabic} />

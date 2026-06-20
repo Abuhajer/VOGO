@@ -1,3 +1,5 @@
+import { formatLocalizedDigits } from "./format";
+
 export const BUSINESS_LOCATION = {
   lat: 31.993307,
   lng: 35.861736,
@@ -9,9 +11,12 @@ export const BUSINESS_LOCATION = {
 } as const;
 
 export function getLocationAddress(locale: string) {
-  return locale === "ar"
-    ? BUSINESS_LOCATION.address.ar
-    : BUSINESS_LOCATION.address.en;
+  const address =
+    locale === "ar"
+      ? BUSINESS_LOCATION.address.ar
+      : BUSINESS_LOCATION.address.en;
+
+  return formatLocalizedDigits(address, locale);
 }
 
 export function getGoogleMapsLink(locale: string) {

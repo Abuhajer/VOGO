@@ -1,0 +1,52 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+
+type StepKey = "product" | "photo";
+
+type Props = {
+  step: StepKey;
+  showCarouselHint?: boolean;
+  variant?: "stacked" | "overlay";
+};
+
+export default function FittingRoomStepIntro({
+  step,
+  showCarouselHint = false,
+  variant = "stacked",
+}: Props) {
+  const t = useTranslations("FittingRoom");
+
+  const label = step === "product" ? t("step1Label") : t("step2Label");
+  const title = step === "product" ? t("step1Title") : t("step2Title");
+  const desc = step === "product" ? t("step1Desc") : t("step2Desc");
+
+  if (variant === "overlay") {
+    return (
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 z-30 bg-gradient-to-b from-[#08080c]/96 via-[#08080c]/72 to-transparent px-3 pb-10 pt-2 sm:px-5 sm:pb-12 sm:pt-3 md:px-6"
+        aria-hidden={false}
+      >
+        <p className="mb-0.5 text-[9px] uppercase tracking-[0.28em] text-gold sm:text-[10px]">{label}</p>
+        <h2 className="font-serif text-lg leading-tight text-ivory sm:text-xl md:text-2xl">{title}</h2>
+        <p className="mt-1 max-w-xl text-[11px] leading-snug text-ivory-muted/90 line-clamp-2 sm:text-xs sm:leading-relaxed">
+          {desc}
+        </p>
+        {step === "product" && showCarouselHint ? (
+          <p className="mt-1 hidden text-[10px] text-ivory-faint sm:block">{t("carouselHint")}</p>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-3 shrink-0 sm:mb-4 md:mb-5">
+      <p className="mb-1 text-[10px] uppercase tracking-[0.3em] text-gold sm:text-[11px]">{label}</p>
+      <h2 className="font-serif text-xl text-ivory sm:text-2xl md:text-[1.75rem] lg:text-3xl">{title}</h2>
+      <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-ivory-muted sm:text-sm">{desc}</p>
+      {step === "product" && showCarouselHint ? (
+        <p className="mt-2 text-[10px] text-ivory-faint sm:text-[11px]">{t("carouselHint")}</p>
+      ) : null}
+    </div>
+  );
+}

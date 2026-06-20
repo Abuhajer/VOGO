@@ -2,14 +2,13 @@ import {defineRouting} from 'next-intl/routing';
 import {createNavigation} from 'next-intl/navigation';
 
 export const routing = defineRouting({
-  // A list of all locales that are supported
   locales: ['ar', 'en'],
 
-  // Used when no locale matches
+  /** Arabic is the site default — do not redirect to English from browser language. */
   defaultLocale: 'ar',
+  localeDetection: false,
 
-  // Prepend the locale to all paths
-  localePrefix: 'always'
+  localePrefix: 'always',
 });
 
 // Lightweight wrappers around Next.js' navigation APIs

@@ -1,4 +1,7 @@
+import { siteImages } from "./images";
 import { BUSINESS_LOCATION, getLocationAddress } from "./location";
+import { absoluteUrl } from "./site";
+import { BRAND, BRAND_LOGO } from "./brand";
 
 export function getOrganizationSchema(locale: string) {
   const isAr = locale === "ar";
@@ -6,10 +9,10 @@ export function getOrganizationSchema(locale: string) {
   return {
     "@context": "https://schema.org",
     "@type": "ClothingStore",
-    name: isAr ? "برايم من ڤوچو" : "PRIME by VOGO BY FAME",
-    url: "https://vogobyfame.com",
-    logo: "https://vogobyfame.com/logo/prime-logo.svg",
-    image: "https://vogobyfame.com/images/hero/hero_suit_man.png",
+    name: isAr ? BRAND.nameAr : BRAND.name,
+    url: absoluteUrl("/"),
+    logo: absoluteUrl(BRAND_LOGO.path),
+    image: absoluteUrl(siteImages.og),
     telephone: "+962797226984",
     address: {
       "@type": "PostalAddress",
@@ -29,7 +32,7 @@ export function getOrganizationSchema(locale: string) {
       "https://www.instagram.com/vogobyfame",
     ],
     description: isAr
-      ? "ڤوچو — الخيار الأول لكل رجل مميز يبحث عن الأناقة والفخامة للبدلات الرسمية وبدلات العرسان في عمّان."
-      : "PRIME by VOGO — premium bespoke menswear and luxury groom suits in Amman, Jordan.",
+      ? `${BRAND.nameAr} — الخيار الأول لكل رجل مميز يبحث عن الأناقة والفخامة للبدلات الرسمية وبدلات العرسان في عمّان.`
+      : `${BRAND.name} — premium bespoke menswear and luxury groom suits in Amman, Jordan.`,
   };
 }

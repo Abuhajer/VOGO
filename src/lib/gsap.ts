@@ -15,6 +15,8 @@ if (typeof window !== "undefined") {
   // Enable smooth scroll behaviors on scrollTrigger if required
   ScrollTrigger.config({
     autoRefreshEvents: "visibilitychange,DOMContentLoaded,load,resize",
+    limitCallbacks: true,
+    ignoreMobileResize: true,
   });
 }
 

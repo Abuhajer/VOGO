@@ -4,6 +4,8 @@ import React, { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import SectionLabel from "@/components/icons/SectionLabel";
 import { WhatsAppIcon } from "@/components/icons/Icons";
+import { BUSINESS_PHONE_E164, getDisplayPhone } from "@/lib/format";
+import PhoneInput from "@/components/form/PhoneInput";
 import { getGoogleMapsLink, getLocationAddress } from "@/lib/location";
 import SocialLinks from "@/components/icons/SocialLinks";
 import ContactMap from "@/components/contact/ContactMap";
@@ -37,7 +39,7 @@ export default function ContactSection() {
           : `Hello VOGO, my name is: ${name}\nPhone: ${phone}\nInquiry: ${message}`
       );
       
-      const whatsappUrl = `https://wa.me/962797226984?text=${encodedText}`;
+      const whatsappUrl = `https://wa.me/${BUSINESS_PHONE_E164.replace("+", "")}?text=${encodedText}`;
       window.open(whatsappUrl, "_blank");
 
       // Reset form fields
@@ -70,10 +72,12 @@ export default function ContactSection() {
                 {t("phone")}
               </span>
               <a
-                href="tel:+962797226984"
-                className="text-gold hover:text-ivory text-lg md:text-xl font-light tracking-wide transition-colors duration-300 w-fit"
+                href={`tel:${BUSINESS_PHONE_E164}`}
+                className="text-gold hover:text-ivory text-lg md:text-xl font-light tracking-wide transition-colors duration-300 w-fit inline-block"
               >
-                +962 79 722 6984
+                <span className="block dir-ltr text-start [unicode-bidi:isolate] tabular-nums">
+                  {getDisplayPhone(locale)}
+                </span>
               </a>
             </div>
 
@@ -97,7 +101,7 @@ export default function ContactSection() {
             {/* Direct WhatsApp Call to Action */}
             <div className="pt-4">
               <a
-                href={`https://wa.me/962797226984?text=${encodeURIComponent(t("whatsappMsg"))}`}
+                href={`https://wa.me/${BUSINESS_PHONE_E164.replace("+", "")}?text=${encodeURIComponent(t("whatsappMsg"))}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-3 bg-[#25D366] hover:bg-[#20ba5a] text-white px-6 py-3.5 rounded-sm font-sans text-xs uppercase tracking-[0.2em] font-semibold transition-all duration-300 hover:shadow-[0_4px_15px_rgba(37,211,102,0.3)]"
@@ -146,14 +150,11 @@ export default function ContactSection() {
               <label htmlFor="phone" className="text-[10px] uppercase tracking-wider text-ivory-muted mb-2 font-medium">
                 {t("phoneLabel")} <span className="text-gold">*</span>
               </label>
-              <input
+              <PhoneInput
                 id="phone"
-                type="tel"
-                required
+                locale={locale}
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder={t("phonePlaceholder")}
-                className="bg-void border border-gold-glow/20 text-ivory rounded-sm px-4 py-3 text-sm focus:outline-none focus:border-gold focus:ring-1 focus:ring-gold transition-all duration-300 placeholder:text-ivory-faint/60"
+                onChange={setPhone}
               />
             </div>
 

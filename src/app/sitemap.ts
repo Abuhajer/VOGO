@@ -1,13 +1,22 @@
 import type { MetadataRoute } from "next";
 import { routing } from "@/i18n/routing";
+import { absoluteUrl } from "@/lib/site";
 
-const BASE_URL = "https://vogobyfame.com";
+const publicPaths = ["", "/shop", "/cart", "/checkout", "/login", "/register"];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  return routing.locales.map((locale) => ({
-    url: `${BASE_URL}/${locale}`,
-    lastModified: new Date(),
-    changeFrequency: "weekly",
-    priority: 1,
-  }));
+  const entries: MetadataRoute.Sitemap = [];
+
+  for (const locale of routing.locales) {
+    for (const path of publicPaths) {
+      entries.push({
+        url: absoluteUrl(`/${locale}${path}`),
+        lastModified: new Date(),
+        changeFrequency: path === "" ? "weekly" : "daily",
+        priority: path === "" ? 1 : 0.8,
+      });
+    }
+  }
+
+  return entries;
 }

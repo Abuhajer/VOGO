@@ -8,9 +8,10 @@ import { useGSAP } from "@gsap/react";
 export default function MagneticCursor() {
   const cursorRef = useRef<HTMLDivElement>(null);
   const locale = useLocale();
-  const [cursorText, setCursorText] = useState("");
-  const [isVisible, setIsVisible] = useState(false);
+  const cursorTextRef = useRef("");
+  const visibleRef = useRef(false);
   const [enabled, setEnabled] = useState(false);
+  const [cursorText, setCursorTextState] = useState("");
 
   useEffect(() => {
     setEnabled(!window.matchMedia("(pointer: coarse)").matches);
@@ -22,15 +23,30 @@ export default function MagneticCursor() {
     const cursor = cursorRef.current;
     if (!cursor) return;
 
-    const xTo = gsap.quickTo(cursor, "x", { duration: 0.18, ease: "power3" });
-    const yTo = gsap.quickTo(cursor, "y", { duration: 0.18, ease: "power3" });
+    const xTo = gsap.quickTo(cursor, "x", { duration: 0.16, ease: "power3.out" });
+    const yTo = gsap.quickTo(cursor, "y", { duration: 0.16, ease: "power3.out" });
+    const scaleXTo = gsap.quickTo(cursor, "scaleX", { duration: 0.22, ease: "power2.out" });
+    const scaleYTo = gsap.quickTo(cursor, "scaleY", { duration: 0.22, ease: "power2.out" });
 
-    gsap.set(cursor, { xPercent: -50, yPercent: -50, scale: 0, opacity: 0 });
+    gsap.set(cursor, {
+      xPercent: -50,
+      yPercent: -50,
+      scaleX: 0,
+      scaleY: 0,
+      opacity: 0,
+      force3D: true,
+    });
+
+    const updateCursorLabel = (text: string) => {
+      if (cursorTextRef.current === text) return;
+      cursorTextRef.current = text;
+      setCursorTextState(text);
+    };
 
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isVisible) {
-        setIsVisible(true);
-        gsap.to(cursor, { scale: 1, opacity: 1, duration: 0.3 });
+      if (!visibleRef.current) {
+        visibleRef.current = true;
+        gsap.to(cursor, { scaleX: 1, scaleY: 1, opacity: 1, duration: 0.25, overwrite: "auto" });
       }
       xTo(e.clientX);
       yTo(e.clientY);
@@ -39,26 +55,28 @@ export default function MagneticCursor() {
     const handleMouseOver = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
 
-      if (target.closest("a, button, input, textarea, select, [role='button'], [data-hover-magnetic]")) {
-        gsap.to(cursor, {
-          scale: 1.8,
-          backgroundColor: "rgba(201, 168, 76, 0.12)",
-          borderColor: "var(--color-gold)",
-          borderWidth: "1px",
-          duration: 0.25,
-          ease: "power2.out",
-        });
-      }
-
       if (target.closest(".product-card")) {
-        setCursorText(locale === "ar" ? "عرض" : "View");
+        updateCursorLabel(locale === "ar" ? "عرض" : "View");
+        scaleXTo(2.4);
+        scaleYTo(2.4);
         gsap.to(cursor, {
-          scale: 2.4,
           backgroundColor: "rgba(201, 168, 76, 0.2)",
           borderColor: "var(--color-gold)",
-          borderWidth: "1px",
-          duration: 0.3,
-          ease: "power2.out",
+          duration: 0.22,
+          overwrite: "auto",
+        });
+        return;
+      }
+
+      if (target.closest("a, button, input, textarea, select, [role='button'], [data-hover-magnetic]")) {
+        updateCursorLabel("");
+        scaleXTo(1.8);
+        scaleYTo(1.8);
+        gsap.to(cursor, {
+          backgroundColor: "rgba(201, 168, 76, 0.12)",
+          borderColor: "var(--color-gold)",
+          duration: 0.22,
+          overwrite: "auto",
         });
       }
     };
@@ -66,38 +84,30 @@ export default function MagneticCursor() {
     const handleMouseOut = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
 
-      if (target.closest("a, button, input, textarea, select, [role='button'], [data-hover-magnetic]")) {
+      if (
+        target.closest(".product-card") ||
+        target.closest("a, button, input, textarea, select, [role='button'], [data-hover-magnetic]")
+      ) {
+        updateCursorLabel("");
+        scaleXTo(1);
+        scaleYTo(1);
         gsap.to(cursor, {
-          scale: 1,
           backgroundColor: "transparent",
           borderColor: "rgba(201, 168, 76, 0.4)",
-          borderWidth: "1.5px",
-          duration: 0.25,
-          ease: "power2.out",
-        });
-      }
-
-      if (target.closest(".product-card")) {
-        setCursorText("");
-        gsap.to(cursor, {
-          scale: 1,
-          backgroundColor: "transparent",
-          borderColor: "rgba(201, 168, 76, 0.4)",
-          borderWidth: "1.5px",
-          duration: 0.3,
-          ease: "power2.out",
+          duration: 0.22,
+          overwrite: "auto",
         });
       }
     };
 
     const handleMouseLeaveWindow = () => {
-      setIsVisible(false);
-      gsap.to(cursor, { scale: 0, opacity: 0, duration: 0.3 });
+      visibleRef.current = false;
+      gsap.to(cursor, { scaleX: 0, scaleY: 0, opacity: 0, duration: 0.25, overwrite: "auto" });
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseover", handleMouseOver);
-    window.addEventListener("mouseout", handleMouseOut);
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    window.addEventListener("mouseover", handleMouseOver, { passive: true });
+    window.addEventListener("mouseout", handleMouseOut, { passive: true });
     document.addEventListener("mouseleave", handleMouseLeaveWindow);
 
     return () => {
@@ -106,7 +116,7 @@ export default function MagneticCursor() {
       window.removeEventListener("mouseout", handleMouseOut);
       document.removeEventListener("mouseleave", handleMouseLeaveWindow);
     };
-  }, [enabled, locale, isVisible]);
+  }, [enabled, locale]);
 
   if (!enabled) return null;
 
@@ -114,9 +124,9 @@ export default function MagneticCursor() {
     <div
       ref={cursorRef}
       aria-hidden="true"
-      className="pointer-events-none fixed top-0 left-0 z-[80] flex h-8 w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-[1.5px] border-gold/40 select-none"
+      className="pointer-events-none fixed top-0 left-0 z-[80] flex h-8 w-8 items-center justify-center rounded-full border-[1.5px] border-gold/40 select-none"
       style={{
-        opacity: isVisible ? 1 : 0,
+        opacity: 0,
         backgroundColor: "transparent",
         boxShadow: cursorText ? "0 0 15px rgba(201, 168, 76, 0.2)" : "none",
       }}

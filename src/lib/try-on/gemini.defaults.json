@@ -1,0 +1,19 @@
+{
+  "providerId": "gemini",
+  "apiBaseUrl": "https://generativelanguage.googleapis.com/v1beta",
+  "urlTemplate": "{base}/models/{model}:generateContent",
+  "generationConfig": {
+    "responseModalities": ["IMAGE"]
+  },
+  "userContentRole": "user",
+  "http": {
+    "errorBodyMaxChars": 400,
+    "retry429FallbackSeconds": 20,
+    "retryDelayMinSeconds": 5,
+    "retryDelayMaxSeconds": 120
+  },
+  "messages": {
+    "quotaHintRegex": "limit:\\s*0|free_tier|Quota exceeded",
+    "modelEnvVarName": "GEMINI_IMAGE_MODEL"
+  }
+}

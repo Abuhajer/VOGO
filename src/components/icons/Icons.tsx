@@ -109,6 +109,41 @@ export function CloseIcon({ size = 20, className, ...props }: IconProps) {
   );
 }
 
+export function EyeIcon({ size = 20, className, ...props }: IconProps) {
+  return (
+    <svg
+      {...iconProps({ size, className, ...props })}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+export function EyeOffIcon({ size = 20, className, ...props }: IconProps) {
+  return (
+    <svg
+      {...iconProps({ size, className, ...props })}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 3l18 18" />
+      <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+      <path d="M6.7 6.7C4.6 8.1 3 10 2 12c0 0 3.5 7 10 7 1.8 0 3.4-.5 4.7-1.2" />
+      <path d="M14.1 9.9C14.6 10.5 15 11.2 15 12c0 1.7-1.3 3-3 3-.8 0-1.5-.4-2.1-.9" />
+      <path d="M9.9 4.2C10.6 4.1 11.3 4 12 4c6.5 0 10 7 10 7a16.6 16.6 0 0 1-2.5 3.6" />
+    </svg>
+  );
+}
+
 export function StarIcon({ size = 20, className, ...props }: IconProps) {
   return (
     <svg {...iconProps({ size, className, viewBox: "0 0 20 20", ...props })}>

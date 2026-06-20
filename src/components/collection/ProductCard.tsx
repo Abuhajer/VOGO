@@ -1,7 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import { motion } from "framer-motion";
 import { useTranslations, useLocale } from "next-intl";
+import { formatNumber } from "@/lib/format";
 
 type ProductCardProps = {
   id: string;
@@ -26,6 +28,7 @@ export default function ProductCard({
   const t = useTranslations("Collection");
   const locale = useLocale();
   const isArabic = locale === "ar";
+  const formattedPrice = formatNumber(price, locale);
 
   return (
     <div
@@ -53,15 +56,15 @@ export default function ProductCard({
             src={imageSrc}
             alt={name}
             fill
-            quality={90}
+            quality={index < 2 ? 85 : 78}
             sizes={
               carousel3d
                 ? "(max-width: 640px) 78vw, (max-width: 768px) 290px, 320px"
                 : "(max-width: 640px) 100vw, 400px"
             }
-            priority={carousel3d || index < 2}
-            loading={carousel3d ? "eager" : "lazy"}
-            fetchPriority={carousel3d ? "high" : "auto"}
+            priority={index < 2}
+            loading={index < 3 ? "eager" : "lazy"}
+            fetchPriority={index < 2 ? "high" : "low"}
             className={`object-cover object-center ${
               carousel3d ? "" : "transition-transform duration-700 ease-fabric group-hover:scale-105"
             }`}
@@ -75,12 +78,18 @@ export default function ProductCard({
           />
 
           {carousel3d ? (
-            <div className="absolute bottom-0 inset-x-0 z-20 p-3.5 sm:p-4 flex flex-col gap-1">
+            <motion.div
+              className="absolute bottom-0 inset-x-0 z-20 p-3.5 sm:p-4 flex flex-col gap-1"
+              initial={{ y: 20, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true, amount: 0.55 }}
+              transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+            >
               <h3 className="font-serif text-sm sm:text-base md:text-lg text-ivory leading-snug line-clamp-2 group-[.is-active]:text-gold transition-colors duration-500">
                 {name}
               </h3>
               <span className="font-sans text-[11px] sm:text-xs md:text-sm text-gold">
-                {price} {t("currency")}
+                {formattedPrice} {t("currency")}
               </span>
               <span
                 className={`mt-2 inline-flex self-start items-center min-h-[44px] px-3.5 py-2 rounded-sm border border-gold/40 text-gold text-[10px] sm:text-[11px] font-semibold bg-void/50 backdrop-blur-sm group-[.is-active]:bg-gold group-[.is-active]:text-[#0E0D12] group-[.is-active]:border-gold transition-all duration-500 ${
@@ -89,7 +98,7 @@ export default function ProductCard({
               >
                 {t("view")}
               </span>
-            </div>
+            </motion.div>
           ) : (
             <div className="absolute bottom-4 left-4 right-4 z-20 md:translate-y-6 md:opacity-0 md:group-hover:translate-y-0 md:group-hover:opacity-100 transition-all duration-500 ease-fabric flex justify-center">
               <span
@@ -110,7 +119,7 @@ export default function ProductCard({
                 {name}
               </h3>
               <span className="font-sans text-sm md:text-base text-gold whitespace-nowrap pt-0.5">
-                {price} {t("currency")}
+                {formattedPrice} {t("currency")}
               </span>
             </div>
 

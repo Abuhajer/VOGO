@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import SectionLabel from "@/components/icons/SectionLabel";
 import { CloseIcon, WhatsAppIcon } from "@/components/icons/Icons";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { BUSINESS_PHONE_E164, formatNumber } from "@/lib/format";
 
 type ProductDetailModalProps = {
   open: boolean;
@@ -29,6 +30,7 @@ export default function ProductDetailModal({
   const t = useTranslations("Collection");
   const locale = useLocale();
   const isArabic = locale === "ar";
+  const formattedPrice = formatNumber(price, locale);
   const isMobile = useIsMobile();
   const isMobileView = isMobile ?? true;
   const [mounted, setMounted] = useState(false);
@@ -63,9 +65,9 @@ export default function ProductDetailModal({
 
   const whatsappMessage = t("inquireMessage", {
     product: name,
-    price: String(price),
+    price: formattedPrice,
   });
-  const whatsappHref = `https://wa.me/962797226984?text=${encodeURIComponent(whatsappMessage)}`;
+  const whatsappHref = `https://wa.me/${BUSINESS_PHONE_E164.replace("+", "")}?text=${encodeURIComponent(whatsappMessage)}`;
 
   if (!mounted) return null;
 
@@ -146,7 +148,7 @@ export default function ProductDetailModal({
                     {name}
                   </h3>
                   <p className="mt-2 sm:mt-3 text-gold font-sans text-base sm:text-lg md:text-xl">
-                    {price} {t("currency")}
+                    {formattedPrice} {t("currency")}
                   </p>
                   <div className="w-14 sm:w-16 h-px bg-gradient-to-r from-gold/80 to-transparent mt-4 sm:mt-5 mb-4 sm:mb-6" />
                 </div>

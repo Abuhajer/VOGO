@@ -1,172 +1,174 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import Image from "next/image";
+import { useCallback, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
-import { gsap, ScrollTrigger } from "@/lib/gsap";
-import { useGSAP } from "@gsap/react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import CoverflowCarousel3D from "@/components/carousel/CoverflowCarousel3D";
 import ProductCard from "./ProductCard";
 import ProductDetailModal from "./ProductDetailModal";
-import { siteImages } from "@/lib/images";
 import SectionLabel from "@/components/icons/SectionLabel";
+import { localizeProduct } from "@/lib/products";
+import { formatNumber } from "@/lib/format";
+import type { CollectionCarouselProduct } from "@/types/catalog";
 
-const PRODUCTS_DATA = [
-  { id: "classicBlack", imageSrc: siteImages.products.classicBlack, price: 280 },
-  { id: "navyWedding", imageSrc: siteImages.products.navyWedding, price: 350 },
-  { id: "businessGray", imageSrc: siteImages.products.businessGray, price: 290 },
-  { id: "burgundyEvening", imageSrc: siteImages.products.burgundyEvening, price: 260 },
-  { id: "ivorySummer", imageSrc: siteImages.products.ivorySummer, price: 180 },
-] as const;
-
-type ProductId = (typeof PRODUCTS_DATA)[number]["id"];
+type HorizontalCollectionProps = {
+  products: CollectionCarouselProduct[];
+};
 
 type SelectedProduct = {
-  id: ProductId;
+  id: string;
   name: string;
   description: string;
   price: number;
   imageSrc: string;
 };
 
-type QuickCache = {
-  rotationY: gsap.QuickToFunc;
-  rotationX: gsap.QuickToFunc;
-  z: gsap.QuickToFunc;
-  scaleX: gsap.QuickToFunc;
-  scaleY: gsap.QuickToFunc;
-  y: gsap.QuickToFunc;
-  opacity: gsap.QuickToFunc;
-};
+function CollectionCoverflowSlide({
+  product,
+  locale,
+  isCenter,
+  viewLabel,
+  onOpenDetails,
+  onActivate,
+  index,
+}: {
+  product: CollectionCarouselProduct;
+  locale: string;
+  isCenter: boolean;
+  viewLabel: string;
+  onOpenDetails: () => void;
+  onActivate: () => void;
+  index: number;
+}) {
+  const { name } = localizeProduct(product, locale);
 
-type InnerQuickCache = {
-  z: gsap.QuickToFunc;
-};
-
-const quickCache = new WeakMap<HTMLElement, QuickCache>();
-const innerQuickCache = new WeakMap<HTMLElement, InnerQuickCache>();
-
-const QUICK_OPTS = { duration: 0.45, ease: "power2.out" } as const;
-
-function getQuickTweens(wrapper: HTMLElement): QuickCache {
-  const existing = quickCache.get(wrapper);
-  if (existing) return existing;
-
-  gsap.set(wrapper, {
-    transformPerspective: 1600,
-    transformOrigin: "50% 50%",
-    force3D: true,
-  });
-
-  const tweens: QuickCache = {
-    rotationY: gsap.quickTo(wrapper, "rotationY", QUICK_OPTS),
-    rotationX: gsap.quickTo(wrapper, "rotationX", QUICK_OPTS),
-    z: gsap.quickTo(wrapper, "z", QUICK_OPTS),
-    scaleX: gsap.quickTo(wrapper, "scaleX", QUICK_OPTS),
-    scaleY: gsap.quickTo(wrapper, "scaleY", QUICK_OPTS),
-    y: gsap.quickTo(wrapper, "y", QUICK_OPTS),
-    opacity: gsap.quickTo(wrapper, "opacity", { duration: 0.35, ease: "power2.out" }),
-  };
-
-  quickCache.set(wrapper, tweens);
-  return tweens;
+  return (
+    <button
+      type="button"
+      data-carousel-card={isCenter ? "" : undefined}
+      onClick={() => {
+        if (isCenter) onOpenDetails();
+        else onActivate();
+      }}
+      aria-label={isCenter ? `${viewLabel} — ${name}` : name}
+      className={`group relative h-full w-full overflow-hidden rounded-sm border text-start transition-[border-color,box-shadow] duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/50 active:scale-[0.98] ${
+        isCenter
+          ? "coverflow-carousel-card border-gold shadow-[0_0_20px_rgba(201,168,76,0.28)] ring-1 ring-gold/45"
+          : "coverflow-carousel-card border-gold-glow/15 hover:border-gold/35"
+      }`}
+    >
+      <div className="relative h-full w-full bg-obsidian">
+        <Image
+          src={product.imageSrc}
+          alt={name}
+          fill
+          quality={index < 2 ? 85 : 78}
+          sizes="(max-width: 640px) 70vw, 420px"
+          priority={index < 2}
+          loading={index < 3 ? "eager" : "lazy"}
+          fetchPriority={index < 2 ? "high" : "low"}
+          className="object-contain object-center p-1.5"
+        />
+      </div>
+    </button>
+  );
 }
 
-function getInnerQuickTweens(inner: HTMLElement): InnerQuickCache {
-  const existing = innerQuickCache.get(inner);
-  if (existing) return existing;
+function CollectionCarouselMeta({
+  product,
+  locale,
+  isAr,
+  viewLabel,
+  currencyLabel,
+  onOpenDetails,
+}: {
+  product: CollectionCarouselProduct;
+  locale: string;
+  isAr: boolean;
+  viewLabel: string;
+  currencyLabel: string;
+  onOpenDetails: () => void;
+}) {
+  const { name } = localizeProduct(product, locale);
 
-  const tweens: InnerQuickCache = {
-    z: gsap.quickTo(inner, "z", QUICK_OPTS),
-  };
-
-  innerQuickCache.set(inner, tweens);
-  return tweens;
+  return (
+    <div
+      className="collection-coverflow-meta relative z-20 mx-auto w-full max-w-lg px-4 sm:px-6"
+      dir={isAr ? "rtl" : "ltr"}
+    >
+      <h3 className="font-serif text-lg leading-snug text-ivory sm:text-xl md:text-2xl">{name}</h3>
+      <p className="mt-2 text-sm tabular-nums text-gold sm:mt-2.5 sm:text-base">
+        {formatNumber(product.price, locale)} {currencyLabel}
+      </p>
+      <div className="mt-5 flex justify-center sm:mt-6">
+        <button
+          type="button"
+          onClick={onOpenDetails}
+          className={`inline-flex min-h-[44px] min-w-[9.5rem] items-center justify-center rounded-sm border border-gold/40 bg-surface/80 px-6 py-2.5 text-[10px] font-semibold text-gold transition-colors hover:border-gold/60 hover:bg-surface sm:text-[11px] ${
+            isAr ? "" : "uppercase tracking-[0.12em]"
+          }`}
+        >
+          {viewLabel}
+        </button>
+      </div>
+    </div>
+  );
 }
 
-const PRODUCTS_COUNT = PRODUCTS_DATA.length;
-const MOBILE_MQ = "(max-width: 767px)";
-const DESKTOP_MQ = "(min-width: 768px)";
-
-function isMobileViewport() {
-  return window.matchMedia(MOBILE_MQ).matches;
+function FlatCollectionStrip({
+  products,
+  locale,
+  onOpenDetails,
+}: {
+  products: CollectionCarouselProduct[];
+  locale: string;
+  onOpenDetails: (product: SelectedProduct) => void;
+}) {
+  return (
+    <div
+      className="flex gap-4 overflow-x-auto pb-2 px-4 snap-x snap-mandatory scroll-ps-4 scroll-pe-[max(1rem,env(safe-area-inset-right))] scrollbar-hide sm:gap-6 sm:px-6 md:px-12"
+      dir={locale === "ar" ? "rtl" : "ltr"}
+    >
+      {products.map((product, index) => {
+        const { name, description } = localizeProduct(product, locale);
+        return (
+          <div key={product.id} className="w-[80vw] max-w-[300px] shrink-0 snap-center sm:w-[290px]">
+            <ProductCard
+              id={product.id}
+              name={name}
+              description={description}
+              price={product.price}
+              imageSrc={product.imageSrc}
+              index={index}
+              onOpenDetails={() =>
+                onOpenDetails({
+                  id: product.id,
+                  name,
+                  description,
+                  price: product.price,
+                  imageSrc: product.imageSrc,
+                })
+              }
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
-function updateCards3D(
-  track: HTMLElement | null,
-  dotsRoot: HTMLElement | null,
-  isMobile: boolean
-) {
-  if (!track) return;
-
-  const wrappers = gsap.utils.toArray<HTMLElement>(".product-card-3d", track);
-  const viewportCenter = window.innerWidth / 2;
-  let activeIndex = 0;
-  let minDistance = Number.POSITIVE_INFINITY;
-
-  const rotateMax = isMobile ? 14 : 22;
-  const zMax = isMobile ? 55 : 100;
-  const zCenter = isMobile ? 70 : 95;
-
-  wrappers.forEach((wrapper, index) => {
-    const rect = wrapper.getBoundingClientRect();
-    const cardCenter = rect.left + rect.width / 2;
-    const offset = (cardCenter - viewportCenter) / (window.innerWidth * (isMobile ? 0.48 : 0.36));
-    const absOffset = Math.min(Math.abs(offset), 1);
-    const isCenter = absOffset < (isMobile ? 0.2 : 0.15);
-
-    if (absOffset < minDistance) {
-      minDistance = absOffset;
-      activeIndex = index;
-    }
-
-    const rotationY = offset * -rotateMax;
-    const rotationX = 3 - absOffset * 5;
-    const cardScale = isCenter ? 1.05 : 1 - absOffset * 0.08;
-    const z = isCenter ? zCenter : -absOffset * zMax;
-    const y = absOffset * (isMobile ? 8 : 12);
-    const opacity = Math.max(0.82, 1 - absOffset * 0.15);
-    const innerZ = isCenter ? (isMobile ? 40 : 50) : 10;
-
-    wrapper.style.setProperty("--depth", absOffset.toFixed(3));
-
-    const tweens = getQuickTweens(wrapper);
-    tweens.rotationY(rotationY);
-    tweens.rotationX(rotationX);
-    tweens.z(z);
-    tweens.scaleX(cardScale);
-    tweens.scaleY(cardScale);
-    tweens.y(y);
-    tweens.opacity(opacity);
-
-    const inner = wrapper.querySelector<HTMLElement>(".product-card-inner");
-    if (inner) {
-      getInnerQuickTweens(inner).z(innerZ);
-    }
-  });
-
-  wrappers.forEach((wrapper, index) => {
-    wrapper.classList.toggle("is-active", index === activeIndex && minDistance < 0.4);
-    wrapper.classList.toggle("is-near", index !== activeIndex && Math.abs(index - activeIndex) === 1);
-  });
-
-  dotsRoot?.querySelectorAll("[data-carousel-dot]").forEach((dot, index) => {
-    dot.classList.toggle("is-active", index === activeIndex);
-  });
-}
-
-export default function HorizontalCollection() {
+export default function HorizontalCollection({ products }: HorizontalCollectionProps) {
   const t = useTranslations("Collection");
   const locale = useLocale();
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const pinRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const snapRef = useRef<HTMLDivElement>(null);
-  const dotsRef = useRef<HTMLDivElement>(null);
+  const isAr = locale === "ar";
+  const productCount = products.length;
   const prefersReducedMotion = useReducedMotion();
 
+  const [activeIndex, setActiveIndex] = useState(0);
   const [selectedProduct, setSelectedProduct] = useState<SelectedProduct | null>(null);
 
-  const useCarousel3D = !prefersReducedMotion;
+  const useCarousel3D = !prefersReducedMotion && productCount > 0;
 
   const openProductDetails = useCallback((product: SelectedProduct) => {
     setSelectedProduct(product);
@@ -176,131 +178,37 @@ export default function HorizontalCollection() {
     setSelectedProduct(null);
   }, []);
 
-  const rafRef = useRef<number | null>(null);
-
-  const handle3DUpdate = useCallback(() => {
-    if (rafRef.current !== null) return;
-
-    rafRef.current = requestAnimationFrame(() => {
-      rafRef.current = null;
-      updateCards3D(trackRef.current, dotsRef.current, isMobileViewport());
-    });
-  }, []);
-
-  useGSAP(() => {
-    if (prefersReducedMotion) return;
-
-    const track = trackRef.current;
-    const pin = pinRef.current;
-    const snap = snapRef.current;
-    if (!track || !pin || !snap) return;
-
-    let scrollTween: gsap.core.Tween | null = null;
-
-    const mm = gsap.matchMedia();
-
-    mm.add(DESKTOP_MQ, () => {
-      const getHorizontalTravel = () =>
-        Math.max(track.scrollWidth - window.innerWidth, 0);
-
-      // Shorter vertical pin than full track width — same horizontal travel, faster exit
-      const getPinScrollLength = () =>
-        window.innerHeight * (PRODUCTS_COUNT - 1) * 0.48;
-
-      scrollTween = gsap.to(track, {
-        x: () => -getHorizontalTravel(),
-        ease: "none",
-        scrollTrigger: {
-          trigger: pin,
-          start: "top top",
-          end: () => `+=${getPinScrollLength()}`,
-          pin: true,
-          pinSpacing: true,
-          scrub: true,
-          invalidateOnRefresh: true,
-          anticipatePin: 0,
-          snap: {
-            snapTo: (progress) => {
-              const steps = PRODUCTS_COUNT - 1;
-              if (steps <= 0) return progress;
-              return Math.round(progress * steps) / steps;
-            },
-            duration: { min: 0.1, max: 0.22 },
-            ease: "power1.out",
-          },
-          onUpdate: handle3DUpdate,
-        },
+  const openFromProduct = useCallback(
+    (product: CollectionCarouselProduct) => {
+      const { name, description } = localizeProduct(product, locale);
+      openProductDetails({
+        id: product.id,
+        name,
+        description,
+        price: product.price,
+        imageSrc: product.imageSrc,
       });
-
-      handle3DUpdate();
-
-      return () => {
-        scrollTween?.scrollTrigger?.kill();
-        scrollTween?.kill();
-        scrollTween = null;
-        gsap.set(track, { x: 0 });
-      };
-    });
-
-    mm.add(MOBILE_MQ, () => {
-      gsap.set(track, { x: 0 });
-      handle3DUpdate();
-      snap.addEventListener("scroll", handle3DUpdate, { passive: true });
-
-      return () => {
-        snap.removeEventListener("scroll", handle3DUpdate);
-      };
-    });
-
-    const onResize = () => {
-      ScrollTrigger.refresh();
-      handle3DUpdate();
-    };
-    window.addEventListener("resize", onResize);
-
-    return () => {
-      mm.revert();
-      window.removeEventListener("resize", onResize);
-    };
-  }, { scope: sectionRef, dependencies: [prefersReducedMotion, handle3DUpdate] });
-
-  const renderProduct = (p: (typeof PRODUCTS_DATA)[number], index: number) => (
-    <ProductCard
-      key={p.id}
-      id={p.id}
-      name={t(`products.${p.id}.name`)}
-      description={t(`products.${p.id}.description`)}
-      price={p.price}
-      imageSrc={p.imageSrc}
-      index={index}
-      carousel3d={useCarousel3D}
-      onOpenDetails={() =>
-        openProductDetails({
-          id: p.id,
-          name: t(`products.${p.id}.name`),
-          description: t(`products.${p.id}.description`),
-          price: p.price,
-          imageSrc: p.imageSrc,
-        })
-      }
-    />
+    },
+    [locale, openProductDetails]
   );
+
+  const activeProduct = products[activeIndex] ?? null;
 
   const header = (
     <div
-      className="container mx-auto px-4 sm:px-6 md:px-12 mb-4 sm:mb-6 md:mb-8 relative z-10 select-none"
-      dir={locale === "ar" ? "rtl" : "ltr"}
+      className="relative z-10 mx-auto mb-4 max-w-7xl select-none px-4 sm:mb-6 sm:px-6 md:mb-8 md:px-12"
+      dir={isAr ? "rtl" : "ltr"}
     >
-      <SectionLabel className="mb-2 text-gold font-light">{t("title")}</SectionLabel>
-      <h2 className="text-2xl sm:text-3xl md:text-5xl font-serif font-light text-ivory max-w-xl leading-tight">
+      <SectionLabel className="mb-2 font-light text-gold">{t("title")}</SectionLabel>
+      <h2 className="max-w-xl font-serif text-2xl font-light leading-tight text-ivory sm:text-3xl md:text-5xl">
         {t("subtitle")}
       </h2>
       {useCarousel3D && (
         <>
-          <p className="mt-2 sm:mt-3 text-[11px] sm:text-xs text-ivory-faint font-sans font-light leading-relaxed md:hidden">
+          <p className="mt-2 font-sans text-[11px] font-light leading-relaxed text-ivory-faint sm:mt-3 sm:text-xs md:hidden">
             {t("carouselHintMobile")}
           </p>
-          <p className="mt-2 sm:mt-3 text-[11px] sm:text-xs text-ivory-faint font-sans font-light leading-relaxed hidden md:block">
+          <p className="mt-2 hidden font-sans text-[11px] font-light leading-relaxed text-ivory-faint sm:mt-3 sm:text-xs md:block">
             {t("carouselHint")}
           </p>
         </>
@@ -308,73 +216,57 @@ export default function HorizontalCollection() {
     </div>
   );
 
-  const carouselTrack = (
-    <div
-      className="collection-3d-stage relative w-full flex flex-col items-center md:flex-1 md:justify-center md:min-h-[480px]"
-      dir="ltr"
-    >
-      <div className="collection-3d-ambient pointer-events-none absolute inset-0" aria-hidden />
-      <div className="pointer-events-none absolute inset-0 collection-3d-vignette" aria-hidden />
-      <div className="collection-3d-floor pointer-events-none absolute left-1/2 bottom-[6%] -translate-x-1/2" aria-hidden />
-      <div className="collection-3d-beam pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" aria-hidden />
-
-      <div
-        ref={snapRef}
-        className="collection-snap-track relative z-10 w-full overflow-x-auto overflow-y-hidden snap-x snap-proximity scroll-smooth py-2 md:overflow-hidden md:snap-none"
-      >
-        <div
-          ref={trackRef}
-          className="flex items-stretch gap-4 ps-[max(1rem,calc(50vw-40vw))] pe-[max(1rem,calc(50vw-40vw))] py-2 md:items-center md:gap-6 lg:gap-10 md:px-[14vw] md:w-max"
-          style={{ transformStyle: "preserve-3d" }}
-        >
-          {PRODUCTS_DATA.map((p, index) => (
-            <div
-              key={p.id}
-              className="product-card-3d group flex-shrink-0 snap-center will-change-transform"
-              style={{ transformStyle: "preserve-3d" }}
-            >
-              {renderProduct(p, index)}
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div ref={dotsRef} className="relative z-10 mt-5 flex items-center justify-center gap-2.5">
-        {PRODUCTS_DATA.map((p) => (
-          <span
-            key={p.id}
-            data-carousel-dot
-            className="carousel-dot h-1.5 w-1.5 rounded-full bg-gold-muted/30 transition-all duration-500"
-          />
-        ))}
-      </div>
-    </div>
-  );
+  if (productCount === 0) return null;
 
   return (
     <>
-      <section
-        ref={sectionRef}
-        className="relative bg-void w-full py-10 sm:py-14 md:pt-16 md:pb-0"
-        id="collection"
-      >
+      <section className="relative w-full scroll-mt-24 bg-void py-10 sm:py-14 md:py-16" id="collection">
         {header}
 
-        <div
-          ref={pinRef}
-          className="w-full md:min-h-[72vh] md:flex md:flex-col md:justify-center md:overflow-hidden"
-        >
-          {!useCarousel3D ? (
-            <div
-              className="container mx-auto px-4 sm:px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
-              dir={locale === "ar" ? "rtl" : "ltr"}
-            >
-              {PRODUCTS_DATA.map((p, index) => renderProduct(p, index))}
-            </div>
-          ) : (
-            carouselTrack
-          )}
-        </div>
+        {!useCarousel3D ? (
+          <FlatCollectionStrip products={products} locale={locale} onOpenDetails={openProductDetails} />
+        ) : (
+          <div
+            className="collection-coverflow-stage relative mx-auto w-full max-w-[96rem] px-2 sm:px-4"
+            dir="ltr"
+          >
+            <CoverflowCarousel3D
+              variant="collection"
+              className="collection-coverflow-carousel relative mx-auto w-full max-w-6xl"
+              items={products}
+              activeIndex={activeIndex}
+              onActiveIndexChange={setActiveIndex}
+              isRtl={isAr}
+              locale={locale}
+              getItemKey={(product) => product.id}
+              getItemLabel={(product) => localizeProduct(product, locale).name}
+              ariaLabel={t("title")}
+              prevLabel={t("carouselPrev")}
+              nextLabel={t("carouselNext")}
+              renderSlide={({ item, index, isCenter, onActivate }) => (
+                <CollectionCoverflowSlide
+                  product={item}
+                  locale={locale}
+                  isCenter={isCenter}
+                  viewLabel={t("view")}
+                  onOpenDetails={() => openFromProduct(item)}
+                  onActivate={onActivate}
+                  index={index}
+                />
+              )}
+            />
+            {activeProduct ? (
+              <CollectionCarouselMeta
+                product={activeProduct}
+                locale={locale}
+                isAr={isAr}
+                viewLabel={t("view")}
+                currencyLabel={t("currency")}
+                onOpenDetails={() => openFromProduct(activeProduct)}
+              />
+            ) : null}
+          </div>
+        )}
       </section>
 
       <ProductDetailModal
