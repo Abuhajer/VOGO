@@ -13,8 +13,18 @@ function buildCriticalConstraints(dims?: ImageDimensions | null): string {
 2. OUTPUT ASPECT RATIO: Same ratio as the person photo (portrait stays portrait).
 3. NO ZOOM IN: subject must NOT appear closer or larger in frame — match head/body size vs canvas to the person photo within ~2%.
 4. NO ZOOM OUT, NO CROP, NO REFRAME, NO ROTATION.
-5. CLOTHING ONLY: replace visible garments — NOT a portrait edit, relight, or background change.`;
+5. DO NOT MOVE THE PERSON: same position left/right/up/down in the frame — no recentre or reframing.
+6. CLOTHING ONLY: replace visible garments — NOT a portrait edit, relight, or background change.
+7. IN-PLACE EDIT: treat the person photo as a fixed template; paint the new outfit onto the existing body at the same scale and position.`;
 }
+
+const LOCK_BODY_POSE = `
+=== BODY / POSE / POSITION LOCK ===
+- Person stays in the EXACT same spot in the frame — do not shift, recentre, or reposition.
+- Standing or seated posture, limb angles, and body proportions — UNCHANGED.
+- Head size relative to the frame — UNCHANGED (no zoom-in portrait effect).
+- Visible skin on face, neck, and hands — UNCHANGED except where new garment fabric naturally covers it.
+- Background, furniture, and scene geometry — UNCHANGED.`;
 
 const LOCK_OUTPUT_GEOMETRY = `
 === CAMERA & GEOMETRY LOCK ===
@@ -86,13 +96,14 @@ export function buildDimensionLockPart(dims?: ImageDimensions | null): string {
   if (!dims?.width || !dims?.height) {
     return "Output MUST match the person photo pixel width × height exactly. Change clothing ONLY. NO zoom, crop, reframe, or face edits.";
   }
-  return `OUTPUT LOCK: Render exactly ${dims.width}×${dims.height} pixels — identical canvas to the next image (person photo). Change ONLY clothing/garments. FORBIDDEN: zoom in, zoom out, crop, reframe, rotate, relight, background change, face or body edits.`;
+  return `OUTPUT LOCK: The next image is the person photo at ${dims.width}×${dims.height} pixels. Your output MUST be that same canvas with ONLY the clothing changed. FORBIDDEN: zoom in, zoom out, crop, move/reposition the person, reframe, rotate, relight, background edits, face or body edits.`;
 }
 
 const FORBIDDEN_EDITS = `
 === FORBIDDEN (UNLESS CHANGING CLOTHING) ===
-- Zoom in or zoom out (subject closer/farther in frame)
-- Crop, reframe, recentre, or change subject scale in the frame
+- Zoom in or zoom out (subject closer/farther, or larger/smaller in frame)
+- Moving, shifting, or recentring the person in the frame
+- Crop, reframe, or change subject scale in the frame
 - Rotate, flip, mirror, or tilt
 - Face, hair, skin, hands, pose, or body proportion edits
 - Background replacement, whitening, relighting, or HDR beautify
@@ -121,10 +132,11 @@ ${buildCoverageBlock(coverage)}
 ${FORBIDDEN_EDITS}
 
 === ABSOLUTE PRESERVATION (EVERYTHING EXCEPT CLOTHING) ===
-- Same person, pose, face, hair, skin, hands, background, lighting, and camera framing as the person photo.
+- Same person, pose, position, face, hair, skin, hands, background, lighting, and camera framing as the person photo.
 - Face shape, eyes, nose, mouth, ears, skin tone, expression — UNCHANGED.
-- Body proportions and pose — UNCHANGED.
+- Body proportions, posture, and placement in the frame — UNCHANGED.
 - When text and garment image conflict, trust the garment reference for color and fabric only.
+${LOCK_BODY_POSE}
 ${LOCK_OUTPUT_GEOMETRY}
 ${LOCK_LIGHTING_AND_SCENE}
 ${LOCK_FACE_HEAD}
@@ -132,9 +144,10 @@ ${CLOTHING_LIGHT_MATCH}
 
 === VERIFICATION ===
 ✓ Output is exactly ${dims?.width ?? "?"}×${dims?.height ?? "?"} pixels with NO zoom or crop
+✓ Person is in the SAME position and scale as the person photo (not moved, not closer)
 ✓ Clothing changed to reference garment with natural fit
 ✓ Face and hair IDENTICAL to person photo (no gray blocks or blur)
-✓ Pose, scale, and framing IDENTICAL to person photo`;
+✓ Pose, background, and framing IDENTICAL to person photo`;
 }
 
 export function buildGarmentTitlePart(title: string): string {
@@ -162,7 +175,9 @@ export function buildNvidiaKontextTryOnPrompt(
 ${formatSize(dims)}
 ${extraSections ?? ""}
 ${buildCoverageBlock(coverage)}
-Keep the same face, hair, pose, background, lighting, and full-body framing. Change clothing only.
+${FORBIDDEN_EDITS}
+Keep the same face, hair, pose, position, background, lighting, and full-body framing. Do NOT zoom or move the person. Change clothing only.
+${LOCK_BODY_POSE}
 ${LOCK_FACE_HEAD}
 ${CLOTHING_LIGHT_MATCH}`;
 }
