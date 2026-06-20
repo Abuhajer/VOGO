@@ -4,7 +4,7 @@ export type TryOnImageInput = {
   mimeType?: string;
 };
 
-/** Ordered Gemini content: garment image → title → description → person image → instructions. */
+/** Ordered Gemini content: instruction text → person photo → garment reference. */
 export type TryOnMultimodalPart =
   | { type: "text"; text: string }
   | { type: "image"; image: TryOnImageInput };

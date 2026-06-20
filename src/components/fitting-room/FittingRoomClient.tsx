@@ -43,6 +43,7 @@ export default function FittingRoomClient({
   const [selectedProduct, setSelectedProduct] = useState<FittingRoomProduct | null>(preselected);
   const [personImageUrl, setPersonImageUrl] = useState<string | null>(null);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
+  const [resultSize, setResultSize] = useState<{ width: number; height: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
@@ -114,6 +115,8 @@ export default function FittingRoomClient({
       });
       const data = (await res.json()) as {
         url?: string;
+        width?: number;
+        height?: number;
         error?: string;
         code?: string;
         retryAfterSeconds?: number;
@@ -124,6 +127,11 @@ export default function FittingRoomClient({
         return;
       }
       setResultUrl(data.url);
+      if (data.width && data.height) {
+        setResultSize({ width: data.width, height: data.height });
+      } else {
+        setResultSize(null);
+      }
       goToStep("result");
     } catch (err) {
       setError(err instanceof Error ? err.message : t("generateFailed"));
@@ -262,10 +270,13 @@ export default function FittingRoomClient({
               <ResultReveal
                 beforeUrl={personImageUrl}
                 afterUrl={resultUrl}
+                frameWidth={resultSize?.width}
+                frameHeight={resultSize?.height}
                 product={selectedProduct}
                 onTryAnother={() => {
                   goToStep("product");
                   setResultUrl(null);
+                  setResultSize(null);
                   setError(null);
                 }}
                 onStartOver={() => {
@@ -273,6 +284,7 @@ export default function FittingRoomClient({
                   setSelectedProduct(null);
                   setPersonImageUrl(null);
                   setResultUrl(null);
+                  setResultSize(null);
                   setError(null);
                 }}
               />

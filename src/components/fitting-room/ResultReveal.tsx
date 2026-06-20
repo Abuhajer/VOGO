@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import { localizeProduct } from "@/lib/products";
@@ -11,16 +11,36 @@ type Props = {
   beforeUrl: string;
   afterUrl: string;
   product: FittingRoomProduct;
+  /** Person photo dimensions — keeps compare frame aligned with the upload. */
+  frameWidth?: number;
+  frameHeight?: number;
   onTryAnother: () => void;
   onStartOver?: () => void;
 };
 
-const compareImgClass = "absolute inset-0 h-full w-full object-contain object-center";
+const compareImgClass = "absolute inset-0 h-full w-full object-cover object-center";
+
+function resolveFrameSize(
+  frameWidth?: number,
+  frameHeight?: number,
+  naturalWidth?: number,
+  naturalHeight?: number
+): { width: number; height: number } | null {
+  if (frameWidth && frameHeight) {
+    return { width: frameWidth, height: frameHeight };
+  }
+  if (naturalWidth && naturalHeight) {
+    return { width: naturalWidth, height: naturalHeight };
+  }
+  return null;
+}
 
 export default function ResultReveal({
   beforeUrl,
   afterUrl,
   product,
+  frameWidth,
+  frameHeight,
   onTryAnother,
   onStartOver,
 }: Props) {
@@ -29,7 +49,25 @@ export default function ResultReveal({
   const isAr = locale === "ar";
   const { name } = localizeProduct(product, locale);
   const [sliderPos, setSliderPos] = useState(50);
+  const [frameSize, setFrameSize] = useState<{ width: number; height: number } | null>(() =>
+    resolveFrameSize(frameWidth, frameHeight)
+  );
   const draggingRef = useRef(false);
+
+  useEffect(() => {
+    const fromProps = resolveFrameSize(frameWidth, frameHeight);
+    if (fromProps) {
+      setFrameSize(fromProps);
+      return;
+    }
+
+    const img = new Image();
+    img.onload = () => {
+      const size = resolveFrameSize(undefined, undefined, img.naturalWidth, img.naturalHeight);
+      if (size) setFrameSize(size);
+    };
+    img.src = beforeUrl;
+  }, [beforeUrl, frameWidth, frameHeight]);
 
   const updateSlider = useCallback(
     (clientX: number, rect: DOMRect) => {
@@ -50,6 +88,9 @@ export default function ResultReveal({
   const clipAfter = isAr
     ? `inset(0 0 0 ${100 - sliderPos}%)`
     : `inset(0 ${100 - sliderPos}% 0 0)`;
+
+  const frameAspect =
+    frameSize && frameSize.height > 0 ? frameSize.width / frameSize.height : 9 / 16;
 
   const actionButtons = (
     <>
@@ -82,11 +123,19 @@ export default function ResultReveal({
   return (
     <div
       dir={isAr ? "rtl" : "ltr"}
-      className="flex min-h-0 flex-1 flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-stretch lg:gap-8 xl:gap-10"
+      className="flex min-h-0 flex-1 flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)] lg:items-stretch lg:gap-8 xl:gap-10"
     >
-      <div className="flex min-h-0 flex-1 flex-col gap-2">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2">
         <div
-          className="fitting-room-compare relative flex min-h-[min(68vh,720px)] flex-1 cursor-ew-resize select-none overflow-hidden touch-pan-x lg:min-h-0"
+          className="fitting-room-compare relative mx-auto w-full max-w-full cursor-ew-resize select-none overflow-hidden rounded-sm border border-gold-glow/10 touch-pan-x"
+          style={{
+            aspectRatio: frameAspect,
+            height: frameSize ? "min(72vh, 820px)" : undefined,
+            width: frameSize
+              ? `min(100%, calc(min(72vh, 820px) * ${frameAspect}))`
+              : undefined,
+            maxHeight: "min(72vh, 820px)",
+          }}
           onPointerDown={(e) => {
             if (e.button !== 0) return;
             draggingRef.current = true;
@@ -107,28 +156,26 @@ export default function ResultReveal({
             draggingRef.current = false;
           }}
         >
-          <div className="absolute inset-0 bg-obsidian">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={beforeUrl} alt="" className={compareImgClass} draggable={false} />
+          <div className="absolute inset-0 overflow-hidden" style={{ clipPath: clipAfter }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={beforeUrl} alt="" className={compareImgClass} draggable={false} />
-            <div className="absolute inset-0 overflow-hidden" style={{ clipPath: clipAfter }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={afterUrl} alt="" className={compareImgClass} draggable={false} />
+            <img src={afterUrl} alt="" className={compareImgClass} draggable={false} />
+          </div>
+          <div
+            className="pointer-events-none absolute bottom-0 top-0 z-20 flex -translate-x-1/2 items-center justify-center"
+            style={{ left: `${sliderPos}%` }}
+          >
+            <div className="h-full w-0.5 bg-gold shadow-[0_0_12px_rgba(201,168,76,0.6)]" />
+            <div className="absolute flex h-11 w-11 items-center justify-center rounded-full border border-gold bg-void/90 text-sm text-gold shadow-[0_4px_16px_rgba(0,0,0,0.4)] sm:h-12 sm:w-12">
+              ↔
             </div>
-            <div
-              className="pointer-events-none absolute bottom-0 top-0 z-20 flex -translate-x-1/2 items-center justify-center"
-              style={{ left: `${sliderPos}%` }}
-            >
-              <div className="h-full w-0.5 bg-gold shadow-[0_0_12px_rgba(201,168,76,0.6)]" />
-              <div className="absolute flex h-12 w-12 items-center justify-center rounded-full border border-gold bg-void/90 text-sm text-gold shadow-[0_4px_16px_rgba(0,0,0,0.4)]">
-                ↔
-              </div>
-            </div>
-            <div className="pointer-events-none absolute start-3 top-3 z-20 rounded-sm bg-void/80 px-2 py-1 text-[8px] uppercase tracking-wider text-ivory backdrop-blur-sm">
-              {t("before")}
-            </div>
-            <div className="pointer-events-none absolute end-3 top-3 z-20 rounded-sm bg-void/80 px-2 py-1 text-[8px] uppercase tracking-wider text-gold backdrop-blur-sm">
-              {t("after")}
-            </div>
+          </div>
+          <div className="pointer-events-none absolute start-3 top-3 z-20 rounded-sm bg-void/80 px-2 py-1 text-[8px] uppercase tracking-wider text-ivory backdrop-blur-sm">
+            {t("before")}
+          </div>
+          <div className="pointer-events-none absolute end-3 top-3 z-20 rounded-sm bg-void/80 px-2 py-1 text-[8px] uppercase tracking-wider text-gold backdrop-blur-sm">
+            {t("after")}
           </div>
         </div>
         <p className="shrink-0 text-center text-[9px] uppercase tracking-[0.15em] text-ivory-faint lg:text-start">

@@ -1,14 +1,12 @@
-import sharp from "sharp";
 import {
   getActiveImageProviderId,
   generateWithActiveProvider,
   tryOnMissingConfigMessage,
 } from "./providers/registry";
-import { enforceExactPersonDimensions, getPersonImageDimensions } from "./normalize";
+import { assertExactPersonCanvas, getPersonImageDimensions } from "./normalize";
 import { buildUnderlayerPromptSection, inferGarmentStyling } from "./garment-styling";
 import {
-  buildGarmentDescriptionPart,
-  buildGarmentTitlePart,
+  buildDimensionLockPart,
   buildMenswearTryOnInstructionPrompt,
   buildNvidiaKontextTryOnPrompt,
 } from "./prompts";
@@ -46,6 +44,7 @@ export async function runVirtualTryOn(input: RunTryOnInput): Promise<GenerateTry
   };
 
   const instructionPrompt = buildMenswearTryOnInstructionPrompt(
+    garmentContext,
     personDims,
     promptSections,
     styling.coverage
@@ -67,22 +66,15 @@ export async function runVirtualTryOn(input: RunTryOnInput): Promise<GenerateTry
     mimeType: "image/jpeg" as const,
   };
 
+  // Dimension lock → full instructions → person photo → garment reference
   const multimodalParts: TryOnMultimodalPart[] = [
+    { type: "text", text: buildDimensionLockPart(personDims) },
+    { type: "text", text: instructionPrompt },
+    { type: "image", image: personImage },
     { type: "image", image: garmentImage },
   ];
-  if (garmentTitle) {
-    multimodalParts.push({ type: "text", text: buildGarmentTitlePart(garmentTitle) });
-  }
-  if (garmentDescriptionText) {
-    multimodalParts.push({
-      type: "text",
-      text: buildGarmentDescriptionPart(garmentDescriptionText),
-    });
-  }
-  multimodalParts.push({ type: "image", image: personImage });
-  multimodalParts.push({ type: "text", text: instructionPrompt });
 
-  const geminiImages = [garmentImage, personImage];
+  const geminiImages = [personImage, garmentImage];
   const nvidiaImages = [personImage];
 
   const result = await generateWithActiveProvider({
@@ -109,16 +101,17 @@ export async function runVirtualTryOn(input: RunTryOnInput): Promise<GenerateTry
     throw new Error("Generated image could not be read from storage");
   }
 
-  const buffer = await enforceExactPersonDimensions(input.personImageUrl, rawBuffer);
+  const { buffer, width, height } = await assertExactPersonCanvas(
+    input.personImageUrl,
+    rawBuffer
+  );
 
-  const meta = await sharp(buffer).metadata();
-  const targetW = personDims?.width ?? meta.width ?? 0;
-  const targetH = personDims?.height ?? meta.height ?? 0;
-
-  if (personDims && (meta.width !== targetW || meta.height !== targetH)) {
+  if (personDims && (width !== personDims.width || height !== personDims.height)) {
     console.warn(
-      `[TryOn] Output dimensions ${meta.width}×${meta.height} ≠ target ${targetW}×${targetH} after enforce`
+      `[TryOn] Output dimensions ${width}×${height} ≠ person ${personDims.width}×${personDims.height}`
     );
+  } else if (personDims) {
+    console.log(`[TryOn] Output locked to ${width}×${height} (matches person photo)`);
   }
 
   const { url: finalUrl } = await saveUploadBuffer(
@@ -129,8 +122,8 @@ export async function runVirtualTryOn(input: RunTryOnInput): Promise<GenerateTry
 
   return {
     url: finalUrl,
-    width: meta.width ?? targetW,
-    height: meta.height ?? targetH,
+    width,
+    height,
   };
 }
 
