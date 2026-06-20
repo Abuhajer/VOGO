@@ -227,45 +227,6 @@ export function geminiMissingConfigMessage(): string {
   return `Virtual try-on is not configured. Set GEMINI_API_KEY (https://aistudio.google.com/apikey). Optional: GEMINI_IMAGE_MODEL. Restart the server.${help ? ` Docs: ${help}` : " See .env.example."}`;
 }
 
-const GEMINI_ASPECT_RATIOS: Array<{ label: string; value: number }> = [
-  { label: "1:1", value: 1 },
-  { label: "3:4", value: 3 / 4 },
-  { label: "4:3", value: 4 / 3 },
-  { label: "9:16", value: 9 / 16 },
-  { label: "16:9", value: 16 / 9 },
-];
-
-function closestGeminiAspectRatio(width: number, height: number): string {
-  const ratio = width / height;
-  let best = GEMINI_ASPECT_RATIOS[0];
-  let bestDiff = Infinity;
-  for (const option of GEMINI_ASPECT_RATIOS) {
-    const diff = Math.abs(Math.log(ratio) - Math.log(option.value));
-    if (diff < bestDiff) {
-      bestDiff = diff;
-      best = option;
-    }
-  }
-  return best.label;
-}
-
-function buildGenerationConfig(
-  base: Record<string, unknown>,
-  targetDimensions?: { width: number; height: number }
-): Record<string, unknown> {
-  if (!targetDimensions?.width || !targetDimensions?.height) {
-    return base;
-  }
-  const aspectRatio = closestGeminiAspectRatio(
-    targetDimensions.width,
-    targetDimensions.height
-  );
-  return {
-    ...base,
-    aspectRatio,
-  };
-}
-
 export async function generateWithGemini(
   options: GenerateTryOnOptions
 ): Promise<GenerateTryOnResponse> {
@@ -300,7 +261,7 @@ export async function generateWithGemini(
 
   const body = {
     contents: [{ role: cfg.userContentRole, parts }],
-    generationConfig: buildGenerationConfig(cfg.effectiveGenerationConfig, options.targetDimensions),
+    generationConfig: cfg.effectiveGenerationConfig,
   };
 
   const timeoutMs = TRY_ON_ENV.geminiRequestTimeoutMs;
