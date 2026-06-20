@@ -136,7 +136,7 @@ export async function assertExactPersonCanvas(
   }
 
   let normalized = await enforceExactPersonDimensions(personImageRefUrl, buffer);
-  let meta = await sharp(normalized).metadata();
+  const meta = await sharp(normalized).metadata();
   let width = meta.width ?? dims.width;
   let height = meta.height ?? dims.height;
 
