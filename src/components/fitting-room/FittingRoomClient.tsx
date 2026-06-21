@@ -10,9 +10,7 @@ import PhotoCapture from "./PhotoCapture";
 import ProcessingAnimation from "./ProcessingAnimation";
 import ResultReveal from "./ResultReveal";
 import FittingRoomStepper, { type FittingRoomStepKey } from "./FittingRoomStepper";
-import FittingRoomStepIntro from "./FittingRoomStepIntro";
 import Button from "@/components/ui/Button";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 type Step = "product" | "photo" | "processing" | "result";
 
@@ -186,7 +184,6 @@ export default function FittingRoomClient({
   const isProcessingStep = step === "processing";
   const isImmersiveStep = isProductStep || isPhotoStep || isProcessingStep;
   const isFullBleedStep = isImmersiveStep || isResult;
-  const prefersReducedMotion = useReducedMotion();
 
   return (
     <div
@@ -237,7 +234,7 @@ export default function FittingRoomClient({
       {error ? (
         <div
           role="alert"
-          className={`shrink-0 rounded-sm border border-red-400/30 bg-red-500/10 px-4 py-2.5 text-xs text-red-300 ${
+          className={`shrink-0 rounded-sm border border-red-400/30 bg-red-500/10 px-4 py-2.5 text-xs text-red-300 light:border-red-500/25 light:bg-red-500/8 light:text-red-700 ${
             isImmersiveStep ? "mx-3 mb-2 sm:mx-4" : "mb-3"
           }`}
         >
@@ -249,17 +246,9 @@ export default function FittingRoomClient({
         className={`relative flex min-h-0 flex-1 flex-col overflow-hidden bg-surface/50 backdrop-blur-sm ${
           isFullBleedStep
             ? "rounded-none border-y border-gold-glow/15 shadow-none"
-            : "rounded-sm border border-gold-glow/15 shadow-[0_16px_48px_rgba(0,0,0,0.35)]"
+            : "rounded-sm border border-gold-glow/15 shadow-[0_16px_48px_rgba(0,0,0,0.35)] light:shadow-[0_12px_40px_rgba(14,13,18,0.08)]"
         }`}
       >
-        {(isProductStep) ? (
-          <FittingRoomStepIntro
-            step="product"
-            variant="overlay"
-            showCarouselHint={isProductStep && !prefersReducedMotion && products.length > 0}
-          />
-        ) : null}
-
         <div
           className={`relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden overscroll-y-contain ${
             isResult
@@ -286,6 +275,9 @@ export default function FittingRoomClient({
                 products={products}
                 selectedId={selectedProduct?.id ?? null}
                 onSelect={setSelectedProduct}
+                onContinue={() => goToStep("photo")}
+                canContinue={Boolean(selectedProduct)}
+                continueLabel={t("continue")}
               />
             ) : null}
 
@@ -327,7 +319,7 @@ export default function FittingRoomClient({
           </div>
         </div>
 
-        {step !== "processing" && step !== "result" ? (
+        {step === "photo" ? (
           <div
             className={`relative z-20 flex shrink-0 items-center justify-between gap-3 border-t border-gold-glow/10 bg-surface/95 backdrop-blur-md pb-[max(0.625rem,env(safe-area-inset-bottom))] ${
               isImmersiveStep
@@ -335,46 +327,28 @@ export default function FittingRoomClient({
                 : "px-3 py-2.5 sm:px-5 sm:py-3 md:px-6 lg:px-8"
             }`}
           >
-            {step === "photo" ? (
-              <Button
-                variant="ghost"
-                onClick={() => goToStep("product")}
-                isArabic={isAr}
-                className="!min-h-11 !px-4 !py-2.5"
-              >
-                {t("back")}
-              </Button>
-            ) : (
-              <span />
-            )}
+            <Button
+              variant="ghost"
+              onClick={() => goToStep("product")}
+              isArabic={isAr}
+              className="!min-h-11 !px-4 !py-2.5"
+            >
+              {t("back")}
+            </Button>
 
-            {step === "product" ? (
-              <Button
-                variant="solid"
-                disabled={!selectedProduct}
-                onClick={() => goToStep("photo")}
-                isArabic={isAr}
-                className="!min-h-11 !px-5 !py-2.5 ms-auto"
-              >
-                {t("continue")}
-              </Button>
-            ) : null}
-
-            {step === "photo" ? (
-              <Button
-                variant="solid"
-                disabled={!personImageUrl || generating || !apiConfigured || cooldownSeconds > 0}
-                onClick={() => void handleGenerate()}
-                isArabic={isAr}
-                className="!min-h-11 !px-5 !py-2.5"
-              >
-                {generating
-                  ? t("generating")
-                  : cooldownSeconds > 0
-                    ? t("retryIn", { seconds: cooldownSeconds })
-                    : t("generate")}
-              </Button>
-            ) : null}
+            <Button
+              variant="solid"
+              disabled={!personImageUrl || generating || !apiConfigured || cooldownSeconds > 0}
+              onClick={() => void handleGenerate()}
+              isArabic={isAr}
+              className="!min-h-11 !px-5 !py-2.5"
+            >
+              {generating
+                ? t("generating")
+                : cooldownSeconds > 0
+                  ? t("retryIn", { seconds: cooldownSeconds })
+                  : t("generate")}
+            </Button>
           </div>
         ) : null}
       </div>

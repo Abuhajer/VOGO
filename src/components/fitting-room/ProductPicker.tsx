@@ -8,12 +8,17 @@ import CoverflowCarousel3D from "@/components/carousel/CoverflowCarousel3D";
 import ProductDetailModal from "@/components/collection/ProductDetailModal";
 import { localizeProduct } from "@/lib/products";
 import { formatNumber } from "@/lib/format";
+import Button from "@/components/ui/Button";
+import FittingRoomStepIntro from "./FittingRoomStepIntro";
 import type { FittingRoomProduct } from "@/lib/try-on/types";
 
 type Props = {
   products: FittingRoomProduct[];
   selectedId: string | null;
   onSelect: (product: FittingRoomProduct) => void;
+  onContinue?: () => void;
+  canContinue?: boolean;
+  continueLabel?: string;
 };
 
 type DetailProduct = {
@@ -252,7 +257,7 @@ function ProductCarousel3D({
             slideTotal={isCenter ? products.length : undefined}
             imageOnly
             fitContain
-            className="coverflow-carousel-card h-full w-full shadow-[0_16px_40px_rgba(0,0,0,0.45)]"
+            className="coverflow-carousel-card h-full w-full shadow-[0_16px_40px_rgba(0,0,0,0.45)] light:shadow-[0_12px_32px_rgba(14,13,18,0.12)]"
           />
         )}
       />
@@ -260,13 +265,22 @@ function ProductCarousel3D({
   );
 }
 
-export default function ProductPicker({ products, selectedId, onSelect }: Props) {
+export default function ProductPicker({
+  products,
+  selectedId,
+  onSelect,
+  onContinue,
+  canContinue = false,
+  continueLabel,
+}: Props) {
   const t = useTranslations("FittingRoom");
   const locale = useLocale();
   const isAr = locale === "ar";
   const prefersReducedMotion = useReducedMotion();
   const useCarousel3D = !prefersReducedMotion && products.length > 0;
+  const showCarouselHint = useCarousel3D;
   const [detailProduct, setDetailProduct] = useState<DetailProduct | null>(null);
+  const continueText = continueLabel ?? t("continue");
 
   const openProductDetails = useCallback(
     (product: FittingRoomProduct) => {
@@ -287,31 +301,86 @@ export default function ProductPicker({ products, selectedId, onSelect }: Props)
     return <p className="text-sm text-ivory-muted">{t("noProducts")}</p>;
   }
 
+  const carousel = useCarousel3D ? (
+    <ProductCarousel3D
+      products={products}
+      selectedId={selectedId}
+      locale={locale}
+      isAr={isAr}
+      selectedLabel={t("selected")}
+      viewDetailsLabel={t("viewDetails")}
+      onSelect={onSelect}
+      onOpenDetails={openProductDetails}
+    />
+  ) : (
+    <FlatProductStrip
+      products={products}
+      selectedId={selectedId}
+      locale={locale}
+      isAr={isAr}
+      selectedLabel={t("selected")}
+      onSelect={onSelect}
+      onOpenDetails={openProductDetails}
+    />
+  );
+
+  const continueButton = onContinue ? (
+    <Button
+      variant="solid"
+      disabled={!canContinue}
+      onClick={onContinue}
+      isArabic={isAr}
+      className="!min-h-11 w-full !px-5 !py-2.5"
+    >
+      {continueText}
+    </Button>
+  ) : null;
+
   return (
     <>
-      <div className="flex min-h-0 w-full flex-1 flex-col">
-        {useCarousel3D ? (
-          <ProductCarousel3D
-            products={products}
-            selectedId={selectedId}
-            locale={locale}
-            isAr={isAr}
-            selectedLabel={t("selected")}
-            viewDetailsLabel={t("viewDetails")}
-            onSelect={onSelect}
-            onOpenDetails={openProductDetails}
+      <div className="fitting-room-product-stage relative flex min-h-0 w-full flex-1 flex-col">
+        <div className="shrink-0 px-2 pt-1 md:hidden" dir={isAr ? "rtl" : "ltr"}>
+          <FittingRoomStepIntro
+            step="product"
+            variant="stacked"
+            showCarouselHint={showCarouselHint}
           />
-        ) : (
-          <FlatProductStrip
-            products={products}
-            selectedId={selectedId}
-            locale={locale}
-            isAr={isAr}
-            selectedLabel={t("selected")}
-            onSelect={onSelect}
-            onOpenDetails={openProductDetails}
-          />
-        )}
+        </div>
+
+        <div
+          className="fitting-room-product-row relative mx-auto flex min-h-0 w-full max-w-full flex-1 items-stretch justify-center gap-2 px-2 py-2 sm:gap-3 sm:px-3 md:items-center md:gap-6 md:py-3 lg:gap-8"
+          dir="ltr"
+        >
+          <div className="fitting-room-product-carousel relative mx-auto flex min-h-0 min-w-0 flex-1 flex-col">
+            {carousel}
+          </div>
+
+          <aside
+            className="fitting-room-product-sidebar hidden min-h-0 w-full max-w-[19rem] shrink-0 flex-col md:flex lg:max-w-[21rem]"
+            dir={isAr ? "rtl" : "ltr"}
+          >
+            <FittingRoomStepIntro
+              step="product"
+              variant="sidebar"
+              showCarouselHint={showCarouselHint}
+            />
+
+            {continueButton ? (
+              <div className="mt-auto shrink-0 border-t border-gold-glow/10 pt-4">
+                {continueButton}
+              </div>
+            ) : null}
+          </aside>
+        </div>
+
+        {continueButton ? (
+          <div
+            className="shrink-0 border-t border-gold-glow/10 bg-surface/95 px-3 py-2.5 backdrop-blur-md md:hidden sm:px-4"
+            dir={isAr ? "rtl" : "ltr"}
+          >
+            {continueButton}
+          </div>
+        ) : null}
       </div>
 
       <ProductDetailModal

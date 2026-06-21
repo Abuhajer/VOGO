@@ -188,7 +188,7 @@ export default function ResultReveal({
       className="relative flex min-h-0 flex-1 flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)] lg:items-stretch lg:gap-8 xl:gap-10"
     >
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 z-30 bg-gradient-to-b from-[#08080c]/96 via-[#08080c]/55 to-transparent px-3 pb-8 pt-1 sm:px-4 lg:hidden"
+        className="pointer-events-none absolute inset-x-0 top-0 z-30 bg-gradient-to-b from-void/96 via-void/55 to-transparent px-3 pb-8 pt-1 sm:px-4 lg:hidden"
         aria-hidden={false}
       >
         {stepMeta}
@@ -196,7 +196,7 @@ export default function ResultReveal({
 
       <div className="fitting-room-result-stage flex min-h-0 flex-1 items-center justify-center px-2 pb-1 pt-[5.5rem] sm:px-3 sm:pt-[6rem] lg:px-0 lg:pb-0 lg:pt-0">
         <div
-          className="fitting-room-result-compare fitting-room-compare relative cursor-ew-resize select-none overflow-hidden rounded-sm border border-gold-glow/15 bg-obsidian shadow-[inset_0_0_40px_rgba(201,168,76,0.04)] touch-pan-x"
+          className="fitting-room-result-compare fitting-room-compare relative cursor-ew-resize select-none overflow-hidden rounded-sm border border-gold-glow/15 bg-obsidian shadow-[inset_0_0_40px_rgba(201,168,76,0.04)] light:shadow-[inset_0_0_32px_rgba(179,142,54,0.06)] touch-pan-x"
           style={{
             ["--compare-aspect" as string]: String(frameAspect),
             ...(frameSize

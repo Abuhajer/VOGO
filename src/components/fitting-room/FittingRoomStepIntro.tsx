@@ -7,7 +7,7 @@ type StepKey = "product" | "photo";
 type Props = {
   step: StepKey;
   showCarouselHint?: boolean;
-  variant?: "stacked" | "overlay";
+  variant?: "stacked" | "sidebar" | "overlay";
 };
 
 export default function FittingRoomStepIntro({
@@ -24,7 +24,7 @@ export default function FittingRoomStepIntro({
   if (variant === "overlay") {
     return (
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 z-30 bg-gradient-to-b from-[#08080c]/96 via-[#08080c]/72 to-transparent px-3 pb-10 pt-2 sm:px-5 sm:pb-12 sm:pt-3 md:px-6"
+        className="pointer-events-none absolute inset-x-0 top-0 z-30 bg-gradient-to-b from-void/96 via-void/72 to-transparent px-3 pb-10 pt-2 sm:px-5 sm:pb-12 sm:pt-3 md:px-6"
         aria-hidden={false}
       >
         <p className="mb-0.5 text-[9px] uppercase tracking-[0.28em] text-gold sm:text-[10px]">{label}</p>
@@ -37,6 +37,24 @@ export default function FittingRoomStepIntro({
         ) : null}
         {step === "photo" ? (
           <p className="mt-1 hidden text-[10px] text-ivory-faint md:block">{t("portraitHint")}</p>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (variant === "sidebar") {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col">
+        <p className="mb-1 text-[9px] uppercase tracking-[0.28em] text-gold sm:text-[10px]">{label}</p>
+        <h2 className="font-serif text-xl leading-tight text-ivory lg:text-[1.65rem] lg:leading-snug">
+          {title}
+        </h2>
+        <p className="mt-2.5 text-[11px] leading-relaxed text-ivory-muted">{desc}</p>
+        {step === "product" && showCarouselHint ? (
+          <p className="mt-3 text-[10px] leading-relaxed text-ivory-faint">{t("carouselHint")}</p>
+        ) : null}
+        {step === "photo" ? (
+          <p className="mt-3 text-[10px] leading-relaxed text-ivory-faint">{t("portraitHint")}</p>
         ) : null}
       </div>
     );

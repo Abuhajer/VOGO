@@ -74,12 +74,18 @@ export default function Navbar() {
     navigateToSection(href, { isHome, locale });
   };
 
-  const sectionLinkClass = `relative shrink-0 whitespace-nowrap px-1.5 py-2 rounded-sm text-[10px] lg:text-[11px] xl:text-xs text-ivory/90 hover:text-gold transition-all duration-300 font-sans font-medium border border-transparent hover:border-gold/25 hover:bg-gold/5 ${
+  const showNavSurface = isScrolled || theme === "light";
+
+  const sectionLinkClass = `relative shrink-0 whitespace-nowrap px-1.5 py-2 rounded-sm text-[10px] lg:text-[11px] xl:text-xs text-ivory/90 hover:text-gold transition-all duration-300 font-sans font-medium border border-transparent hover:border-gold/25 hover:bg-gold/5 light:text-ivory light:hover:bg-gold/10 ${
     locale === "ar" ? "" : "tracking-[0.06em] xl:tracking-[0.08em] uppercase"
   }`;
 
-  const storeLinkClass = `relative shrink-0 whitespace-nowrap px-1.5 py-2 rounded-sm text-[10px] lg:text-[11px] xl:text-xs text-ivory-muted hover:text-gold transition-all duration-300 font-sans font-medium border border-transparent hover:border-gold/20 hover:bg-gold/5 ${
+  const storeLinkClass = `relative shrink-0 whitespace-nowrap px-1.5 py-2 rounded-sm text-[10px] lg:text-[11px] xl:text-xs text-ivory-muted hover:text-gold transition-all duration-300 font-sans font-medium border border-transparent hover:border-gold/20 hover:bg-gold/5 light:hover:bg-gold/10 ${
     locale === "ar" ? "" : "tracking-[0.06em] xl:tracking-[0.08em] uppercase"
+  }`;
+
+  const mobileLinkClass = `text-xl text-ivory hover:text-gold transition-colors duration-300 font-sans font-medium ${
+    locale === "ar" ? "" : "tracking-[0.15em] uppercase"
   }`;
 
   return (
@@ -94,9 +100,9 @@ export default function Navbar() {
       <header
         dir={locale === "ar" ? "rtl" : "ltr"}
         className={`fixed top-0 left-0 right-0 z-40 transition-all duration-500 select-none pt-[env(safe-area-inset-top)] ${
-          isScrolled
-            ? "bg-void/85 backdrop-blur-md border-b border-gold-glow/10 py-3 shadow-[0_4px_30px_rgba(0,0,0,0.3)]"
-            : "surface-dark bg-transparent py-5"
+          showNavSurface
+            ? "bg-void/88 backdrop-blur-md border-b border-gold-glow/10 py-3 shadow-[0_4px_30px_rgba(0,0,0,0.3)] light:shadow-[0_4px_24px_rgba(14,13,18,0.08)] light:bg-void/92"
+            : "bg-transparent py-5"
         }`}
       >
         <div className="mx-auto flex max-w-[96rem] items-center justify-between gap-2 px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12">
@@ -128,7 +134,7 @@ export default function Navbar() {
                 {link.label}
               </a>
             ))}
-            <span className="mx-0.5 h-4 w-px shrink-0 bg-gold/20 xl:mx-1" aria-hidden />
+            <span className="mx-0.5 h-4 w-px shrink-0 bg-gold/20 light:bg-gold/30 xl:mx-1" aria-hidden />
             {storeLinks.map((link) => (
               <Link key={link.href} href={link.href} className={storeLinkClass}>
                 {link.label}
@@ -140,14 +146,17 @@ export default function Navbar() {
           </nav>
 
           <div className="flex items-center gap-2.5 sm:gap-4 md:gap-6 shrink-0">
-            <Link href="/cart" className="lg:hidden text-ivory-muted hover:text-gold text-xs">
+            <Link
+              href="/cart"
+              className="lg:hidden text-ivory-muted hover:text-gold text-xs transition-colors duration-300"
+            >
               {t("cart")}
               {cartCount > 0 ? ` (${formatNumber(cartCount, locale)})` : ""}
             </Link>
 
             <button
               onClick={handleLocaleToggle}
-              className={`text-[10px] text-gold font-semibold font-sans px-2.5 py-1 border border-gold/30 hover:border-gold hover:bg-gold/10 rounded-sm transition-all duration-300 ${
+              className={`text-[10px] text-gold font-semibold font-sans px-2.5 py-1 border border-gold/30 hover:border-gold hover:bg-gold/10 rounded-sm transition-all duration-300 light:border-gold/40 light:hover:bg-gold/15 ${
                 locale === "ar" ? "" : "tracking-[0.15em] uppercase"
               }`}
               aria-label={locale === "ar" ? "تبديل اللغة" : "Switch language"}
@@ -169,9 +178,21 @@ export default function Navbar() {
               aria-label={locale === "ar" ? "فتح القائمة" : "Open menu"}
               aria-expanded={mobileMenuOpen}
             >
-              <span className={`w-full h-[1.5px] bg-ivory rounded-full transition-all duration-300 ${mobileMenuOpen ? "transform rotate-45 translate-y-1.5" : ""}`} />
-              <span className={`h-[1.5px] bg-ivory rounded-full transition-all duration-300 ${locale === "ar" ? "origin-right" : "origin-left"} ${mobileMenuOpen ? "w-0" : "w-2/3"}`} />
-              <span className={`w-full h-[1.5px] bg-ivory rounded-full transition-all duration-300 ${mobileMenuOpen ? "transform -rotate-45 -translate-y-1" : ""}`} />
+              <span
+                className={`w-full h-[1.5px] bg-ivory rounded-full transition-all duration-300 ${
+                  mobileMenuOpen ? "transform rotate-45 translate-y-1.5" : ""
+                }`}
+              />
+              <span
+                className={`h-[1.5px] bg-ivory rounded-full transition-all duration-300 ${
+                  locale === "ar" ? "origin-right" : "origin-left"
+                } ${mobileMenuOpen ? "w-0" : "w-2/3"}`}
+              />
+              <span
+                className={`w-full h-[1.5px] bg-ivory rounded-full transition-all duration-300 ${
+                  mobileMenuOpen ? "transform -rotate-45 -translate-y-1" : ""
+                }`}
+              />
             </button>
           </div>
         </div>
@@ -184,12 +205,15 @@ export default function Navbar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.4, ease: "easeInOut" }}
-            className="surface-dark fixed inset-0 z-30 bg-[#050508]/98 backdrop-blur-lg flex flex-col justify-center items-center p-8 select-none"
+            className="fixed inset-0 z-30 flex flex-col items-center justify-center bg-void/98 p-8 backdrop-blur-lg select-none light:bg-void/99"
           >
             <div className="absolute inset-0 z-0" onClick={() => setMobileMenuOpen(false)} />
-            <div className="absolute w-[300px] h-[300px] rounded-full bg-gold-glow filter blur-[80px] pointer-events-none opacity-20 z-0" />
+            <div className="pointer-events-none absolute h-[300px] w-[300px] rounded-full bg-gold-glow opacity-20 blur-[80px] light:opacity-30" />
 
-            <nav className="relative z-10 flex flex-col items-center gap-6 text-center" dir={locale === "ar" ? "rtl" : "ltr"}>
+            <nav
+              className="relative z-10 flex flex-col items-center gap-6 text-center"
+              dir={locale === "ar" ? "rtl" : "ltr"}
+            >
               {[...sectionLinks, ...storeLinks].map((link, idx) => (
                 <motion.div
                   key={link.href}
@@ -201,20 +225,12 @@ export default function Navbar() {
                     <a
                       href={link.href}
                       onClick={(event) => handleSectionClick(event, link.href)}
-                      className={`text-xl text-ivory hover:text-gold transition-colors duration-300 font-sans font-medium ${
-                        locale === "ar" ? "" : "tracking-[0.15em] uppercase"
-                      }`}
+                      className={mobileLinkClass}
                     >
                       {link.label}
                     </a>
                   ) : (
-                    <Link
-                      href={link.href}
-                      onClick={handleLinkClick}
-                      className={`text-xl text-ivory hover:text-gold transition-colors duration-300 font-sans font-medium ${
-                        locale === "ar" ? "" : "tracking-[0.15em] uppercase"
-                      }`}
-                    >
+                    <Link href={link.href} onClick={handleLinkClick} className={mobileLinkClass}>
                       {link.label}
                     </Link>
                   )}

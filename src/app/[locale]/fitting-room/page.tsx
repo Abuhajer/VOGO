@@ -26,7 +26,7 @@ export default async function FittingRoomPage({
   }
 
   return (
-    <main className="surface-dark mt-[calc(5.75rem+env(safe-area-inset-top))] flex h-[calc(100dvh-5.75rem-env(safe-area-inset-top))] max-h-[calc(100dvh-5.75rem-env(safe-area-inset-top))] flex-col overflow-hidden bg-[#050508]">
+    <main className="mt-[calc(5.75rem+env(safe-area-inset-top))] flex h-[calc(100dvh-5.75rem-env(safe-area-inset-top))] max-h-[calc(100dvh-5.75rem-env(safe-area-inset-top))] flex-col overflow-hidden bg-void">
       <Suspense fallback={null}>
         <FittingRoomErrorBoundary>
           <FittingRoomClient
