@@ -27,4 +27,9 @@ if (databaseUrl?.startsWith("postgres")) {
   );
 }
 
+// Prisma prep, then Next.js build. @netlify/plugin-nextjs packages the output in onPostBuild.
 run("npm run build", "Next.js production build");
+
+if (isNetlify) {
+  run("node -e \"require('fs').rmSync('.next/cache',{recursive:true,force:true})\"", "Drop webpack cache before Netlify bundle");
+}

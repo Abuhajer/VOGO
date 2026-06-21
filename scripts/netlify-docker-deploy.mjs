@@ -30,10 +30,7 @@ function readNetlifyToken() {
 }
 
 const token = readNetlifyToken();
-const projectMount =
-  process.platform === "win32"
-    ? root.replace(/\\/g, "/").replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`)
-    : root;
+const volumeSource = process.platform === "win32" ? root.replace(/\\/g, "/") : root;
 
 console.log("[netlify-docker-deploy] Building on Linux via Docker…");
 
@@ -45,15 +42,33 @@ export NETLIFY_SITE_ID="$NETLIFY_SITE_ID"
 export npm_config_cache=/tmp/npm-cache
 npm ci
 npm install -g netlify-cli@23.12.3
+set +e
 netlify build
-netlify deploy --prod --no-build
+BUILD_EXIT=$?
+set -e
+echo "[deploy] build exit: $BUILD_EXIT"
+du -sh .netlify/functions-internal/* 2>/dev/null || true
+if [ ! -d .netlify/functions-internal ]; then
+  echo "[deploy] Missing .netlify/functions-internal — aborting"
+  exit 1
+fi
+if [ ! -d .netlify/static ]; then
+  echo "[deploy] Missing .netlify/static — aborting"
+  exit 1
+fi
+netlify deploy --prod --no-build --dir=.netlify/static --functions=.netlify/functions-internal --skip-functions-cache
 `.trim();
 
 const dockerArgs = [
   "run",
   "--rm",
+  "--network=host",
   "-v",
-  `${projectMount}:/app`,
+  `${volumeSource}:/app`,
+  "-v",
+  "/app/node_modules",
+  "-v",
+  "/app/.next",
   "-w",
   "/app",
   "-e",

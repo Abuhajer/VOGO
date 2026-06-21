@@ -2,32 +2,58 @@ const createNextIntlPlugin = require("next-intl/plugin");
 
 const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
+const SHARP_TRACE_EXCLUDES = [
+  "node_modules/@img/sharp-win32-x64/**",
+  "node_modules/@img/sharp-win32-arm64/**",
+  "node_modules/@img/sharp-wasm32/**",
+  "node_modules/@img/sharp-darwin-x64/**",
+  "node_modules/@img/sharp-darwin-arm64/**",
+  "node_modules/@img/sharp-linux-arm64/**",
+  "node_modules/@img/sharp-linux-arm/**",
+  "node_modules/@img/sharp-linux-s390x/**",
+  "node_modules/@img/sharp-linux-ppc64/**",
+  "node_modules/@img/sharp-linux-riscv64/**",
+  "node_modules/@img/sharp-libvips-dev/**",
+  "node_modules/@img/sharp-libvips-dev-*/**",
+];
+
+const NETLIFY_TRACE_EXCLUDES = [
+  ...SHARP_TRACE_EXCLUDES,
+  "public/**",
+  ".next/cache/**",
+  "node_modules/typescript/**",
+  "node_modules/eslint/**",
+  "node_modules/@types/**",
+  "node_modules/prisma/**",
+  "node_modules/.cache/**",
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  // Keep native modules external so Netlify bundles Linux sharp binaries from CI builds.
-  serverExternalPackages: ["sharp", "@prisma/client"],
   experimental: {
-    outputFileTracingIncludes: {
-      "/api/fitting-room/generate": [
-        "./node_modules/sharp/**/*",
-        "./node_modules/@img/**/*",
-      ],
-    },
+    serverComponentsExternalPackages: ["sharp", "@prisma/client"],
+    ...(process.env.NETLIFY === "true"
+      ? {
+          outputFileTracingExcludes: {
+            "*": NETLIFY_TRACE_EXCLUDES,
+          },
+        }
+      : {}),
   },
 
-  // Dev-only: memory cache avoids corrupt/missing .pack.gz errors on Windows
-  // when .next is cleared while the dev server is running.
   webpack: (config, { dev }) => {
     if (dev) {
       config.cache = { type: "memory" };
     }
-
     return config;
   },
 
   images: {
+    // Netlify deploy ships `public/` to CDN only (excluded from function bundle to stay under 250MB).
+    // `/_next/image` cannot read those files in the serverless handler → 400 on all local assets.
+    unoptimized: process.env.NETLIFY === "true",
     formats: ["image/avif", "image/webp"],
     remotePatterns: [
       {

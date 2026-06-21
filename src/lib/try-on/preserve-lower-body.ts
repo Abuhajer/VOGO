@@ -1,4 +1,4 @@
-import sharp from "sharp";
+import { getSharp } from "./sharpLazy";
 import type { GarmentCoverage } from "./garment-styling";
 import { shouldPreservePersonLowerBody } from "./garment-styling";
 import { readImageBufferFromRef } from "./normalize";
@@ -21,6 +21,7 @@ export async function preservePersonLowerBody(
   }
 
   try {
+    const sharp = await getSharp();
     const personBuf = await readImageBufferFromRef(personImageRefUrl);
     const personMeta = await sharp(personBuf).metadata();
     const width = personMeta.width ?? 0;
