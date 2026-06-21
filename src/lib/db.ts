@@ -22,7 +22,12 @@ function ensureDatabaseUrlFromNetlify(): void {
 export function isDatabaseConfigured(): boolean {
   ensureDatabaseUrlFromNetlify();
   const url = process.env.NETLIFY_DATABASE_URL?.trim() || process.env.DATABASE_URL?.trim();
-  return Boolean(url);
+  if (!url) return false;
+  // Netlify builds ship the PostgreSQL Prisma client — ignore SQLite dev URLs in production.
+  if (process.env.NETLIFY === "true") {
+    return url.startsWith("postgres");
+  }
+  return true;
 }
 
 function loadPrismaClientClass(): PrismaClientConstructor | null {
