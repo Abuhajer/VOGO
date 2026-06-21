@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { capturePortrait9x16FromVideo } from "@/lib/captureVideoFrame";
 import {
   preparePortraitBlob,
@@ -59,6 +60,37 @@ function SourceIcon({ id, size = 16 }: { id: PhotoSource; size?: number }) {
   );
 }
 
+function PortraitPlaceholder({
+  icon,
+  title,
+  subtitle,
+  action,
+}: {
+  icon: ReactNode;
+  title: string;
+  subtitle?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="fitting-room-portrait-empty absolute inset-0 flex flex-col items-center justify-center gap-3 px-5 text-center sm:gap-4 sm:px-8">
+      <div className="relative flex h-[min(42%,9.5rem)] w-[min(58%,7rem)] items-center justify-center rounded-sm border border-dashed border-gold/28 bg-gold/[0.03] sm:h-[min(44%,10.5rem)] sm:w-[min(60%,7.5rem)]">
+        <span className="flex h-11 w-11 items-center justify-center rounded-full border border-gold/30 bg-gold/[0.08] text-gold/90 sm:h-12 sm:w-12">
+          {icon}
+        </span>
+      </div>
+      <div className="max-w-[15rem] space-y-1.5">
+        <p className="text-[10px] uppercase leading-relaxed tracking-[0.14em] text-ivory/85 sm:text-[11px]">
+          {title}
+        </p>
+        {subtitle ? (
+          <p className="text-[10px] leading-relaxed text-ivory-faint sm:text-[11px]">{subtitle}</p>
+        ) : null}
+      </div>
+      {action}
+    </div>
+  );
+}
+
 function SourceTabs({
   tabs,
   source,
@@ -72,17 +104,54 @@ function SourceTabs({
   isAr: boolean;
   stepLabel: string;
   onSelect: (id: PhotoSource) => void;
-  layout: "horizontal" | "vertical";
+  layout: "horizontal" | "sidebar";
 }) {
-  const isHorizontal = layout === "horizontal";
+  if (layout === "sidebar") {
+    return (
+      <div
+        className="fitting-room-source-tabs flex flex-col gap-1.5"
+        role="tablist"
+        aria-label={stepLabel}
+        dir={isAr ? "rtl" : "ltr"}
+      >
+        {tabs.map((tab) => {
+          const active = source === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              aria-label={tab.label}
+              onClick={() => onSelect(tab.id)}
+              className={`group flex min-h-[3rem] items-center gap-3 rounded-sm border px-3 py-2.5 text-start transition-all duration-200 motion-reduce:transition-none ${
+                active
+                  ? "border-gold/40 bg-gold/[0.1] text-gold shadow-[inset_0_0_0_1px_rgba(201,168,76,0.14),0_8px_24px_rgba(0,0,0,0.22)]"
+                  : "border-gold-glow/12 bg-void/40 text-ivory-muted hover:border-gold/22 hover:bg-surface/25 hover:text-ivory"
+              }`}
+            >
+              <span
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border transition-colors ${
+                  active
+                    ? "border-gold/35 bg-gold/12 text-gold"
+                    : "border-gold-glow/15 bg-gold/[0.04] text-ivory-faint group-hover:border-gold/25 group-hover:text-gold/80"
+                }`}
+              >
+                <SourceIcon id={tab.id} size={15} />
+              </span>
+              <span className="min-w-0 flex-1 text-[10px] uppercase leading-snug tracking-[0.13em]">
+                {tab.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div
-      className={
-        isHorizontal
-          ? "fitting-room-source-tabs-h flex w-full shrink-0 gap-1 rounded-sm border border-gold-glow/12 bg-void/60 p-1 backdrop-blur-sm"
-          : "fitting-room-source-tabs flex w-11 shrink-0 flex-col gap-0.5 rounded-sm border border-gold-glow/12 bg-void/50 p-1 sm:w-12"
-      }
+      className="fitting-room-source-tabs-h flex w-full shrink-0 gap-1 rounded-sm border border-gold-glow/12 bg-void/60 p-1 backdrop-blur-sm"
       role="tablist"
       aria-label={stepLabel}
       dir={isAr ? "rtl" : "ltr"}
@@ -97,29 +166,14 @@ function SourceTabs({
             aria-selected={active}
             aria-label={tab.label}
             onClick={() => onSelect(tab.id)}
-            className={
-              isHorizontal
-                ? `relative flex min-h-11 flex-1 flex-col items-center justify-center gap-1 rounded-[2px] px-2 py-2 transition-colors duration-200 sm:min-h-12 ${
-                    active
-                      ? "bg-gold/12 text-gold shadow-[inset_0_0_0_1px_rgba(201,168,76,0.25)]"
-                      : "text-ivory-faint hover:bg-surface/35 hover:text-ivory-muted"
-                  }`
-                : `relative flex min-h-[2.75rem] flex-col items-center justify-center gap-1 rounded-[2px] px-1 py-2 transition-colors duration-200 sm:min-h-[3rem] ${
-                    active
-                      ? "bg-gold/12 text-gold"
-                      : "text-ivory-faint hover:bg-surface/35 hover:text-ivory-muted"
-                  }`
-            }
+            className={`relative flex min-h-11 flex-1 flex-col items-center justify-center gap-1 rounded-[2px] px-2 py-2 transition-colors duration-200 motion-reduce:transition-none sm:min-h-12 ${
+              active
+                ? "bg-gold/12 text-gold shadow-[inset_0_0_0_1px_rgba(201,168,76,0.25)]"
+                : "text-ivory-faint hover:bg-surface/35 hover:text-ivory-muted"
+            }`}
           >
-            {!isHorizontal && active ? (
-              <span className="absolute inset-y-1 start-0 w-px bg-gold/80" aria-hidden />
-            ) : null}
-            <SourceIcon id={tab.id} size={isHorizontal ? 16 : 15} />
-            <span
-              className={`max-w-full truncate text-center uppercase leading-none tracking-[0.08em] ${
-                isHorizontal ? "text-[8px] sm:text-[9px]" : "text-[7px] sm:text-[8px]"
-              }`}
-            >
+            <SourceIcon id={tab.id} size={16} />
+            <span className="max-w-full truncate text-center text-[8px] uppercase leading-none tracking-[0.08em] sm:text-[9px]">
               {tab.label}
             </span>
           </button>
@@ -133,6 +187,7 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
   const t = useTranslations("FittingRoom");
   const locale = useLocale();
   const isAr = locale === "ar";
+  const prefersReducedMotion = useReducedMotion();
   const [source, setSource] = useState<PhotoSource>("upload");
   const [preview, setPreview] = useState<string | null>(personImageUrl);
   const [uploading, setUploading] = useState(false);
@@ -196,7 +251,7 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
     setCameraStarting(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: { facingMode: "user", width: { ideal: 720 }, height: { ideal: 1280 } },
         audio: false,
       });
       streamRef.current = stream;
@@ -260,10 +315,17 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
     preview && (source === "upload" || source === "avatar" || (source === "camera" && !cameraActive));
   const showUploadEmpty = source === "upload" && !preview;
   const showCamera = source === "camera";
-  const showAvatarPanel = source === "avatar";
+  const showAvatarEmpty = source === "avatar" && !preview;
 
   const previewLabel =
     source === "avatar" ? t("selectedModel") : source === "upload" ? t("yourPhoto") : t("yourPhoto");
+
+  const portraitImgClass =
+    source === "avatar"
+      ? "fitting-room-portrait-img fitting-room-portrait-img--avatar"
+      : "fitting-room-portrait-img fitting-room-portrait-img--photo";
+
+  const previewTransition = prefersReducedMotion ? "" : "fitting-room-portrait-fade";
 
   return (
     <div className="fitting-room-photo-stage relative flex min-h-0 w-full flex-1 flex-col">
@@ -292,18 +354,19 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
       </div>
 
       <div
-        className="fitting-room-photo-row relative mx-auto flex min-h-0 w-full max-w-full flex-1 items-stretch justify-center gap-2 px-2 py-2 sm:gap-3 sm:px-3 md:items-center md:py-3"
+        className="fitting-room-photo-row relative mx-auto flex min-h-0 w-full max-w-full flex-1 items-stretch justify-center gap-2 px-2 py-2 sm:gap-3 sm:px-3 md:items-center md:gap-6 md:py-3 lg:gap-8"
         dir="ltr"
       >
-        <div className="fitting-room-portrait-frame relative min-h-0 min-w-0 flex-1">
+        <div className="fitting-room-portrait-frame relative mx-auto min-h-0 min-w-0 shrink-0">
           {showPortraitPreview ? (
             <>
               <Image
+                key={preview}
                 src={preview}
                 alt=""
                 fill
-                sizes="(max-width: 768px) 92vw, 480px"
-                className="fitting-room-portrait-img"
+                sizes="(max-width: 768px) 92vw, 420px"
+                className={`${portraitImgClass} ${previewTransition}`}
                 unoptimized={
                   preview.startsWith("data:") ||
                   preview.startsWith("/uploads") ||
@@ -342,14 +405,13 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
                   openFilePicker();
                 }
               }}
-              className="absolute inset-0 flex cursor-pointer flex-col items-center justify-center gap-3 transition-colors hover:bg-gold/[0.03]"
+              className="absolute inset-0 cursor-pointer"
             >
-              <span className="flex h-12 w-12 items-center justify-center rounded-full border border-gold/25 bg-gold/[0.06] text-gold/85 sm:h-14 sm:w-14">
-                <SourceIcon id="upload" size={18} />
-              </span>
-              <span className="max-w-[14rem] px-4 text-center text-[10px] uppercase leading-relaxed tracking-[0.14em] text-ivory-faint sm:text-[11px]">
-                {uploading ? t("uploading") : t("dropPhoto")}
-              </span>
+              <PortraitPlaceholder
+                icon={<SourceIcon id="upload" size={18} />}
+                title={uploading ? t("uploading") : t("dropPhoto")}
+                subtitle={t("portraitHint")}
+              />
             </div>
           ) : null}
 
@@ -382,7 +444,7 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
                       type="button"
                       onClick={() => void capturePhoto()}
                       disabled={uploading}
-                      className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-gold bg-gold/20 shadow-[0_0_28px_rgba(201,168,76,0.3)] transition-transform hover:scale-[1.03] hover:bg-gold/35 active:scale-[0.97] disabled:opacity-50 sm:h-16 sm:w-16"
+                      className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-gold bg-gold/20 shadow-[0_0_28px_rgba(201,168,76,0.3)] transition-transform hover:scale-[1.03] hover:bg-gold/35 active:scale-[0.97] disabled:opacity-50 motion-reduce:transition-none motion-reduce:hover:scale-100 sm:h-16 sm:w-16"
                       aria-label={t("capture")}
                     >
                       <span className="h-10 w-10 rounded-full border border-gold/60 bg-gold/25 sm:h-11 sm:w-11" />
@@ -390,55 +452,92 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
                   </div>
                 </>
               ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 text-center sm:gap-5">
-                  <span className="flex h-14 w-14 items-center justify-center rounded-full border border-gold/35 bg-gold/10 text-gold sm:h-16 sm:w-16">
-                    <SourceIcon id="camera" size={20} />
-                  </span>
-                  <p className="max-w-sm text-[11px] leading-relaxed text-ivory-muted sm:text-xs">
-                    {t("cameraIntro")}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => void startCamera()}
-                    disabled={cameraStarting}
-                    className="min-h-11 rounded-sm border border-gold/40 bg-gold/10 px-6 py-2.5 text-[9px] uppercase tracking-[0.15em] text-gold transition-colors hover:bg-gold/20 disabled:cursor-wait disabled:opacity-60 sm:min-h-12 sm:px-8 sm:text-[10px]"
-                  >
-                    {cameraStarting ? t("cameraStarting") : t("enableCamera")}
-                  </button>
-                </div>
+                <PortraitPlaceholder
+                  icon={<SourceIcon id="camera" size={18} />}
+                  title={t("cameraIntro")}
+                  action={
+                    <button
+                      type="button"
+                      onClick={() => void startCamera()}
+                      disabled={cameraStarting}
+                      className="min-h-11 rounded-sm border border-gold/40 bg-gold/10 px-6 py-2.5 text-[9px] uppercase tracking-[0.15em] text-gold transition-colors hover:bg-gold/20 disabled:cursor-wait disabled:opacity-60 motion-reduce:transition-none sm:min-h-12 sm:px-8 sm:text-[10px]"
+                    >
+                      {cameraStarting ? t("cameraStarting") : t("enableCamera")}
+                    </button>
+                  }
+                />
               )}
             </>
           ) : null}
 
-          {showAvatarPanel && !preview ? (
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
-              <span className="flex h-12 w-12 items-center justify-center rounded-full border border-gold/25 bg-gold/[0.06] text-gold/80">
-                <SourceIcon id="avatar" size={18} />
-              </span>
-              <p className="max-w-xs text-[11px] leading-relaxed text-ivory-muted sm:text-xs">{t("pickModel")}</p>
-            </div>
+          {showAvatarEmpty ? (
+            <PortraitPlaceholder
+              icon={<SourceIcon id="avatar" size={18} />}
+              title={t("pickModel")}
+              subtitle={t("avatarHint")}
+            />
           ) : null}
         </div>
 
-        <div className="hidden shrink-0 md:block">
+        <aside
+          className="fitting-room-photo-sidebar hidden min-h-0 w-full max-w-[19rem] shrink-0 flex-col md:flex lg:max-w-[21rem]"
+          dir={isAr ? "rtl" : "ltr"}
+        >
+          <p className="mb-2 text-[9px] uppercase tracking-[0.22em] text-gold">{t("sourceLabel")}</p>
           <SourceTabs
             tabs={tabs}
             source={source}
             isAr={isAr}
             stepLabel={t("step2Title")}
             onSelect={switchSource}
-            layout="vertical"
+            layout="sidebar"
           />
-        </div>
+
+          <div className="mt-4 min-h-0 flex-1 overflow-y-auto overscroll-y-contain border-t border-gold-glow/10 pt-4">
+            {source === "upload" ? (
+              <div className="space-y-3 px-0.5">
+                <p className="text-[11px] leading-relaxed text-ivory-muted">{t("step2Desc")}</p>
+                <button
+                  type="button"
+                  disabled={uploading}
+                  onClick={openFilePicker}
+                  className="flex min-h-11 w-full items-center justify-center gap-2 rounded-sm border border-gold/35 bg-gold/[0.08] px-4 text-[10px] uppercase tracking-[0.14em] text-gold transition-colors hover:border-gold/50 hover:bg-gold/[0.14] disabled:cursor-wait disabled:opacity-60"
+                >
+                  <SourceIcon id="upload" size={14} />
+                  {uploading ? t("uploading") : t("dropPhoto")}
+                </button>
+              </div>
+            ) : null}
+
+            {source === "camera" ? (
+              <div className="space-y-3 px-0.5">
+                <p className="text-[11px] leading-relaxed text-ivory-muted">{t("cameraIntro")}</p>
+                {!cameraActive ? (
+                  <button
+                    type="button"
+                    onClick={() => void startCamera()}
+                    disabled={cameraStarting}
+                    className="flex min-h-11 w-full items-center justify-center gap-2 rounded-sm border border-gold/35 bg-gold/[0.08] px-4 text-[10px] uppercase tracking-[0.14em] text-gold transition-colors hover:border-gold/50 hover:bg-gold/[0.14] disabled:cursor-wait disabled:opacity-60"
+                  >
+                    <SourceIcon id="camera" size={14} />
+                    {cameraStarting ? t("cameraStarting") : t("enableCamera")}
+                  </button>
+                ) : (
+                  <p className="text-[10px] leading-relaxed text-ivory-faint">{t("frameGuide")}</p>
+                )}
+              </div>
+            ) : null}
+
+            {source === "avatar" ? (
+              <AvatarPicker selectedSrc={preview} onSelect={selectAvatar} layout="grid" />
+            ) : null}
+          </div>
+        </aside>
       </div>
 
-      {showAvatarPanel ? (
-        <div className="fitting-room-avatar-panel shrink-0 border-t border-gold-glow/10 bg-void/40 px-2 pb-2 pt-2 sm:px-3 md:px-4">
-          <div className="mb-2 hidden px-1 sm:block">
-            <p className="text-[9px] uppercase tracking-[0.2em] text-gold">{t("avatarLabel")}</p>
-            <p className="mt-1 text-[10px] leading-relaxed text-ivory-muted sm:text-[11px]">{t("avatarHint")}</p>
-          </div>
-          <AvatarPicker selectedSrc={preview} onSelect={selectAvatar} compact />
+      {source === "avatar" ? (
+        <div className="fitting-room-avatar-panel shrink-0 border-t border-gold-glow/10 bg-void/35 px-2 pb-2 pt-2.5 md:hidden sm:px-3">
+          <AvatarPicker selectedSrc={preview} onSelect={selectAvatar} layout="scroll" showHeader={false} />
         </div>
       ) : null}
 

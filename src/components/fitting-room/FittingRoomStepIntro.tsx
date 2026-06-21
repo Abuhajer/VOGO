@@ -35,6 +35,9 @@ export default function FittingRoomStepIntro({
         {step === "product" && showCarouselHint ? (
           <p className="mt-1 hidden text-[10px] text-ivory-faint sm:block">{t("carouselHint")}</p>
         ) : null}
+        {step === "photo" ? (
+          <p className="mt-1 hidden text-[10px] text-ivory-faint md:block">{t("portraitHint")}</p>
+        ) : null}
       </div>
     );
   }

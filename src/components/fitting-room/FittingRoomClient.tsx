@@ -252,9 +252,9 @@ export default function FittingRoomClient({
             : "rounded-sm border border-gold-glow/15 shadow-[0_16px_48px_rgba(0,0,0,0.35)]"
         }`}
       >
-        {(isProductStep || isPhotoStep) ? (
+        {(isProductStep) ? (
           <FittingRoomStepIntro
-            step={isPhotoStep ? "photo" : "product"}
+            step="product"
             variant="overlay"
             showCarouselHint={isProductStep && !prefersReducedMotion && products.length > 0}
           />
