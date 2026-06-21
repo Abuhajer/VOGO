@@ -4,6 +4,7 @@ import {
   tryOnMissingConfigMessage,
 } from "./providers/registry";
 import { getPersonImageDimensions, lockOutputToPersonDimensions, readImageBufferFromRef } from "./normalize";
+import { getSharp } from "./sharpLazy";
 import { buildUnderlayerPromptSection, inferGarmentStyling } from "./garment-styling";
 import {
   buildClothingOnlyLockPart,
@@ -137,10 +138,13 @@ export async function runVirtualTryOn(input: RunTryOnInput): Promise<GenerateTry
     );
   }
 
+  const sharp = await getSharp();
+  const jpegBuffer = await sharp(buffer).jpeg({ quality: 88, mozjpeg: true }).toBuffer();
+
   const { url: finalUrl } = await saveUploadBuffer(
-    buffer,
+    jpegBuffer,
     `tryon-${Date.now()}`,
-    "image/png"
+    "image/jpeg"
   );
 
   return {

@@ -26,6 +26,18 @@ export default function CheckoutForm({ stripeEnabled }: { stripeEnabled: boolean
     return <p className="text-ivory-muted">{t("emptyCart")}</p>;
   }
 
+  function mapCheckoutError(code?: string) {
+    switch (code) {
+      case "INVALID_PRODUCTS":
+        return t("errorInvalidProducts");
+      case "STRIPE_UNAVAILABLE":
+      case "STRIPE_REQUIRES_DATABASE":
+        return t("errorStripeUnavailable");
+      default:
+        return t("error");
+    }
+  }
+
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setLoading(true);
@@ -40,13 +52,24 @@ export default function CheckoutForm({ stripeEnabled }: { stripeEnabled: boolean
       });
 
       if (!result.ok) {
-        setError(t("error"));
+        setError(mapCheckoutError(result.error));
         setLoading(false);
         return;
       }
 
-      clearCart();
-      trackPurchase(subtotal);
+      const isStripeRedirect = result.redirectUrl.includes("checkout.stripe.com");
+
+      if (!isStripeRedirect) {
+        clearCart();
+        trackPurchase(subtotal);
+      }
+
+      if (result.viaWhatsapp) {
+        window.open(result.redirectUrl, "_blank", "noopener,noreferrer");
+        window.location.href = `/${locale}/checkout/success?whatsapp=1`;
+        return;
+      }
+
       window.location.href = result.redirectUrl;
     } catch {
       setError(t("error"));

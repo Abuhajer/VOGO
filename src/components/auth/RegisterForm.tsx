@@ -33,7 +33,13 @@ export default function RegisterForm() {
     const result = await registerCustomer(form);
 
     if (!result.ok) {
-      setError(result.error === "EMAIL_EXISTS" ? t("emailExists") : t("error"));
+      setError(
+        result.error === "EMAIL_EXISTS"
+          ? t("emailExists")
+          : result.error === "DATABASE_UNAVAILABLE"
+            ? t("databaseUnavailable")
+            : t("error")
+      );
       setLoading(false);
       return;
     }

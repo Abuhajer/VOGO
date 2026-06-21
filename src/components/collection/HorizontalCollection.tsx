@@ -18,7 +18,10 @@ type HorizontalCollectionProps = {
 
 type SelectedProduct = {
   id: string;
+  slug: string;
   name: string;
+  nameAr: string;
+  nameEn: string;
   description: string;
   price: number;
   imageSrc: string;
@@ -144,7 +147,10 @@ function FlatCollectionStrip({
               onOpenDetails={() =>
                 onOpenDetails({
                   id: product.id,
+                  slug: product.slug,
                   name,
+                  nameAr: product.nameAr,
+                  nameEn: product.nameEn,
                   description,
                   price: product.price,
                   imageSrc: product.imageSrc,
@@ -183,7 +189,10 @@ export default function HorizontalCollection({ products }: HorizontalCollectionP
       const { name, description } = localizeProduct(product, locale);
       openProductDetails({
         id: product.id,
+        slug: product.slug,
         name,
+        nameAr: product.nameAr,
+        nameEn: product.nameEn,
         description,
         price: product.price,
         imageSrc: product.imageSrc,
@@ -276,6 +285,9 @@ export default function HorizontalCollection({ products }: HorizontalCollectionP
         description={selectedProduct?.description ?? ""}
         price={selectedProduct?.price ?? 0}
         imageSrc={selectedProduct?.imageSrc ?? ""}
+        slug={selectedProduct?.slug}
+        nameAr={selectedProduct?.nameAr}
+        nameEn={selectedProduct?.nameEn}
       />
     </>
   );

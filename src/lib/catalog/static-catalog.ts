@@ -117,6 +117,47 @@ export function getStaticFittingRoomProductBySlug(slug: string): FittingRoomProd
   return FITTING_ROOM_STATIC_CATALOG.find((p) => p.slug === slug) ?? null;
 }
 
+export function getStaticProductSlugs(): string[] {
+  return STATIC_PRODUCTS.map((p) => p.slug);
+}
+
+/** Shop product detail shape aligned with Prisma `product` + `collection` include. */
+export function getStaticProductBySlug(slug: string) {
+  const product = STATIC_PRODUCTS.find((p) => p.slug === slug);
+  if (!product) return null;
+
+  const collection = STATIC_COLLECTIONS.find((c) => c.slug === product.collectionSlug);
+
+  return {
+    id: product.slug,
+    slug: product.slug,
+    sku: product.sku,
+    nameAr: product.nameAr,
+    nameEn: product.nameEn,
+    descAr: product.descAr,
+    descEn: product.descEn,
+    price: product.price,
+    imageSrc: product.imageSrc,
+    active: true,
+    featuredCarousel: product.featuredCarousel,
+    collectionId: collection?.id ?? product.collectionSlug,
+    createdAt: new Date(0),
+    updatedAt: new Date(0),
+    collection: collection
+      ? {
+          id: collection.id,
+          slug: collection.slug,
+          nameAr: collection.nameAr,
+          nameEn: collection.nameEn,
+          sortOrder: collection.sortOrder,
+          active: true,
+          createdAt: new Date(0),
+          updatedAt: new Date(0),
+        }
+      : null,
+  };
+}
+
 export function getStaticCarouselProducts(): CollectionCarouselProduct[] {
   return STATIC_PRODUCTS.filter((p) => p.featuredCarousel).map(toCarouselProduct);
 }

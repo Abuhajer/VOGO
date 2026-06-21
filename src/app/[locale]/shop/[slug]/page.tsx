@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
@@ -6,7 +7,34 @@ import { getProductBySlug } from "@/server/products";
 import { localizeProduct } from "@/lib/products";
 import { localizeCollectionName } from "@/lib/collections";
 import { formatNumber } from "@/lib/format";
+import { absoluteUrl } from "@/lib/site";
 import AddToCartButton from "@/components/shop/AddToCartButton";
+
+export async function generateMetadata({
+  params: { locale, slug },
+}: {
+  params: { locale: string; slug: string };
+}): Promise<Metadata> {
+  const product = await getProductBySlug(slug);
+  if (!product) {
+    return { title: "Product not found" };
+  }
+
+  const { name, description } = localizeProduct(product, locale);
+  const title = `${name} | VOGO BY FAME`;
+  const url = absoluteUrl(`/${locale}/shop/${slug}`);
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url,
+      images: [{ url: absoluteUrl(product.imageSrc) }],
+    },
+  };
+}
 
 export default async function ProductPage({
   params: { locale, slug },

@@ -2,7 +2,7 @@
 
 import bcrypt from "bcryptjs";
 import { Role } from "@/types/db";
-import { prisma } from "@/lib/db";
+import { getPrisma } from "@/lib/db";
 import { z } from "zod";
 
 const registerSchema = z.object({
@@ -14,6 +14,11 @@ const registerSchema = z.object({
 
 export async function registerCustomer(input: z.infer<typeof registerSchema>) {
   const data = registerSchema.parse(input);
+  const prisma = getPrisma();
+  if (!prisma) {
+    return { ok: false as const, error: "DATABASE_UNAVAILABLE" };
+  }
+
   const email = data.email.toLowerCase();
 
   const existing = await prisma.user.findUnique({ where: { email } });
@@ -35,6 +40,9 @@ export async function registerCustomer(input: z.infer<typeof registerSchema>) {
 }
 
 export async function getCustomerOrders(userId: string) {
+  const prisma = getPrisma();
+  if (!prisma) return [];
+
   return prisma.order.findMany({
     where: { userId },
     include: { items: true },
@@ -43,6 +51,9 @@ export async function getCustomerOrders(userId: string) {
 }
 
 export async function getCustomerOrder(userId: string, orderId: string) {
+  const prisma = getPrisma();
+  if (!prisma) return null;
+
   return prisma.order.findFirst({
     where: { id: orderId, userId },
     include: { items: true },

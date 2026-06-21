@@ -5,9 +5,11 @@ import { createPortal } from "react-dom";
 import Image from "next/image";
 import { useTranslations, useLocale } from "next-intl";
 import { AnimatePresence, motion } from "framer-motion";
+import { Link } from "@/i18n/routing";
 import SectionLabel from "@/components/icons/SectionLabel";
 import { CloseIcon, WhatsAppIcon } from "@/components/icons/Icons";
 import { useIsMobile } from "@/hooks/useIsMobile";
+import { useCart } from "@/context/CartProvider";
 import { BUSINESS_PHONE_E164, formatNumber } from "@/lib/format";
 
 type ProductDetailModalProps = {
@@ -17,6 +19,9 @@ type ProductDetailModalProps = {
   description: string;
   price: number;
   imageSrc: string;
+  slug?: string;
+  nameAr?: string;
+  nameEn?: string;
 };
 
 export default function ProductDetailModal({
@@ -26,6 +31,9 @@ export default function ProductDetailModal({
   description,
   price,
   imageSrc,
+  slug,
+  nameAr,
+  nameEn,
 }: ProductDetailModalProps) {
   const t = useTranslations("Collection");
   const locale = useLocale();
@@ -34,11 +42,18 @@ export default function ProductDetailModal({
   const isMobile = useIsMobile();
   const isMobileView = isMobile ?? true;
   const [mounted, setMounted] = useState(false);
+  const [added, setAdded] = useState(false);
+  const { addItem } = useCart();
+
+  const canShop = Boolean(slug && nameAr && nameEn);
 
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setAdded(false);
+      return;
+    }
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
@@ -68,6 +83,19 @@ export default function ProductDetailModal({
     price: formattedPrice,
   });
   const whatsappHref = `https://wa.me/${BUSINESS_PHONE_E164.replace("+", "")}?text=${encodeURIComponent(whatsappMessage)}`;
+
+  function handleAddToCart() {
+    if (!canShop || !slug || !nameAr || !nameEn) return;
+    addItem({
+      productId: slug,
+      slug,
+      nameAr,
+      nameEn,
+      price,
+      imageSrc,
+    });
+    setAdded(true);
+  }
 
   if (!mounted) return null;
 
@@ -170,6 +198,41 @@ export default function ProductDetailModal({
                 </ul>
 
                 <div className="mt-6 sm:mt-8 lg:mt-auto lg:pt-8 flex flex-col gap-3 sticky bottom-0 bg-obsidian pt-3 sm:pt-0 sm:static">
+                  {canShop ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={handleAddToCart}
+                        className={`inline-flex w-full items-center justify-center min-h-[48px] px-5 py-3.5 bg-gold text-[#0E0D12] font-sans text-xs sm:text-sm font-semibold rounded-sm transition-all duration-300 hover:bg-gold-muted active:scale-[0.98] ${
+                          isArabic ? "" : "uppercase tracking-[0.12em]"
+                        }`}
+                      >
+                        {added ? t("addedToCart") : t("addToCart")}
+                      </button>
+                      <Link
+                        href={`/fitting-room?product=${slug}`}
+                        onClick={onClose}
+                        className={`inline-flex w-full items-center justify-center min-h-[48px] px-5 py-3.5 border border-gold/40 text-gold font-sans text-xs sm:text-sm font-semibold rounded-sm transition-all duration-300 hover:bg-gold/10 active:scale-[0.98] ${
+                          isArabic ? "" : "uppercase tracking-[0.12em]"
+                        }`}
+                      >
+                        {t("tryOn")}
+                      </Link>
+                    </div>
+                  ) : null}
+
+                  {canShop ? (
+                    <Link
+                      href={`/shop/${slug}`}
+                      onClick={onClose}
+                      className={`inline-flex w-full items-center justify-center min-h-[48px] px-5 py-3.5 border border-gold-muted/40 text-ivory font-sans text-xs font-medium rounded-sm transition-all duration-300 hover:bg-surface/80 active:scale-[0.98] ${
+                        isArabic ? "" : "uppercase tracking-[0.12em]"
+                      }`}
+                    >
+                      {t("viewInShop")}
+                    </Link>
+                  ) : null}
+
                   <a
                     href={whatsappHref}
                     target="_blank"
