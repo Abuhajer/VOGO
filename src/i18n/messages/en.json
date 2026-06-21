@@ -395,6 +395,7 @@
     "cameraDenied": "Camera access was denied. Please allow camera or upload a photo.",
     "captureFailed": "Could not capture photo. Please try again.",
     "generateFailed": "Generation failed. Please try again.",
+    "serverError": "Server error during try-on. Please refresh and try again in a moment.",
     "rateLimit": "Gemini is busy (rate limit). Wait about {seconds} seconds, then try again.",
     "quotaExceeded": "Daily free image quota may be used up. Wait an hour or try again tomorrow, or enable billing in Google AI Studio.",
     "apiNotConfigured": "Virtual try-on is not configured yet. Set IMAGE_PROVIDER and add GEMINI_API_KEY or NVIDIA_API_KEY in .env (see .env.example), then restart the dev server.",

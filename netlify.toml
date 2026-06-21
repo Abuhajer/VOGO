@@ -1,6 +1,14 @@
 [build]
   command = "node scripts/netlify-build.mjs"
 
+[functions]
+  node_bundler = "esbuild"
+  external_node_modules = ["sharp", "@prisma/client"]
+
+[functions."*"]
+  # Try-on (Gemini + sharp normalize) can exceed the default 10s on cold start.
+  timeout = 60
+
 [build.environment]
   NODE_VERSION = "20"
   NETLIFY = "true"

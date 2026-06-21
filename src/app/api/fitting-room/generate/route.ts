@@ -8,6 +8,7 @@ import {
 } from "@/server/fitting-room";
 
 export const maxDuration = 180;
+export const runtime = "nodejs";
 
 const bodySchema = z
   .object({

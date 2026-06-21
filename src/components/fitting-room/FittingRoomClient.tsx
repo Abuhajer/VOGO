@@ -132,7 +132,8 @@ export default function FittingRoomClient({
           productId: selectedProduct.id,
         }),
       });
-      const data = (await res.json()) as {
+      const raw = await res.text();
+      let data: {
         url?: string;
         width?: number;
         height?: number;
@@ -142,6 +143,17 @@ export default function FittingRoomClient({
         code?: string;
         retryAfterSeconds?: number;
       };
+      try {
+        data = JSON.parse(raw) as typeof data;
+      } catch {
+        setError(
+          res.ok
+            ? t("generateFailed")
+            : t("serverError")
+        );
+        goToStep("photo");
+        return;
+      }
       if (!res.ok || !data.url) {
         setError(mapGenerateError(data));
         goToStep("photo");

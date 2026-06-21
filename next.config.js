@@ -6,6 +6,8 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Keep native modules external so Netlify bundles Linux sharp binaries from CI builds.
+  serverExternalPackages: ["sharp", "@prisma/client"],
 
   // Dev-only: memory cache avoids corrupt/missing .pack.gz errors on Windows
   // when .next is cleared while the dev server is running.
