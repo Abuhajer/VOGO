@@ -40,10 +40,16 @@ export default function FittingRoomStepIntro({
   }
 
   return (
-    <div className="mb-3 shrink-0 sm:mb-4 md:mb-5">
-      <p className="mb-1 text-[10px] uppercase tracking-[0.3em] text-gold sm:text-[11px]">{label}</p>
-      <h2 className="font-serif text-xl text-ivory sm:text-2xl md:text-[1.75rem] lg:text-3xl">{title}</h2>
-      <p className="mt-1.5 max-w-2xl text-xs leading-relaxed text-ivory-muted sm:text-sm">{desc}</p>
+    <div className="mb-2 shrink-0 border-b border-gold-glow/10 px-3 pb-2 pt-2 sm:mb-4 sm:border-0 sm:px-0 sm:pb-0 sm:pt-0 md:mb-5">
+      <p className="mb-0.5 text-[9px] uppercase tracking-[0.28em] text-gold sm:mb-1 sm:text-[11px] sm:tracking-[0.3em]">
+        {label}
+      </p>
+      <h2 className="font-serif text-base leading-tight text-ivory sm:text-2xl md:text-[1.75rem] lg:text-3xl">
+        {title}
+      </h2>
+      <p className="mt-1 max-w-2xl text-[10px] leading-snug text-ivory-muted line-clamp-2 sm:mt-1.5 sm:line-clamp-none sm:text-sm sm:leading-relaxed">
+        {desc}
+      </p>
       {step === "product" && showCarouselHint ? (
         <p className="mt-2 text-[10px] text-ivory-faint sm:text-[11px]">{t("carouselHint")}</p>
       ) : null}

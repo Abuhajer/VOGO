@@ -35,15 +35,34 @@ export function nvidiaQwenSupportsMultiImage(model = TRY_ON_ENV.nvidiaImageModel
   return id.includes("2511") || id.includes("2509");
 }
 
-export function buildNvidiaGenAiInferUrl(model = TRY_ON_ENV.nvidiaImageModel): string {
-  const base = TRY_ON_ENV.nvidiaApiBaseUrl.replace(/\/$/, "");
-  const slug = model.replace(/^\/+|\/+$/g, "");
-  return `${base}/genai/${slug}`;
+export function normalizeNvidiaModelSlug(model = TRY_ON_ENV.nvidiaImageModel): string {
+  return model.replace(/^\/+|\/+$/g, "");
 }
 
-export function buildNvidiaOpenAiEditsUrl(): string {
+/** Model-scoped GenAI base, e.g. https://ai.api.nvidia.com/v1/genai/qwen/qwen-image-edit-2511 */
+export function buildNvidiaGenAiBaseUrl(model = TRY_ON_ENV.nvidiaImageModel): string {
   const base = TRY_ON_ENV.nvidiaApiBaseUrl.replace(/\/$/, "");
-  return `${base}/images/edits`;
+  return `${base}/genai/${normalizeNvidiaModelSlug(model)}`;
+}
+
+/** Qwen uses /infer; FLUX Kontext posts to the genai base path directly. */
+export function buildNvidiaGenAiInferUrl(model = TRY_ON_ENV.nvidiaImageModel): string {
+  if (isNvidiaQwenModel(model)) {
+    return `${buildNvidiaGenAiBaseUrl(model)}/infer`;
+  }
+  return buildNvidiaGenAiBaseUrl(model);
+}
+
+/** Short OpenAI model id, e.g. qwen-image-edit-2511 (not qwen/qwen-image-edit-2511). */
+export function normalizeNvidiaQwenOpenAiModelId(model = TRY_ON_ENV.nvidiaImageModel): string {
+  const slug = normalizeNvidiaModelSlug(model);
+  const parts = slug.split("/");
+  return parts[parts.length - 1] ?? slug;
+}
+
+/** OpenAI-compatible edits are scoped under the model GenAI path (not global /v1/images/edits). */
+export function buildNvidiaOpenAiEditsUrl(model = TRY_ON_ENV.nvidiaImageModel): string {
+  return `${buildNvidiaGenAiBaseUrl(model)}/images/edits`;
 }
 
 export async function tryOnImageToJpegBuffer(img: TryOnImageInput): Promise<Buffer> {
@@ -96,6 +115,9 @@ export function formatNvidiaHttpError(status: number, bodyText: string): string 
   if (status === 403 || status === 401) {
     return `${providerLabel} authorization failed (${status}). Check NVIDIA_API_KEY has "Public API Endpoints" scope from https://build.nvidia.com. ${short}`;
   }
+  if (status === 404) {
+    return `${providerLabel} model endpoint not found (404). Verify NVIDIA_IMAGE_MODEL is enabled for your API key at https://build.nvidia.com (e.g. qwen/qwen-image-edit-2511). Set GEMINI_API_KEY for automatic fallback. ${short}`;
+  }
   if (status === 503 || status === 502) {
     return `${providerLabel} temporarily unavailable (${status}). Try again in a moment. ${short}`;
   }
@@ -140,6 +162,20 @@ export async function saveGeneratedImage(buffer: Buffer): Promise<GenerateTryOnR
 
 export function isNvidiaCustomImageUnsupported(message: string): boolean {
   return /Expected:\s*example_id|got:\s*(base64|asset_id)/i.test(message);
+}
+
+/** NVIDIA failures where Gemini fallback is appropriate when configured. */
+export function isNvidiaFallbackEligible(message: string): boolean {
+  return (
+    isNvidiaCustomImageUnsupported(message) ||
+    /request failed \(404\)|404 page not found|endpoint not found \(404\)/i.test(message)
+  );
+}
+
+export function isNvidiaEndpointNotFound(message: string): boolean {
+  return /\(\s*404\s*\)|\b404\b|page not found|endpoint not found|model endpoint not found/i.test(
+    message
+  );
 }
 
 export function isNvidiaConfigured(): boolean {

@@ -5,7 +5,7 @@ import {
   isNvidiaCustomImageUnsupported,
   nvidiaMissingConfigMessage,
 } from "../nvidia";
-import { isNvidiaQwenModel } from "../nvidiaCommon";
+import { isNvidiaFallbackEligible, isNvidiaQwenModel } from "../nvidiaCommon";
 import { TRY_ON_ENV } from "../env";
 import type { GenerateTryOnOptions, GenerateTryOnResponse } from "../types";
 import type { ImageProviderId, ImageTransformProvider } from "./types";
@@ -111,14 +111,15 @@ export async function generateWithActiveProvider(
     return await nvidiaProvider.generate(options);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    if (isNvidiaCustomImageUnsupported(message)) {
+    if (isNvidiaFallbackEligible(message)) {
       if (!isGeminiConfigured()) {
         throw new Error(
-          "NVIDIA free API does not accept custom photos (demo images only). Set IMAGE_PROVIDER=gemini and add GEMINI_API_KEY, or use a self-hosted NIM deployment."
+          "NVIDIA hosted API could not run try-on (404 or unsupported photo format). Set IMAGE_PROVIDER=gemini and add GEMINI_API_KEY, or check NVIDIA_IMAGE_MODEL / NVIDIA_OPENAI_API_BASE_URL in .env.example."
         );
       }
       console.warn(
-        "[TryOn] NVIDIA hosted API rejected custom photo — falling back to Gemini for try-on"
+        "[TryOn] NVIDIA request failed — falling back to Gemini for try-on:",
+        message.slice(0, 120)
       );
       return geminiProvider.generate({
         ...options,

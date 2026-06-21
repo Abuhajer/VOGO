@@ -30,6 +30,9 @@ export const TRY_ON_ENV = {
     process.env.NVIDIA_IMAGE_MODEL?.trim() || "black-forest-labs/flux.1-kontext-dev",
   nvidiaApiBaseUrl:
     process.env.NVIDIA_API_BASE_URL?.trim() || "https://ai.api.nvidia.com/v1",
+  /** OpenAI-compatible image edits (Qwen) — hosted on integrate.api.nvidia.com, not ai.api. */
+  nvidiaOpenAiApiBaseUrl:
+    process.env.NVIDIA_OPENAI_API_BASE_URL?.trim() || "https://integrate.api.nvidia.com/v1",
   nvidiaRequestTimeoutMs: intEnv("NVIDIA_REQUEST_TIMEOUT_MS", 120_000),
   nvidiaProviderDisplayName:
     process.env.NVIDIA_PROVIDER_DISPLAY_NAME?.trim() || "NVIDIA NIM",

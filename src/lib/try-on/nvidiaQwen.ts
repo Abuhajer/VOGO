@@ -8,6 +8,7 @@ import {
   bufferFromNvidiaInferResponse,
   bufferFromOpenAiEditResponse,
   formatNvidiaHttpError,
+  normalizeNvidiaQwenOpenAiModelId,
   nvidiaQwenSupportsMultiImage,
   saveGeneratedImage,
   tryOnImageToJpegBuffer,
@@ -15,36 +16,34 @@ import {
   type NvidiaOpenAiEditResponse,
 } from "./nvidiaCommon";
 
-async function imageInputsToDataUrls(
+async function uploadImagesAsAssetRefs(
   images: TryOnImageInput[],
   apiKey: string,
   labelPrefix: string
-): Promise<string[]> {
-  const urls: string[] = [];
+): Promise<{ refs: string[]; assetIds: string[] }> {
+  const refs: string[] = [];
+  const assetIds: string[] = [];
 
   for (let i = 0; i < images.length; i++) {
     const jpegBuffer = await tryOnImageToJpegBuffer(images[i]);
     const contentType = "image/jpeg";
-
-    try {
-      const assetId = await uploadNvcfImageAsset(
-        jpegBuffer,
-        contentType,
-        apiKey,
-        `${labelPrefix}-${i + 1}`
-      );
-      urls.push(nvcfAssetImageReference(assetId, contentType));
-    } catch {
-      urls.push(`data:image/jpeg;base64,${jpegBuffer.toString("base64")}`);
-    }
+    const assetId = await uploadNvcfImageAsset(
+      jpegBuffer,
+      contentType,
+      apiKey,
+      `${labelPrefix}-${i + 1}`
+    );
+    assetIds.push(assetId);
+    refs.push(nvcfAssetImageReference(assetId, contentType));
   }
 
-  return urls;
+  return { refs, assetIds };
 }
 
 async function postOpenAiEdits(
   apiKey: string,
-  body: Record<string, unknown>
+  body: Record<string, unknown>,
+  assetIds: string[]
 ): Promise<Buffer> {
   const providerLabel = TRY_ON_ENV.nvidiaProviderDisplayName;
   const url = buildNvidiaOpenAiEditsUrl();
@@ -59,6 +58,9 @@ async function postOpenAiEdits(
         Authorization: `Bearer ${apiKey}`,
         Accept: "application/json",
         "Content-Type": "application/json",
+        ...(assetIds.length > 0
+          ? { "NVCF-INPUT-ASSET-REFERENCES": assetIds.join(",") }
+          : {}),
       },
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(TRY_ON_ENV.nvidiaRequestTimeoutMs),
@@ -156,7 +158,7 @@ export async function generateWithNvidiaQwen(options: GenerateTryOnOptions) {
     options.prompt ||
     buildNvidiaQwenTryOnPrompt({}, dims, undefined, undefined, useMultiImage);
 
-  const model = TRY_ON_ENV.nvidiaImageModel.replace(/^\/+|\/+$/g, "");
+  const model = normalizeNvidiaQwenOpenAiModelId();
   const size =
     dims?.width && dims?.height ? `${dims.width}x${dims.height}` : undefined;
 
@@ -164,39 +166,32 @@ export async function generateWithNvidiaQwen(options: GenerateTryOnOptions) {
     `[TryOn] ${providerLabel} (Qwen): preparing ${editImages.length} image(s), multi=${useMultiImage}`
   );
 
-  const dataUrls = await imageInputsToDataUrls(editImages, apiKey, "vogo-qwen");
+  const { refs, assetIds } = await uploadImagesAsAssetRefs(editImages, apiKey, "vogo-qwen");
+
+  const openAiBody: Record<string, unknown> = {
+    model,
+    prompt,
+    image: refs.length === 1 ? refs[0] : refs,
+    n: 1,
+    response_format: "b64_json",
+  };
+  if (size) openAiBody.size = size;
 
   try {
-    const openAiBody: Record<string, unknown> = {
-      model,
-      prompt,
-      image: dataUrls.length === 1 ? dataUrls[0] : dataUrls,
-      n: 1,
-      response_format: "b64_json",
-    };
-    if (size) openAiBody.size = size;
-
-    const buffer = await postOpenAiEdits(apiKey, openAiBody);
+    const buffer = await postOpenAiEdits(apiKey, openAiBody, assetIds);
     return saveGeneratedImage(buffer);
   } catch (openAiErr) {
     console.warn(
-      `[TryOn] ${providerLabel} (Qwen): OpenAI edits failed, trying /genai infer…`,
+      `[TryOn] ${providerLabel} (Qwen): OpenAI edits failed, trying /infer…`,
       openAiErr instanceof Error ? openAiErr.message : openAiErr
     );
   }
 
   const inferBody: Record<string, unknown> = {
     prompt,
-    image: dataUrls.length === 1 ? dataUrls[0] : dataUrls,
+    image: refs.length === 1 ? refs[0] : refs,
     seed: TRY_ON_ENV.nvidiaSeed,
   };
-
-  const assetIds = dataUrls
-    .map((ref) => {
-      const m = /asset_id,([a-f0-9-]+)/i.exec(ref);
-      return m?.[1] ?? "";
-    })
-    .filter(Boolean);
 
   const buffer = await postQwenInfer(apiKey, inferBody, assetIds);
   return saveGeneratedImage(buffer);
