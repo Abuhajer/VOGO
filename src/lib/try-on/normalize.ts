@@ -49,9 +49,9 @@ function aspectRatiosMatch(aW: number, aH: number, bW: number, bH: number): bool
   return Math.abs(a - b) / Math.max(a, b) < 0.004;
 }
 
-async function personCanvasBackground(
-  personBuf: Buffer
-): Promise<{ r: number; g: number; b: number; alpha: number }> {
+type Rgba = { r: number; g: number; b: number; alpha: number };
+
+async function personCanvasBackground(personBuf: Buffer): Promise<Rgba> {
   const stats = await sharp(personBuf).stats();
   const m0 = stats.channels[0].mean;
   const m1 = stats.channels[1]?.mean ?? m0;
@@ -65,9 +65,49 @@ async function personCanvasBackground(
 }
 
 /**
+ * Scale image uniformly to fit inside target canvas (no crop), then pad to exact W×H.
+ * Sharp `fit: inside` alone does not always emit the padded canvas size.
+ */
+async function fitInsideExactCanvas(
+  imageBuffer: Buffer,
+  targetW: number,
+  targetH: number,
+  bg: Rgba
+): Promise<Buffer> {
+  const resized = await sharp(imageBuffer)
+    .resize(targetW, targetH, {
+      fit: "inside",
+      kernel: sharp.kernel.lanczos3,
+    })
+    .toBuffer();
+
+  const meta = await sharp(resized).metadata();
+  const scaledW = meta.width ?? targetW;
+  const scaledH = meta.height ?? targetH;
+
+  if (scaledW === targetW && scaledH === targetH) {
+    return sharp(resized).png().toBuffer();
+  }
+
+  const left = Math.floor((targetW - scaledW) / 2);
+  const top = Math.floor((targetH - scaledH) / 2);
+
+  return sharp({
+    create: {
+      width: targetW,
+      height: targetH,
+      channels: 4,
+      background: bg,
+    },
+  })
+    .composite([{ input: resized, left, top }])
+    .png()
+    .toBuffer();
+}
+
+/**
  * Pad/scale model output to the person photo's exact pixel width × height.
- * Uses `fit: inside` so the full frame stays visible (no zoom-in crop).
- * Background pad tone is sampled from the person photo — never flat black bars.
+ * Uses uniform scale + centre pad (no crop, no zoom-in).
  */
 export async function enforceExactPersonDimensions(
   personImageRefUrl: string,
@@ -92,6 +132,9 @@ export async function enforceExactPersonDimensions(
     const bg = await personCanvasBackground(personBuf);
 
     if (aspectRatiosMatch(resultW, resultH, targetW, targetH)) {
+      console.log(
+        `[TryOn] Uniform scale ${resultW}×${resultH} → ${targetW}×${targetH} (matched aspect)`
+      );
       return sharp(resultBuffer)
         .resize(targetW, targetH, { kernel: sharp.kernel.lanczos3 })
         .png()
@@ -99,18 +142,10 @@ export async function enforceExactPersonDimensions(
     }
 
     console.warn(
-      `[TryOn] Aspect mismatch result ${resultW}×${resultH} → person ${targetW}×${targetH}; scaling inside canvas (no crop/zoom)`
+      `[TryOn] Aspect mismatch ${resultW}×${resultH} → ${targetW}×${targetH}; scale inside + pad (no crop)`
     );
 
-    return sharp(resultBuffer)
-      .resize(targetW, targetH, {
-        fit: "inside",
-        position: "centre",
-        background: bg,
-        kernel: sharp.kernel.lanczos3,
-      })
-      .png()
-      .toBuffer();
+    return fitInsideExactCanvas(resultBuffer, targetW, targetH, bg);
   } catch (e) {
     console.warn(
       "enforceExactPersonDimensions: skipped",
@@ -142,19 +177,11 @@ export async function assertExactPersonCanvas(
 
   if (width !== dims.width || height !== dims.height) {
     console.warn(
-      `[TryOn] Final canvas ${width}×${height} → ${dims.width}×${dims.height} (inside pad, no crop)`
+      `[TryOn] Final canvas ${width}×${height} → forcing ${dims.width}×${dims.height} (inside pad)`
     );
     const personBuf = await readImageBufferFromRef(personImageRefUrl);
     const bg = await personCanvasBackground(personBuf);
-    normalized = await sharp(normalized)
-      .resize(dims.width, dims.height, {
-        fit: "inside",
-        position: "centre",
-        background: bg,
-        kernel: sharp.kernel.lanczos3,
-      })
-      .png()
-      .toBuffer();
+    normalized = await fitInsideExactCanvas(normalized, dims.width, dims.height, bg);
     width = dims.width;
     height = dims.height;
   }

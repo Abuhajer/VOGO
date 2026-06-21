@@ -15,8 +15,21 @@ function buildCriticalConstraints(dims?: ImageDimensions | null): string {
 4. NO ZOOM OUT, NO CROP, NO REFRAME, NO ROTATION.
 5. DO NOT MOVE THE PERSON: same position left/right/up/down in the frame — no recentre or reframing.
 6. CLOTHING ONLY: replace visible garments — NOT a portrait edit, relight, or background change.
-7. IN-PLACE EDIT: treat the person photo as a fixed template; paint the new outfit onto the existing body at the same scale and position.`;
+7. IN-PLACE EDIT: treat the person photo as a fixed template; paint the new outfit onto the existing body at the same scale and position.
+8. NEVER output a square canvas (e.g. 1024×1024) when the person photo is portrait or landscape — match input pixel dimensions exactly.`;
 }
+
+const CLOTHING_ONLY_LOCK = `
+=== CLOTHING-ONLY EDIT (STRICT — ZERO TOLERANCE) ===
+- Change ONLY garment/clothing pixels. Every other pixel must stay identical to the person photo.
+- Face (eyes, nose, mouth, lips, ears, eyebrows, expression) — preserve exactly; no edits, smoothing, or replacement.
+- Hair, beard, skin tone, neck skin, hands, fingers — preserve exactly.
+- Body shape, pose, posture, limb angles, head position — preserve exactly.
+- Background, walls, floor, furniture, environment — preserve exactly; no replacement, blur, cleanup, or extension.
+- Lighting, shadows, exposure, white balance — preserve exactly.
+- NO beautification, NO retouching, NO skin smoothing, NO teeth whitening, NO makeup changes, NO portrait enhancement.
+- NO environment change, NO scene relight, NO HDR, NO background whitening.
+- Swap only the catalog product garment onto the person — nothing else.`;
 
 const LOCK_BODY_POSE = `
 === BODY / POSE / POSITION LOCK ===
@@ -51,6 +64,18 @@ const CLOTHING_LIGHT_MATCH = `
 - New garment uses the SAME scene lighting as the person photo (direction, softness, shadow color).
 - Realistic fabric drape, wrinkles, and folds for the person's pose (standing or seated).`;
 
+const FORBIDDEN_EDITS = `
+=== FORBIDDEN (UNLESS CHANGING CLOTHING) ===
+- Zoom in or zoom out (subject closer/farther, or larger/smaller in frame)
+- Moving, shifting, or recentring the person in the frame
+- Crop, reframe, or change subject scale in the frame
+- Rotate, flip, mirror, or tilt
+- Face, hair, skin, hands, pose, or body proportion edits
+- Background replacement, whitening, relighting, environment change, or HDR beautify
+- Portrait retouching, skin smoothing, teeth whitening, makeup, or beautification
+- Letterboxing, pillarboxing, black bars, or empty margins inside the scene
+- Changing output resolution or aspect ratio away from the person photo`;
+
 function formatSize(dims?: ImageDimensions | null): string {
   if (!dims?.width || !dims?.height) {
     return "Render at the identical pixel resolution as the person photo.";
@@ -69,17 +94,19 @@ function buildGarmentContextBlock(garment: GarmentTextContext): string {
 
 function buildCoverageBlock(coverage?: GarmentCoverage): string {
   if (coverage === "upper") {
-    return `=== GARMENT COVERAGE (JACKET / OUTERWEAR ONLY) ===
-- Replace the jacket/blazer and visible shirt or tie on the upper body.
+    return `=== GARMENT COVERAGE (UPPER BODY / OUTERWEAR ONLY) ===
+- Replace ONLY the jacket/blazer and visible shirt or tie on the upper body with the catalog product.
 - The reference may show trousers on a mannequin — IGNORE those legs; use only the jacket details.
 - Keep the person's existing trousers and pants below the waist exactly as in the person photo.
-- Add an appropriate dress shirt under the jacket if the reference is outerwear only.`;
+- Add an appropriate dress shirt under the jacket if the reference is outerwear only.
+- Do NOT alter face, hair, skin, hands, pose, background, or lower-body clothing.`;
   }
 
   return `=== GARMENT COVERAGE (FULL OUTFIT) ===
-- Replace the full visible outfit: jacket, waistcoat (if in reference), shirt, tie, and trousers.
+- Replace the full visible outfit: jacket, waistcoat (if in reference), shirt, tie, and trousers with the catalog product.
 - Match trouser color and fabric from the reference — do not leave original jacket or pants visible.
-- For seated poses, drape trousers naturally over the lap with realistic folds — no melted fabric or distorted crotch.`;
+- For seated poses, drape trousers naturally over the lap with realistic folds — no melted fabric or distorted crotch.
+- Do NOT alter face, hair, skin, hands, pose, or background.`;
 }
 
 function buildImageOrderNote(hasGarmentImage: boolean): string {
@@ -91,23 +118,28 @@ function buildImageOrderNote(hasGarmentImage: boolean): string {
 2. Garment reference — use ONLY for garment color, fabric, cut, lapels, buttons, and tailoring. Do NOT copy its background, mannequin, or crop.`;
 }
 
+function buildVerificationBlock(dims?: ImageDimensions | null): string {
+  return `=== VERIFICATION ===
+✓ Output is exactly ${dims?.width ?? "?"}×${dims?.height ?? "?"} pixels with NO zoom or crop
+✓ Person is in the SAME position and scale as the person photo (not moved, not closer)
+✓ ONLY clothing changed to catalog product — face, hair, skin, hands, pose, background IDENTICAL
+✓ Face and hair IDENTICAL to person photo (no gray blocks, blur, or retouching)
+✓ Pose, background, lighting, and framing IDENTICAL to person photo
+✓ No beautification, environment change, or portrait edits`;
+}
+
+/** Short leading instruction: clothing-only lock (sent before person photo). */
+export function buildClothingOnlyLockPart(): string {
+  return "CLOTHING-ONLY: Change ONLY the garment to the catalog product. Preserve face, hair, skin, hands, pose, background, and lighting EXACTLY. No beautification, retouching, or environment edits.";
+}
+
 /** Short leading instruction sent before the person photo in the multimodal payload. */
 export function buildDimensionLockPart(dims?: ImageDimensions | null): string {
   if (!dims?.width || !dims?.height) {
-    return "Output MUST match the person photo pixel width × height exactly. Change clothing ONLY. NO zoom, crop, reframe, or face edits.";
+    return "Output MUST match the person photo pixel width × height exactly. Change clothing ONLY. NO zoom, crop, reframe, face, background, or body edits.";
   }
-  return `OUTPUT LOCK: The next image is the person photo at ${dims.width}×${dims.height} pixels. Your output MUST be that same canvas with ONLY the clothing changed. FORBIDDEN: zoom in, zoom out, crop, move/reposition the person, reframe, rotate, relight, background edits, face or body edits.`;
+  return `OUTPUT LOCK: The next image is the person photo at ${dims.width}×${dims.height} pixels. Your output MUST be that same canvas with ONLY the clothing changed to the catalog product. FORBIDDEN: zoom, crop, reframe, rotate, relight, background edits, face/body/pose/skin/hair edits, beautification, retouching, environment change.`;
 }
-
-const FORBIDDEN_EDITS = `
-=== FORBIDDEN (UNLESS CHANGING CLOTHING) ===
-- Zoom in or zoom out (subject closer/farther, or larger/smaller in frame)
-- Moving, shifting, or recentring the person in the frame
-- Crop, reframe, or change subject scale in the frame
-- Rotate, flip, mirror, or tilt
-- Face, hair, skin, hands, pose, or body proportion edits
-- Background replacement, whitening, relighting, or HDR beautify
-- Letterboxing, pillarboxing, black bars, or empty margins inside the scene`;
 
 /** Main try-on instruction — matches Cloth Change Platform flow (person image before garment). */
 export function buildMenswearTryOnInstructionPrompt(
@@ -122,10 +154,12 @@ export function buildMenswearTryOnInstructionPrompt(
 
 ${buildCriticalConstraints(dims)}
 
+${CLOTHING_ONLY_LOCK}
+
 ${buildImageOrderNote(true)}
 ${garmentBlock}
 === TRANSFORMATION OBJECTIVE ===
-Primary task ONLY: replace visible clothing with the reference garment. Edit garment pixels only.
+Primary task ONLY: replace visible clothing with the catalog product garment. Edit garment pixels only — nothing else.
 ${formatSize(dims)}
 ${extraSections ?? ""}
 ${buildCoverageBlock(coverage)}
@@ -142,12 +176,7 @@ ${LOCK_LIGHTING_AND_SCENE}
 ${LOCK_FACE_HEAD}
 ${CLOTHING_LIGHT_MATCH}
 
-=== VERIFICATION ===
-✓ Output is exactly ${dims?.width ?? "?"}×${dims?.height ?? "?"} pixels with NO zoom or crop
-✓ Person is in the SAME position and scale as the person photo (not moved, not closer)
-✓ Clothing changed to reference garment with natural fit
-✓ Face and hair IDENTICAL to person photo (no gray blocks or blur)
-✓ Pose, background, and framing IDENTICAL to person photo`;
+${buildVerificationBlock(dims)}`;
 }
 
 export function buildGarmentTitlePart(title: string): string {
@@ -171,15 +200,20 @@ export function buildNvidiaKontextTryOnPrompt(
     garment.description?.trim() ||
     "luxury tailored menswear from the VOGO collection";
 
-  return `${garmentBlock}Virtual try-on: replace only the person's clothing with ${garmentLabel}.
+  return `${garmentBlock}Virtual try-on: replace ONLY the person's clothing with the catalog product (${garmentLabel}). Change garment pixels only.
+${buildCriticalConstraints(dims)}
+${CLOTHING_ONLY_LOCK}
 ${formatSize(dims)}
 ${extraSections ?? ""}
 ${buildCoverageBlock(coverage)}
 ${FORBIDDEN_EDITS}
-Keep the same face, hair, pose, position, background, lighting, and full-body framing. Do NOT zoom or move the person. Change clothing only.
+Preserve face, hair, skin, hands, pose, position, background, lighting, and full-body framing exactly. Do NOT zoom, crop, or move the person. No beautification or retouching.
 ${LOCK_BODY_POSE}
+${LOCK_OUTPUT_GEOMETRY}
+${LOCK_LIGHTING_AND_SCENE}
 ${LOCK_FACE_HEAD}
-${CLOTHING_LIGHT_MATCH}`;
+${CLOTHING_LIGHT_MATCH}
+${buildVerificationBlock(dims)}`;
 }
 
 /** Qwen Image Edit — supports optional garment reference as a second image (2511/2509). */
@@ -197,19 +231,25 @@ export function buildNvidiaQwenTryOnPrompt(
     "luxury tailored menswear from the VOGO collection";
 
   const imageGuide = garmentImageIncluded
-    ? `Image 1 is the person photo (preserve face, hair, pose, and background exactly). Image 2 is the garment product reference — match its color, cut, lapels, and fabric on the person only.
+    ? `Image 1 is the person photo — preserve face, hair, skin, hands, pose, background, and lighting exactly; edit clothing only. Image 2 is the catalog garment reference — match its color, cut, lapels, and fabric on the person only; ignore mannequin and background.
 `
-    : "";
+    : `Image 1 is the person photo — preserve face, hair, skin, hands, pose, background, and lighting exactly; edit clothing only.
+`;
 
-  return `${garmentBlock}${imageGuide}Virtual try-on: replace only the person's clothing with ${garmentLabel}.
+  return `${garmentBlock}${imageGuide}Virtual try-on: replace ONLY the person's clothing with the catalog product (${garmentLabel}). Change garment pixels only.
+${buildCriticalConstraints(dims)}
+${CLOTHING_ONLY_LOCK}
 ${formatSize(dims)}
 ${extraSections ?? ""}
 ${buildCoverageBlock(coverage)}
 ${FORBIDDEN_EDITS}
-Keep the same face, hair, pose, position, background, lighting, and full-body framing. Do NOT zoom, crop, or move the person. Change clothing only.
+Preserve face, hair, skin, hands, pose, position, background, lighting, and full-body framing exactly. Do NOT zoom, crop, reframe, or move the person. No beautification, retouching, or environment change.
 ${LOCK_BODY_POSE}
+${LOCK_OUTPUT_GEOMETRY}
+${LOCK_LIGHTING_AND_SCENE}
 ${LOCK_FACE_HEAD}
-${CLOTHING_LIGHT_MATCH}`;
+${CLOTHING_LIGHT_MATCH}
+${buildVerificationBlock(dims)}`;
 }
 
 /** @deprecated Use buildMenswearTryOnInstructionPrompt with structured multimodal parts. */

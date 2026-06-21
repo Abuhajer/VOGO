@@ -19,7 +19,7 @@ type Props = {
 };
 
 const compareImgClass =
-  "absolute inset-0 h-full w-full object-contain object-center";
+  "absolute inset-0 h-full w-full object-fill object-center";
 
 function resolveFrameSize(
   frameWidth?: number,

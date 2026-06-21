@@ -6,6 +6,7 @@ import {
 import { assertExactPersonCanvas, getPersonImageDimensions } from "./normalize";
 import { buildUnderlayerPromptSection, inferGarmentStyling } from "./garment-styling";
 import {
+  buildClothingOnlyLockPart,
   buildDimensionLockPart,
   buildMenswearTryOnInstructionPrompt,
   buildNvidiaKontextTryOnPrompt,
@@ -79,8 +80,9 @@ export async function runVirtualTryOn(input: RunTryOnInput): Promise<GenerateTry
     mimeType: "image/jpeg" as const,
   };
 
-  // Dimension lock → full instructions → person photo → garment reference
+  // Clothing-only lock → dimension lock → full instructions → person photo → garment reference
   const multimodalParts: TryOnMultimodalPart[] = [
+    { type: "text", text: buildClothingOnlyLockPart() },
     { type: "text", text: buildDimensionLockPart(personDims) },
     { type: "text", text: instructionPrompt },
     { type: "image", image: personImage },

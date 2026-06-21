@@ -44,11 +44,28 @@ export default function FittingRoomClient({
     () => preselected ?? products[0] ?? null
   );
   const [personImageUrl, setPersonImageUrl] = useState<string | null>(null);
+  const [personImageSize, setPersonImageSize] = useState<{ width: number; height: number } | null>(
+    null
+  );
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [resultSize, setResultSize] = useState<{ width: number; height: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
+
+  useEffect(() => {
+    if (!personImageUrl) {
+      setPersonImageSize(null);
+      return;
+    }
+    const img = new Image();
+    img.onload = () => {
+      if (img.naturalWidth && img.naturalHeight) {
+        setPersonImageSize({ width: img.naturalWidth, height: img.naturalHeight });
+      }
+    };
+    img.src = personImageUrl;
+  }, [personImageUrl]);
 
   useEffect(() => {
     if (cooldownSeconds <= 0) return;
@@ -272,8 +289,8 @@ export default function FittingRoomClient({
               <ResultReveal
                 beforeUrl={personImageUrl}
                 afterUrl={resultUrl}
-                frameWidth={resultSize?.width}
-                frameHeight={resultSize?.height}
+                frameWidth={personImageSize?.width ?? resultSize?.width}
+                frameHeight={personImageSize?.height ?? resultSize?.height}
                 product={selectedProduct}
                 onTryAnother={() => {
                   goToStep("product");
