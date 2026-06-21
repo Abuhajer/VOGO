@@ -9,6 +9,7 @@
     "dev": "node node_modules/next/dist/bin/next dev",
     "dev:clean": "node scripts/dev-clean.mjs",
     "build": "next build",
+    "build:netlify": "node scripts/netlify-build.mjs",
     "start": "next start",
     "start:clean": "node scripts/start-clean.mjs",
     "lint": "next lint",

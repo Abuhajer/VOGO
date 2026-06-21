@@ -45,8 +45,8 @@ function clearBuildCaches() {
       fs.rmSync(target, {
         recursive: true,
         force: true,
-        maxRetries: 5,
-        retryDelay: 300,
+        maxRetries: 8,
+        retryDelay: 400,
       });
       console.log(`Cleared ${dir}`);
     } catch (error) {
@@ -55,11 +55,17 @@ function clearBuildCaches() {
   }
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 for (const port of [3000, 3001]) {
   killPort(port);
 }
 
+await sleep(500);
 clearBuildCaches();
+await sleep(300);
 
 console.log("Starting dev server on http://localhost:3000 ...\n");
 

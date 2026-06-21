@@ -7,9 +7,10 @@ const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
 
-  // Dev-only: avoids stale server vendor-chunks when next-intl/webpack cache drifts.
-  webpack: (config, { dev, isServer }) => {
-    if (dev && isServer) {
+  // Dev-only: memory cache avoids corrupt/missing .pack.gz errors on Windows
+  // when .next is cleared while the dev server is running.
+  webpack: (config, { dev }) => {
+    if (dev) {
       config.cache = { type: "memory" };
     }
 
