@@ -1,6 +1,4 @@
 import { FITTING_ROOM_STATIC_CATALOG } from "@/lib/catalog/fitting-room-catalog";
-import { isTryOnConfigured } from "@/lib/try-on/providers/registry";
-import { getFittingRoomProducts } from "@/server/fitting-room";
 import type { FittingRoomProduct } from "@/lib/try-on/types";
 
 export type FittingRoomPageData = {
@@ -14,12 +12,14 @@ export async function loadFittingRoomPageData(): Promise<FittingRoomPageData> {
   let apiConfigured = false;
 
   try {
+    const { getFittingRoomProducts } = await import("@/server/fitting-room");
     products = await getFittingRoomProducts();
   } catch (err) {
     console.error("[fitting-room] products load failed", err);
   }
 
   try {
+    const { isTryOnConfigured } = await import("@/lib/try-on/providers/registry");
     apiConfigured = isTryOnConfigured();
   } catch (err) {
     console.error("[fitting-room] try-on config check failed", err);

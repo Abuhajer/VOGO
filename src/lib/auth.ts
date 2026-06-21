@@ -4,12 +4,14 @@ import Google from "next-auth/providers/google";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { Role } from "@/types/db";
-import { prisma } from "@/lib/db";
+import { getPrisma } from "@/lib/db";
 import { authConfig } from "@/lib/auth.config";
+
+const prismaClient = getPrisma();
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
-  adapter: PrismaAdapter(prisma),
+  ...(prismaClient ? { adapter: PrismaAdapter(prismaClient) } : {}),
   providers: [
     Credentials({
       name: "credentials",
@@ -18,12 +20,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        const client = getPrisma();
+        if (!client) return null;
+
         const email = String(credentials?.email ?? "").trim().toLowerCase();
         const password = String(credentials?.password ?? "");
 
         if (!email || !password) return null;
 
-        const user = await prisma.user.findUnique({ where: { email } });
+        const user = await client.user.findUnique({ where: { email } });
         if (!user?.passwordHash) return null;
 
         const valid = await bcrypt.compare(password, user.passwordHash);
@@ -48,8 +53,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   events: {
     async createUser({ user }) {
-      if (!user.id) return;
-      await prisma.user.updateMany({
+      const client = getPrisma();
+      if (!client || !user.id) return;
+      await client.user.updateMany({
         where: { id: user.id, role: { not: Role.ADMIN } },
         data: { role: Role.CUSTOMER },
       });
