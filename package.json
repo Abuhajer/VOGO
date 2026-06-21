@@ -15,7 +15,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "validate": "npm run lint && npm run typecheck && npm run build",
-    "postinstall": "prisma generate",
+    "postinstall": "node scripts/postinstall-prisma.mjs",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "products:fetch-images": "node scripts/fetch-product-images.mjs",

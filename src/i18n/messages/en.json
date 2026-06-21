@@ -398,6 +398,10 @@
     "rateLimit": "Gemini is busy (rate limit). Wait about {seconds} seconds, then try again.",
     "quotaExceeded": "Daily free image quota may be used up. Wait an hour or try again tomorrow, or enable billing in Google AI Studio.",
     "apiNotConfigured": "Virtual try-on is not configured yet. Set IMAGE_PROVIDER and add GEMINI_API_KEY or NVIDIA_API_KEY in .env (see .env.example), then restart the dev server.",
-    "retryIn": "Retry available in {seconds}s"
+    "retryIn": "Retry available in {seconds}s",
+    "loadErrorTitle": "Fitting room unavailable",
+    "loadErrorDesc": "Something went wrong loading the virtual fitting room. The rest of the site is still available — try again or return home.",
+    "loadErrorRetry": "Try again",
+    "loadErrorHome": "Back to home"
   }
 }

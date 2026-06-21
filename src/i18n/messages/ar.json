@@ -398,6 +398,10 @@
     "rateLimit": "خدمة Gemini مشغولة (حد المعدل). انتظر حوالي {seconds} ثانية ثم حاول مجدداً.",
     "quotaExceeded": "قد تكون الحصة المجانية اليومية للصور مستنفدة. انتظر ساعة أو جرّب غداً، أو فعّل الفوترة في Google AI Studio.",
     "apiNotConfigured": "التجربة الافتراضية غير مفعّلة بعد. اضبط IMAGE_PROVIDER وأضف GEMINI_API_KEY أو NVIDIA_API_KEY في ملف .env (راجع .env.example) ثم أعد تشغيل الخادم.",
-    "retryIn": "يمكنك المحاولة بعد {seconds} ث"
+    "retryIn": "يمكنك المحاولة بعد {seconds} ث",
+    "loadErrorTitle": "غرفة القياس غير متاحة",
+    "loadErrorDesc": "حدث خطأ أثناء تحميل غرفة القياس الافتراضية. بقية الموقع يعمل بشكل طبيعي — أعد المحاولة أو عد إلى الرئيسية.",
+    "loadErrorRetry": "إعادة المحاولة",
+    "loadErrorHome": "العودة للرئيسية"
   }
 }

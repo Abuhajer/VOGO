@@ -1,4 +1,4 @@
-import { isDatabaseConfigured, prisma } from "@/lib/db";
+import { getPrisma, isDatabaseConfigured } from "@/lib/db";
 import {
   FITTING_ROOM_STATIC_CATALOG,
   getStaticFittingRoomProductById,
@@ -28,6 +28,9 @@ export async function getFittingRoomProducts(): Promise<FittingRoomProduct[]> {
   }
 
   try {
+    const prisma = getPrisma();
+    if (!prisma) return FITTING_ROOM_STATIC_CATALOG;
+
     return await prisma.product.findMany({
       where: { active: true },
       select: productSelect,
@@ -45,6 +48,9 @@ export async function getFittingRoomProductById(id: string): Promise<FittingRoom
   }
 
   try {
+    const prisma = getPrisma();
+    if (!prisma) return getStaticFittingRoomProductById(id);
+
     const product = await prisma.product.findFirst({
       where: { id, active: true },
       select: productSelect,
@@ -62,6 +68,9 @@ export async function getFittingRoomProductBySlug(slug: string): Promise<Fitting
   }
 
   try {
+    const prisma = getPrisma();
+    if (!prisma) return getStaticFittingRoomProductBySlug(slug);
+
     const product = await prisma.product.findFirst({
       where: { slug, active: true },
       select: productSelect,

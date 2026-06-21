@@ -3,6 +3,7 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  NETLIFY = "true"
   # Netlify DB: Extensions → Netlify DB → copy URL into DATABASE_URL (or it maps from NETLIFY_DATABASE_URL at build).
   # Also set AUTH_SECRET, GEMINI_API_KEY, NEXT_PUBLIC_SITE_URL in the Netlify UI.
 

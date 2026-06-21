@@ -96,6 +96,8 @@ export default function CoverflowCarousel3D<T>({
   const layout = getRingCarouselLayout(items.length, isLarge);
   const activeItem = items[currentIndex];
   const spinnerTransform = getRingSpinnerTransform();
+  // Collection stage is always `dir="ltr"` — nav sits on physical left/right, so chevrons stay ← / →.
+  const flipNavIcons = isRtl && variant !== "collection";
 
   return (
     <div
@@ -221,7 +223,7 @@ export default function CoverflowCarousel3D<T>({
               viewBox="0 0 16 16"
               fill="none"
               aria-hidden
-              className={isRtl ? "scale-x-[-1]" : undefined}
+              className={flipNavIcons ? "scale-x-[-1]" : undefined}
             >
               <path
                 d="M10 3L5 8L10 13"
@@ -250,7 +252,7 @@ export default function CoverflowCarousel3D<T>({
               viewBox="0 0 16 16"
               fill="none"
               aria-hidden
-              className={isRtl ? "scale-x-[-1]" : undefined}
+              className={flipNavIcons ? "scale-x-[-1]" : undefined}
             >
               <path
                 d="M6 3L11 8L6 13"
