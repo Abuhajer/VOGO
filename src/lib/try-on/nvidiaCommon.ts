@@ -1,4 +1,4 @@
-import sharp from "sharp";
+import { getSharp } from "./sharpLazy";
 import { TRY_ON_ENV } from "./env";
 import {
   readLocalPublicFileAsync,
@@ -93,6 +93,7 @@ export async function tryOnImageToJpegBuffer(img: TryOnImageInput): Promise<Buff
     }
   }
 
+  const sharp = await getSharp();
   return sharp(raw)
     .rotate()
     .jpeg({ quality: 90, mozjpeg: true })

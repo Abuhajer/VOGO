@@ -1,4 +1,4 @@
-import sharp from "sharp";
+import { getSharp } from "./sharpLazy";
 import { readLocalPublicFileAsync, resolvePublicUrl } from "./storage";
 
 export type ImageDimensions = {
@@ -29,6 +29,7 @@ export async function getPersonImageDimensions(
 ): Promise<ImageDimensions | null> {
   try {
     const personBuf = await readImageBufferFromRef(personImageRefUrl);
+    const sharp = await getSharp();
     const meta = await sharp(personBuf).metadata();
     const width = meta.width ?? 0;
     const height = meta.height ?? 0;
@@ -53,6 +54,7 @@ type Rgba = { r: number; g: number; b: number; alpha: number };
 
 /** Sample edge/corner tone from person photo for letterbox padding (not flat black). */
 async function personCanvasBackground(personBuf: Buffer): Promise<Rgba> {
+  const sharp = await getSharp();
   const meta = await sharp(personBuf).metadata();
   const w = meta.width ?? 1;
   const h = meta.height ?? 1;
@@ -91,6 +93,7 @@ async function fitInsideExactCanvas(
   targetH: number,
   bg: Rgba
 ): Promise<Buffer> {
+  const sharp = await getSharp();
   const resized = await sharp(imageBuffer)
     .resize(targetW, targetH, {
       fit: "inside",
@@ -124,6 +127,7 @@ async function fitInsideExactCanvas(
 }
 
 async function readImageDimensions(buffer: Buffer): Promise<ImageDimensions> {
+  const sharp = await getSharp();
   const meta = await sharp(buffer).metadata();
   return {
     width: meta.width ?? 0,
@@ -162,6 +166,7 @@ export async function lockOutputToPersonDimensions(
     buffer = resultBuffer;
   } else if (aspectRatiosMatch(resultW, resultH, targetW, targetH)) {
     console.log(`[TryOn] Uniform scale (matched aspect)`);
+    const sharp = await getSharp();
     buffer = await sharp(resultBuffer)
       .resize(targetW, targetH, { kernel: sharp.kernel.lanczos3 })
       .png()

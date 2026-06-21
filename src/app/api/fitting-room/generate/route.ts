@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { runVirtualTryOn } from "@/lib/try-on/generate";
 import { classifyTryOnError } from "@/lib/try-on/errors";
 import {
   getFittingRoomProductById,
@@ -56,6 +55,7 @@ export async function POST(request: Request) {
       );
     }
 
+    const { runVirtualTryOn } = await import("@/lib/try-on/generate");
     const result = await runVirtualTryOn({
       personImageUrl,
       garmentImageUrl: garmentUrl,

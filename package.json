@@ -40,6 +40,10 @@
     "stripe": "^22.2.2",
     "zod": "^4.4.3"
   },
+  "optionalDependencies": {
+    "@img/sharp-linux-x64": "^0.35.2",
+    "@img/sharp-linuxmusl-x64": "^0.35.2"
+  },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
