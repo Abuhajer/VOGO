@@ -59,6 +59,76 @@ function SourceIcon({ id, size = 16 }: { id: PhotoSource; size?: number }) {
   );
 }
 
+function SourceTabs({
+  tabs,
+  source,
+  isAr,
+  stepLabel,
+  onSelect,
+  layout,
+}: {
+  tabs: { id: PhotoSource; label: string }[];
+  source: PhotoSource;
+  isAr: boolean;
+  stepLabel: string;
+  onSelect: (id: PhotoSource) => void;
+  layout: "horizontal" | "vertical";
+}) {
+  const isHorizontal = layout === "horizontal";
+
+  return (
+    <div
+      className={
+        isHorizontal
+          ? "fitting-room-source-tabs-h flex w-full shrink-0 gap-1 rounded-sm border border-gold-glow/12 bg-void/60 p-1 backdrop-blur-sm"
+          : "fitting-room-source-tabs flex w-11 shrink-0 flex-col gap-0.5 rounded-sm border border-gold-glow/12 bg-void/50 p-1 sm:w-12"
+      }
+      role="tablist"
+      aria-label={stepLabel}
+      dir={isAr ? "rtl" : "ltr"}
+    >
+      {tabs.map((tab) => {
+        const active = source === tab.id;
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            aria-label={tab.label}
+            onClick={() => onSelect(tab.id)}
+            className={
+              isHorizontal
+                ? `relative flex min-h-11 flex-1 flex-col items-center justify-center gap-1 rounded-[2px] px-2 py-2 transition-colors duration-200 sm:min-h-12 ${
+                    active
+                      ? "bg-gold/12 text-gold shadow-[inset_0_0_0_1px_rgba(201,168,76,0.25)]"
+                      : "text-ivory-faint hover:bg-surface/35 hover:text-ivory-muted"
+                  }`
+                : `relative flex min-h-[2.75rem] flex-col items-center justify-center gap-1 rounded-[2px] px-1 py-2 transition-colors duration-200 sm:min-h-[3rem] ${
+                    active
+                      ? "bg-gold/12 text-gold"
+                      : "text-ivory-faint hover:bg-surface/35 hover:text-ivory-muted"
+                  }`
+            }
+          >
+            {!isHorizontal && active ? (
+              <span className="absolute inset-y-1 start-0 w-px bg-gold/80" aria-hidden />
+            ) : null}
+            <SourceIcon id={tab.id} size={isHorizontal ? 16 : 15} />
+            <span
+              className={`max-w-full truncate text-center uppercase leading-none tracking-[0.08em] ${
+                isHorizontal ? "text-[8px] sm:text-[9px]" : "text-[7px] sm:text-[8px]"
+              }`}
+            >
+              {tab.label}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function PhotoCapture({ personImageUrl, onPersonImageChange, onError }: Props) {
   const t = useTranslations("FittingRoom");
   const locale = useLocale();
@@ -67,6 +137,7 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
   const [preview, setPreview] = useState<string | null>(personImageUrl);
   const [uploading, setUploading] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
+  const [cameraStarting, setCameraStarting] = useState(false);
   const [, startTransition] = useTransition();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -80,6 +151,7 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
     setCameraActive(false);
+    setCameraStarting(false);
   }, []);
 
   useEffect(() => {
@@ -102,6 +174,7 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
       const url = await uploadPortraitBlob(blob);
       setPreview(url);
       onPersonImageChange(url);
+      setSource("upload");
     } catch (err) {
       onError(err instanceof Error ? err.message : t("uploadFailed"));
     } finally {
@@ -120,6 +193,7 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
   const startCamera = async () => {
     stopCamera();
     onError(null);
+    setCameraStarting(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
@@ -135,6 +209,8 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
       });
     } catch {
       onError(t("cameraDenied"));
+    } finally {
+      setCameraStarting(false);
     }
   };
 
@@ -166,7 +242,7 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
     onError(null);
     setPreview(src);
     onPersonImageChange(src);
-    setSource("upload");
+    setSource("avatar");
   };
 
   const openFilePicker = () => {
@@ -180,9 +256,14 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
     { id: "avatar", label: t("tabAvatar") },
   ];
 
-  const showPreview = preview && source !== "avatar" && !(source === "camera" && cameraActive);
+  const showPortraitPreview =
+    preview && (source === "upload" || source === "avatar" || (source === "camera" && !cameraActive));
+  const showUploadEmpty = source === "upload" && !preview;
   const showCamera = source === "camera";
-  const showModels = source === "avatar";
+  const showAvatarPanel = source === "avatar";
+
+  const previewLabel =
+    source === "avatar" ? t("selectedModel") : source === "upload" ? t("yourPhoto") : t("yourPhoto");
 
   return (
     <div className="fitting-room-photo-stage relative flex min-h-0 w-full flex-1 flex-col">
@@ -199,151 +280,169 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
         }}
       />
 
+      <div className="shrink-0 px-2 pt-1 md:hidden">
+        <SourceTabs
+          tabs={tabs}
+          source={source}
+          isAr={isAr}
+          stepLabel={t("step2Title")}
+          onSelect={switchSource}
+          layout="horizontal"
+        />
+      </div>
+
       <div
-        className="fitting-room-photo-row relative mx-auto flex min-h-0 w-full max-w-full flex-1 items-center justify-center gap-1 px-2 py-1 sm:gap-1.5 sm:px-3"
+        className="fitting-room-photo-row relative mx-auto flex min-h-0 w-full max-w-full flex-1 items-stretch justify-center gap-2 px-2 py-2 sm:gap-3 sm:px-3 md:items-center md:py-3"
         dir="ltr"
       >
-        <div className="fitting-room-portrait-frame relative min-h-0 min-w-0 shrink">
-        {showPreview ? (
-          <>
-            <Image
-              src={preview}
-              alt=""
-              fill
-              sizes="(max-width: 640px) 90vw, 400px"
-              className="object-contain"
-              unoptimized={preview.startsWith("data:") || preview.startsWith("/uploads") || preview.endsWith(".svg")}
-              priority
-            />
-            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-void/95 via-void/50 to-transparent p-3">
-              <span className="text-[8px] uppercase tracking-[0.2em] text-gold">{t("yourPhoto")}</span>
-            </div>
-            {source === "upload" ? (
-              <button
-                type="button"
-                disabled={uploading}
-                onClick={openFilePicker}
-                title={uploading ? t("uploading") : t("reuploadPhoto")}
-                aria-label={uploading ? t("uploading") : t("reuploadPhoto")}
-                className="absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-sm border border-gold/35 bg-void/90 text-gold shadow-[0_2px_10px_rgba(0,0,0,0.4)] backdrop-blur-sm transition-colors hover:border-gold/55 hover:bg-void disabled:cursor-wait disabled:opacity-60"
-              >
-                <SourceIcon id="upload" size={14} />
-              </button>
-            ) : null}
-          </>
-        ) : null}
-
-        {source === "upload" && !preview ? (
-          <div
-            role="button"
-            tabIndex={0}
-            onClick={openFilePicker}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                openFilePicker();
-              }
-            }}
-            className="absolute inset-0 flex cursor-pointer flex-col items-center justify-center gap-2 transition-colors hover:bg-gold/[0.03]"
-          >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full border border-gold/25 bg-gold/[0.06] text-gold/80">
-              <SourceIcon id="upload" size={14} />
-            </span>
-            <span className="max-w-[11rem] px-3 text-center text-[9px] uppercase tracking-[0.14em] text-ivory-faint">
-              {uploading ? t("uploading") : t("dropPhoto")}
-            </span>
-          </div>
-        ) : null}
-
-        {showCamera ? (
-          <>
-            <video
-              ref={videoRef}
-              className={`absolute inset-0 h-full w-full object-cover ${cameraActive ? "scale-x-[-1]" : "opacity-0"}`}
-              playsInline
-              muted
-            />
-            {cameraActive ? (
-              <>
-                <div className="pointer-events-none absolute inset-[8%] rounded-sm border border-gold/30" />
-                <p className="pointer-events-none absolute inset-x-0 top-3 text-center text-[8px] uppercase tracking-[0.15em] text-gold/80">
-                  {t("frameGuide")}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => void capturePhoto()}
-                  disabled={uploading}
-                  className="absolute bottom-4 start-1/2 h-12 w-12 -translate-x-1/2 rounded-full border-2 border-gold bg-gold/25 shadow-[0_0_24px_rgba(201,168,76,0.25)] hover:bg-gold/40 disabled:opacity-50"
-                  aria-label={t("capture")}
-                />
-              </>
-            ) : (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 text-center">
-                <span className="flex h-12 w-12 items-center justify-center rounded-full border border-gold/35 bg-gold/10 text-gold">
-                  <SourceIcon id="camera" />
+        <div className="fitting-room-portrait-frame relative min-h-0 min-w-0 flex-1">
+          {showPortraitPreview ? (
+            <>
+              <Image
+                src={preview}
+                alt=""
+                fill
+                sizes="(max-width: 768px) 92vw, 480px"
+                className="fitting-room-portrait-img"
+                unoptimized={
+                  preview.startsWith("data:") ||
+                  preview.startsWith("/uploads") ||
+                  preview.endsWith(".svg")
+                }
+                priority
+              />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-void/95 via-void/45 to-transparent px-3 pb-3 pt-10">
+                <span className="text-[8px] uppercase tracking-[0.2em] text-gold sm:text-[9px]">
+                  {previewLabel}
                 </span>
-                <p className="max-w-xs text-[11px] leading-relaxed text-ivory-muted">{t("cameraIntro")}</p>
+              </div>
+              {source === "upload" ? (
                 <button
                   type="button"
-                  onClick={() => void startCamera()}
-                  className="min-h-11 rounded-sm border border-gold/40 bg-gold/10 px-5 py-2.5 text-[9px] uppercase tracking-[0.15em] text-gold transition-colors hover:bg-gold/20"
+                  disabled={uploading}
+                  onClick={openFilePicker}
+                  title={uploading ? t("uploading") : t("reuploadPhoto")}
+                  aria-label={uploading ? t("uploading") : t("reuploadPhoto")}
+                  className="absolute end-2 top-2 z-10 flex h-9 w-9 items-center justify-center rounded-sm border border-gold/35 bg-void/90 text-gold shadow-[0_2px_10px_rgba(0,0,0,0.4)] backdrop-blur-sm transition-colors hover:border-gold/55 hover:bg-void disabled:cursor-wait disabled:opacity-60 sm:h-10 sm:w-10"
                 >
-                  {t("enableCamera")}
+                  <SourceIcon id="upload" size={15} />
                 </button>
-              </div>
-            )}
-          </>
-        ) : null}
+              ) : null}
+            </>
+          ) : null}
 
-        {showModels ? (
-          <div className="absolute inset-0 flex flex-col overflow-hidden bg-void/95">
-            <div className="shrink-0 border-b border-gold-glow/10 px-3 py-2.5 sm:px-4">
-              <p className="text-[9px] uppercase tracking-[0.2em] text-gold">{t("avatarLabel")}</p>
-              <p className="mt-1 text-[10px] leading-relaxed text-ivory-muted">{t("avatarHint")}</p>
+          {showUploadEmpty ? (
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={openFilePicker}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  openFilePicker();
+                }
+              }}
+              className="absolute inset-0 flex cursor-pointer flex-col items-center justify-center gap-3 transition-colors hover:bg-gold/[0.03]"
+            >
+              <span className="flex h-12 w-12 items-center justify-center rounded-full border border-gold/25 bg-gold/[0.06] text-gold/85 sm:h-14 sm:w-14">
+                <SourceIcon id="upload" size={18} />
+              </span>
+              <span className="max-w-[14rem] px-4 text-center text-[10px] uppercase leading-relaxed tracking-[0.14em] text-ivory-faint sm:text-[11px]">
+                {uploading ? t("uploading") : t("dropPhoto")}
+              </span>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-3 sm:p-4">
-              <AvatarPicker selectedSrc={preview} onSelect={selectAvatar} compact />
+          ) : null}
+
+          {showCamera ? (
+            <>
+              <video
+                ref={videoRef}
+                className={`fitting-room-camera-feed absolute inset-0 h-full w-full ${
+                  cameraActive ? "scale-x-[-1] opacity-100" : "opacity-0"
+                }`}
+                playsInline
+                muted
+              />
+              {cameraActive ? (
+                <>
+                  <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_68%_72%_at_50%_42%,transparent_52%,rgba(5,5,8,0.55)_100%)]" />
+                  <div className="fitting-room-camera-guide pointer-events-none absolute inset-[6%] rounded-sm border border-dashed border-gold/35 sm:inset-[8%]" />
+                  <p className="pointer-events-none absolute inset-x-0 top-3 z-10 text-center text-[8px] uppercase tracking-[0.15em] text-gold/90 sm:top-4 sm:text-[9px]">
+                    {t("frameGuide")}
+                  </p>
+                  <div className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-3 bg-gradient-to-t from-void/95 via-void/70 to-transparent px-4 pb-4 pt-10 sm:gap-4 sm:pb-5">
+                    <button
+                      type="button"
+                      onClick={stopCamera}
+                      className="min-h-10 rounded-sm border border-gold-glow/20 bg-void/80 px-3 text-[8px] uppercase tracking-[0.12em] text-ivory-muted backdrop-blur-sm transition-colors hover:border-gold/30 hover:text-ivory sm:min-h-11 sm:px-4 sm:text-[9px]"
+                    >
+                      {t("stopCamera")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void capturePhoto()}
+                      disabled={uploading}
+                      className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 border-gold bg-gold/20 shadow-[0_0_28px_rgba(201,168,76,0.3)] transition-transform hover:scale-[1.03] hover:bg-gold/35 active:scale-[0.97] disabled:opacity-50 sm:h-16 sm:w-16"
+                      aria-label={t("capture")}
+                    >
+                      <span className="h-10 w-10 rounded-full border border-gold/60 bg-gold/25 sm:h-11 sm:w-11" />
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 text-center sm:gap-5">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-full border border-gold/35 bg-gold/10 text-gold sm:h-16 sm:w-16">
+                    <SourceIcon id="camera" size={20} />
+                  </span>
+                  <p className="max-w-sm text-[11px] leading-relaxed text-ivory-muted sm:text-xs">
+                    {t("cameraIntro")}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void startCamera()}
+                    disabled={cameraStarting}
+                    className="min-h-11 rounded-sm border border-gold/40 bg-gold/10 px-6 py-2.5 text-[9px] uppercase tracking-[0.15em] text-gold transition-colors hover:bg-gold/20 disabled:cursor-wait disabled:opacity-60 sm:min-h-12 sm:px-8 sm:text-[10px]"
+                  >
+                    {cameraStarting ? t("cameraStarting") : t("enableCamera")}
+                  </button>
+                </div>
+              )}
+            </>
+          ) : null}
+
+          {showAvatarPanel && !preview ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
+              <span className="flex h-12 w-12 items-center justify-center rounded-full border border-gold/25 bg-gold/[0.06] text-gold/80">
+                <SourceIcon id="avatar" size={18} />
+              </span>
+              <p className="max-w-xs text-[11px] leading-relaxed text-ivory-muted sm:text-xs">{t("pickModel")}</p>
             </div>
-          </div>
-        ) : null}
+          ) : null}
         </div>
 
-        <div
-          className="fitting-room-source-tabs flex w-11 shrink-0 flex-col gap-0.5 rounded-sm border border-gold-glow/12 bg-void/50 p-1 sm:w-12"
-          role="tablist"
-          aria-label={t("step2Title")}
-          dir={isAr ? "rtl" : "ltr"}
-        >
-          {tabs.map((tab) => {
-            const active = source === tab.id;
-            return (
-              <button
-                key={tab.id}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                aria-label={tab.label}
-                onClick={() => switchSource(tab.id)}
-                className={`relative flex min-h-[2.75rem] flex-col items-center justify-center gap-1 rounded-[2px] px-1 py-2 transition-colors duration-200 sm:min-h-[3rem] ${
-                  active
-                    ? "bg-gold/12 text-gold"
-                    : "text-ivory-faint hover:bg-surface/35 hover:text-ivory-muted"
-                }`}
-              >
-                {active ? (
-                  <span className="absolute inset-y-1 start-0 w-px bg-gold/80" aria-hidden />
-                ) : null}
-                <SourceIcon id={tab.id} size={15} />
-                <span className="max-w-full truncate text-center text-[7px] uppercase leading-none tracking-[0.08em] sm:text-[8px]">
-                  {tab.label}
-                </span>
-              </button>
-            );
-          })}
+        <div className="hidden shrink-0 md:block">
+          <SourceTabs
+            tabs={tabs}
+            source={source}
+            isAr={isAr}
+            stepLabel={t("step2Title")}
+            onSelect={switchSource}
+            layout="vertical"
+          />
         </div>
       </div>
 
-      <p className="pointer-events-none absolute inset-x-0 bottom-1 z-10 px-3 text-center text-[8px] leading-snug text-ivory-faint/85 sm:bottom-2 sm:text-[9px]">
+      {showAvatarPanel ? (
+        <div className="fitting-room-avatar-panel shrink-0 border-t border-gold-glow/10 bg-void/40 px-2 pb-2 pt-2 sm:px-3 md:px-4">
+          <div className="mb-2 hidden px-1 sm:block">
+            <p className="text-[9px] uppercase tracking-[0.2em] text-gold">{t("avatarLabel")}</p>
+            <p className="mt-1 text-[10px] leading-relaxed text-ivory-muted sm:text-[11px]">{t("avatarHint")}</p>
+          </div>
+          <AvatarPicker selectedSrc={preview} onSelect={selectAvatar} compact />
+        </div>
+      ) : null}
+
+      <p className="pointer-events-none shrink-0 px-3 pb-1 pt-1 text-center text-[8px] leading-snug text-ivory-faint/85 sm:pb-2 sm:text-[9px]">
         {t("portraitHint")}
       </p>
     </div>

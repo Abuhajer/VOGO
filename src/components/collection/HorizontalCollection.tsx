@@ -68,7 +68,7 @@ function CollectionCoverflowSlide({
           priority={index < 2}
           loading={index < 3 ? "eager" : "lazy"}
           fetchPriority={index < 2 ? "high" : "low"}
-          className="object-contain object-center p-1.5"
+          className="carousel-product-image object-contain object-center"
         />
       </div>
     </button>

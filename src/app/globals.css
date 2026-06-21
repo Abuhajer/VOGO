@@ -537,6 +537,7 @@ body {
 .coverflow-carousel-shell--collection .coverflow-carousel-3d {
   perspective: 1000px;
   perspective-origin: 50% 46%;
+  overflow: visible;
 }
 
 @media (min-width: 1024px) {
@@ -559,6 +560,10 @@ body {
   touch-action: pan-y pinch-zoom;
 }
 
+.coverflow-carousel-shell--collection .coverflow-carousel-viewport {
+  overflow: visible;
+}
+
 .coverflow-carousel-ring {
   height: 100%;
   min-height: inherit;
@@ -569,7 +574,7 @@ body {
 }
 
 .coverflow-carousel-shell--collection .coverflow-carousel-ring {
-  transform: rotateX(3deg);
+  transform: none;
 }
 
 @media (min-width: 640px) {
@@ -578,7 +583,7 @@ body {
   }
 
   .coverflow-carousel-shell--collection .coverflow-carousel-ring {
-    transform: rotateX(2.5deg);
+    transform: none;
   }
 }
 
@@ -596,18 +601,19 @@ body {
 }
 
 .coverflow-carousel-shell--collection .coverflow-carousel-spinner {
-  height: min(calc(78vw * 4 / 3), 28rem);
-  min-height: 18rem;
-  width: min(78vw, 20rem);
-  max-width: min(78vw, 20rem);
+  height: min(calc(78vw * 4 / 3), 32rem);
+  min-height: 17rem;
+  width: min(78vw, 22rem);
+  max-width: min(78vw, 22rem);
+  aspect-ratio: 3 / 4;
 }
 
 @media (min-width: 640px) {
   .coverflow-carousel-shell--collection .coverflow-carousel-spinner {
-    height: min(calc(44vw * 4 / 3), 30rem);
-    min-height: 20rem;
-    width: min(44vw, 22rem);
-    max-width: min(44vw, 22rem);
+    height: min(calc(46vw * 4 / 3), 34rem);
+    min-height: 19rem;
+    width: min(46vw, 24rem);
+    max-width: min(46vw, 24rem);
   }
 }
 
@@ -618,10 +624,10 @@ body {
   }
 
   .coverflow-carousel-shell--collection .coverflow-carousel-spinner {
-    height: min(calc(36vw * 4 / 3), 34rem);
-    min-height: 22rem;
-    width: min(36vw, 24rem);
-    max-width: min(36vw, 24rem);
+    height: min(calc(38vw * 4 / 3), 36rem);
+    min-height: 21rem;
+    width: min(38vw, 26rem);
+    max-width: min(38vw, 26rem);
   }
 }
 
@@ -632,10 +638,10 @@ body {
   }
 
   .coverflow-carousel-shell--collection .coverflow-carousel-spinner {
-    height: min(calc(28vw * 4 / 3), 38rem);
-    min-height: 24rem;
-    width: min(28vw, 26rem);
-    max-width: min(28vw, 26rem);
+    height: min(calc(30vw * 4 / 3), 38rem);
+    min-height: 23rem;
+    width: min(30vw, 28rem);
+    max-width: min(30vw, 28rem);
   }
 }
 
@@ -716,11 +722,14 @@ body {
 }
 
 .coverflow-carousel-shell--collection {
+  contain: none;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  height: min(calc(78vw * 4 / 3 + 2rem), 32rem);
-  min-height: min(calc(78vw * 4 / 3 + 2rem), 32rem);
+  height: min(calc(78vw * 4 / 3 + 2.5rem), 36rem);
+  min-height: min(calc(78vw * 4 / 3 + 2.5rem), 36rem);
+  overflow: visible;
+  padding-block: 0.75rem;
 }
 
 .coverflow-carousel-shell--collection .coverflow-carousel-3d {
@@ -731,8 +740,25 @@ body {
 
 @media (min-width: 768px) {
   .coverflow-carousel-shell--collection {
-    height: min(62vh, 36rem);
-    min-height: min(62vh, 36rem);
+    height: min(72vh, 40rem);
+    min-height: min(72vh, 40rem);
+    padding-block: 1rem;
+  }
+}
+
+.collection-coverflow-stage {
+  overflow: visible;
+}
+
+.carousel-product-image {
+  object-fit: contain;
+  object-position: center;
+  padding: 0.25rem;
+}
+
+@media (min-width: 640px) {
+  .carousel-product-image {
+    padding: 0.375rem;
   }
 }
 
@@ -1124,36 +1150,48 @@ body {
 
 .fitting-room-portrait-frame {
   aspect-ratio: 3 / 4;
-  height: 100%;
-  width: auto;
-  max-height: min(86%, calc(100dvh - 10.5rem));
-  max-width: min(calc((100dvh - 10.5rem) * 0.75), calc(100vw - 3.5rem));
+  width: min(100%, calc(100vw - 1.5rem));
+  max-width: min(calc((100dvh - 11rem) * 0.75), calc(100vw - 5rem));
+  max-height: min(calc(100dvh - 11rem), calc((100vw - 1.5rem) * 4 / 3));
+  margin-inline: auto;
   overflow: hidden;
   border-radius: 0.125rem;
   border: 1px solid rgba(201, 168, 76, 0.22);
   background: #0a0a0f;
-  box-shadow: inset 0 0 40px rgba(201, 168, 76, 0.04);
-}
-
-@media (min-width: 640px) {
-  .fitting-room-portrait-frame {
-    max-height: min(88%, calc(100dvh - 10rem));
-    max-width: min(calc((100dvh - 10rem) * 0.75), calc(100vw - 4rem));
-  }
+  box-shadow:
+    inset 0 0 40px rgba(201, 168, 76, 0.04),
+    0 20px 50px rgba(0, 0, 0, 0.35);
 }
 
 @media (min-width: 768px) {
   .fitting-room-portrait-frame {
-    max-height: min(90%, calc(100dvh - 9.5rem));
-    max-width: min(calc((100dvh - 9.5rem) * 0.75), min(38vw, calc(100vw - 4.5rem)));
+    width: auto;
+    height: min(calc(100dvh - 11rem), 100%);
+    max-height: min(calc(100dvh - 11rem), 90%);
+    max-width: min(calc((100dvh - 11rem) * 0.75), min(42vw, calc(100vw - 6rem)));
   }
 }
 
 @media (min-width: 1024px) {
   .fitting-room-portrait-frame {
-    max-height: min(90%, calc(100dvh - 9rem));
-    max-width: min(calc((100dvh - 9rem) * 0.75), min(32vw, calc(100vw - 5rem)));
+    max-height: min(calc(100dvh - 10rem), 92%);
+    max-width: min(calc((100dvh - 10rem) * 0.75), min(36vw, calc(100vw - 7rem)));
   }
+}
+
+.fitting-room-portrait-img {
+  object-fit: contain;
+  object-position: center;
+}
+
+.fitting-room-camera-feed {
+  object-fit: contain;
+  object-position: center;
+  background: #050508;
+}
+
+.fitting-room-camera-guide {
+  box-shadow: inset 0 0 0 1px rgba(201, 168, 76, 0.08);
 }
 
 .fitting-room-photo-stage {
@@ -1162,29 +1200,26 @@ body {
 }
 
 .fitting-room-photo-row {
-  height: 100%;
-  max-height: min(86%, calc(100dvh - 10.5rem));
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
 }
 
-@media (min-width: 640px) {
-  .fitting-room-photo-row {
-    max-height: min(88%, calc(100dvh - 10rem));
-  }
+.fitting-room-avatar-panel {
+  max-height: min(34dvh, 16.5rem);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 @media (min-width: 768px) {
-  .fitting-room-photo-row {
-    max-height: min(90%, calc(100dvh - 9.5rem));
+  .fitting-room-avatar-panel {
+    max-height: min(28dvh, 14rem);
   }
 }
 
-@media (min-width: 1024px) {
-  .fitting-room-photo-row {
-    max-height: min(90%, calc(100dvh - 9rem));
-  }
-}
-
-.fitting-room-source-tabs button[aria-selected="true"] {
+.fitting-room-source-tabs button[aria-selected="true"],
+.fitting-room-source-tabs-h button[aria-selected="true"] {
   box-shadow: inset 0 0 12px rgba(201, 168, 76, 0.06);
 }
 

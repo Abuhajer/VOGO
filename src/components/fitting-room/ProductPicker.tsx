@@ -91,7 +91,7 @@ function ProductCardFace({
           fill
           sizes="(max-width: 640px) 180px, 240px"
           loading="lazy"
-          className={fitContain ? "object-contain object-center p-1.5" : "object-cover object-center"}
+          className={fitContain ? "carousel-product-image object-contain object-center" : "object-cover object-center"}
         />
         {selected ? (
           <span className="absolute end-1.5 top-1.5 z-20 rounded-sm border border-gold/30 bg-void/85 px-1.5 py-0.5 text-[7px] font-semibold uppercase tracking-wider text-gold">

@@ -65,8 +65,8 @@ export default function ProductCard({
             priority={index < 2}
             loading={index < 3 ? "eager" : "lazy"}
             fetchPriority={index < 2 ? "high" : "low"}
-            className={`object-cover object-center ${
-              carousel3d ? "" : "transition-transform duration-700 ease-fabric group-hover:scale-105"
+            className={`object-contain object-center ${
+              carousel3d ? "carousel-product-image" : "transition-transform duration-700 ease-fabric group-hover:scale-105"
             }`}
           />
           <div

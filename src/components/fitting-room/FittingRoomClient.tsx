@@ -255,7 +255,7 @@ export default function FittingRoomClient({
         {(isProductStep || isPhotoStep) ? (
           <FittingRoomStepIntro
             step={isPhotoStep ? "photo" : "product"}
-            variant={isPhotoStep ? "stacked" : "overlay"}
+            variant="overlay"
             showCarouselHint={isProductStep && !prefersReducedMotion && products.length > 0}
           />
         ) : null}
