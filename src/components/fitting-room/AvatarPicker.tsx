@@ -79,7 +79,7 @@ export default function AvatarPicker({
   const listClassName =
     layout === "scroll"
       ? "fitting-room-avatar-scroll flex gap-2.5 overflow-x-auto overscroll-x-contain pb-1 pt-0.5 scrollbar-hide snap-x snap-mandatory"
-      : "grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-2.5 lg:grid-cols-2 xl:grid-cols-3";
+      : "grid grid-cols-3 gap-2 sm:gap-2.5 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3";
 
   return (
     <div className="space-y-2.5" dir={isAr ? "rtl" : "ltr"}>

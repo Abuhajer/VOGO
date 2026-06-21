@@ -265,9 +265,11 @@ export default function FittingRoomClient({
           <div
             key={step}
             className={
-              isProductStep || isPhotoStep || isProcessingStep || isResult
-                ? "flex min-h-0 flex-1 animate-fade-in flex-col"
-                : "animate-fade-in"
+              isPhotoStep
+                ? "animate-fade-in flex flex-col md:min-h-0 md:flex-1"
+                : isProductStep || isProcessingStep || isResult
+                  ? "flex min-h-0 flex-1 animate-fade-in flex-col"
+                  : "animate-fade-in"
             }
           >
             {step === "product" ? (

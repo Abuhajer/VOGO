@@ -1245,18 +1245,25 @@ body {
 }
 
 .fitting-room-photo-stage {
-  flex: 1 1 auto;
-  min-height: 0;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .fitting-room-photo-stage {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
 }
 
 .fitting-room-photo-row {
-  flex: 1 1 auto;
-  min-height: 0;
+  width: 100%;
   max-height: none;
 }
 
 @media (min-width: 768px) {
   .fitting-room-photo-row {
+    flex: 1 1 auto;
+    min-height: 0;
     align-items: center;
     justify-content: center;
     padding-inline: 1.25rem;
@@ -1275,9 +1282,60 @@ body {
   }
 }
 
+.fitting-room-portrait-frame--step2 {
+  width: min(calc(40dvh * 9 / 16), calc(100vw - 2.5rem), 11rem);
+  max-width: min(calc(40dvh * 9 / 16), calc(100vw - 2.5rem), 11rem);
+  max-height: min(40dvh, 19.5rem);
+  height: auto;
+}
+
+@media (min-width: 640px) and (max-width: 767px) {
+  .fitting-room-portrait-frame--step2 {
+    width: min(calc(44dvh * 9 / 16), calc(100vw - 3rem), 12.5rem);
+    max-width: min(calc(44dvh * 9 / 16), calc(100vw - 3rem), 12.5rem);
+    max-height: min(44dvh, 22rem);
+  }
+}
+
+@media (min-width: 768px) {
+  .fitting-room-portrait-frame--step2 {
+    width: auto;
+    height: min(calc(100dvh - 14rem), 100%);
+    max-height: min(calc(100dvh - 14rem), 78dvh);
+    max-width: min(calc((100dvh - 14rem) * 9 / 16), min(28vw, calc(100vw - 22rem)));
+  }
+}
+
+@media (min-width: 1024px) {
+  .fitting-room-portrait-frame--step2 {
+    max-height: min(calc(100dvh - 13rem), 80dvh);
+    max-width: min(calc((100dvh - 13rem) * 9 / 16), min(26vw, calc(100vw - 24rem)));
+  }
+}
+
 .fitting-room-photo-sidebar {
-  max-width: 19rem;
-  min-height: min(calc(100dvh - 14rem), 100%);
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .fitting-room-photo-sidebar {
+    max-width: 19rem;
+    max-height: min(calc(100dvh - 14rem), 100%);
+    min-height: min(calc(100dvh - 14rem), 100%);
+  }
+}
+
+.fitting-room-photo-panel {
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .fitting-room-photo-panel {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+  }
 }
 
 .fitting-room-product-sidebar {
