@@ -40,7 +40,9 @@ export default function FittingRoomClient({
   }, [products, initialProductSlug, searchParams]);
 
   const [step, setStep] = useState<Step>(preselected ? "photo" : "product");
-  const [selectedProduct, setSelectedProduct] = useState<FittingRoomProduct | null>(preselected);
+  const [selectedProduct, setSelectedProduct] = useState<FittingRoomProduct | null>(
+    () => preselected ?? products[0] ?? null
+  );
   const [personImageUrl, setPersonImageUrl] = useState<string | null>(null);
   const [resultUrl, setResultUrl] = useState<string | null>(null);
   const [resultSize, setResultSize] = useState<{ width: number; height: number } | null>(null);
@@ -281,7 +283,7 @@ export default function FittingRoomClient({
                 }}
                 onStartOver={() => {
                   setStep("product");
-                  setSelectedProduct(null);
+                  setSelectedProduct(products[0] ?? null);
                   setPersonImageUrl(null);
                   setResultUrl(null);
                   setResultSize(null);

@@ -188,11 +188,6 @@ export default function CoverflowCarousel3D<T>({
           </div>
         </div>
 
-        {showCounter && items.length > 0 && variant !== "collection" ? (
-          <p className="pointer-events-none absolute bottom-2 inset-x-0 z-10 text-center text-[10px] tabular-nums tracking-widest text-ivory-faint sm:bottom-3 sm:text-[11px]">
-            {formatNumber(currentIndex + 1, locale)} / {formatNumber(items.length, locale)}
-          </p>
-        ) : null}
       </div>
 
       {showCounter && items.length > 0 && variant === "collection" ? (
@@ -220,7 +215,14 @@ export default function CoverflowCarousel3D<T>({
             className="coverflow-carousel-nav absolute start-2 top-1/2 z-50 -translate-y-1/2 sm:start-3 md:start-4 rounded-sm border border-gold-glow/20 bg-void/90 p-2.5 text-gold backdrop-blur-sm transition-colors hover:border-gold/40 hover:bg-void/95 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/50 disabled:pointer-events-none disabled:opacity-30"
             aria-label={prevLabel}
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              aria-hidden
+              className={isRtl ? "scale-x-[-1]" : undefined}
+            >
               <path
                 d="M10 3L5 8L10 13"
                 stroke="currentColor"
@@ -242,7 +244,14 @@ export default function CoverflowCarousel3D<T>({
             className="coverflow-carousel-nav absolute end-2 top-1/2 z-50 -translate-y-1/2 sm:end-3 md:end-4 rounded-sm border border-gold-glow/20 bg-void/90 p-2.5 text-gold backdrop-blur-sm transition-colors hover:border-gold/40 hover:bg-void/95 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/50 disabled:pointer-events-none disabled:opacity-30"
             aria-label={nextLabel}
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              aria-hidden
+              className={isRtl ? "scale-x-[-1]" : undefined}
+            >
               <path
                 d="M6 3L11 8L6 13"
                 stroke="currentColor"

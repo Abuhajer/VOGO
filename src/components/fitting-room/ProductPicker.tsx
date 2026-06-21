@@ -37,6 +37,8 @@ function ProductCardFace({
   viewDetailsLabel,
   onOpenDetails,
   onActivate,
+  slideIndex,
+  slideTotal,
 }: {
   product: FittingRoomProduct;
   selected: boolean;
@@ -51,8 +53,11 @@ function ProductCardFace({
   viewDetailsLabel?: string;
   onOpenDetails?: () => void;
   onActivate?: () => void;
+  slideIndex?: number;
+  slideTotal?: number;
 }) {
   const { name } = localizeProduct(product, locale);
+  const showCenterOverlay = imageOnly && isCenter;
 
   const handleClick = () => {
     if (imageOnly && isCenter !== undefined) {
@@ -66,9 +71,9 @@ function ProductCardFace({
   return (
     <button
       type="button"
-      data-carousel-card={imageOnly && isCenter ? "" : undefined}
+      data-carousel-card={showCenterOverlay ? "" : undefined}
       onClick={handleClick}
-      aria-label={imageOnly && isCenter && viewDetailsLabel ? viewDetailsLabel : name}
+      aria-label={showCenterOverlay && viewDetailsLabel ? viewDetailsLabel : name}
       className={`group flex flex-col overflow-hidden rounded-sm border text-start transition-[border-color,box-shadow] duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/50 active:scale-[0.98] ${
         selected
           ? "border-gold shadow-[0_0_20px_rgba(201,168,76,0.28)] ring-1 ring-gold/45"
@@ -77,7 +82,7 @@ function ProductCardFace({
     >
       <div
         className={`relative min-h-0 bg-obsidian ${
-          imageOnly ? "w-full flex-1" : "aspect-[3/4] w-full shrink-0"
+          imageOnly ? "h-full w-full" : "aspect-[3/4] w-full shrink-0"
         }`}
       >
         <Image
@@ -89,20 +94,44 @@ function ProductCardFace({
           className={fitContain ? "object-contain object-center p-1.5" : "object-cover object-center"}
         />
         {selected ? (
-          <span className="absolute end-1.5 top-1.5 rounded-sm border border-gold/30 bg-void/85 px-1.5 py-0.5 text-[7px] font-semibold uppercase tracking-wider text-gold">
+          <span className="absolute end-1.5 top-1.5 z-20 rounded-sm border border-gold/30 bg-void/85 px-1.5 py-0.5 text-[7px] font-semibold uppercase tracking-wider text-gold">
             {selectedLabel}
           </span>
         ) : null}
+        {showCenterOverlay ? (
+          <>
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-[46%] bg-gradient-to-t from-void/95 via-void/55 to-transparent"
+              aria-hidden
+            />
+            <div
+              className="fitting-room-card-overlay absolute inset-x-0 bottom-0 z-10 flex flex-col items-center px-3 pb-2 pt-10 text-center sm:px-4 sm:pb-2.5 sm:pt-11"
+              dir={isAr ? "rtl" : "ltr"}
+            >
+              <p className="line-clamp-2 max-w-[92%] font-serif text-[10px] leading-snug text-ivory sm:text-[11px]">
+                {name}
+              </p>
+              <p className="mt-2 text-[9px] tabular-nums text-gold sm:mt-2.5 sm:text-[10px]">
+                {formatNumber(product.price, locale)} {isAr ? "د.أ" : "JOD"}
+              </p>
+              {viewDetailsLabel ? (
+                <span
+                  className={`mt-3 inline-flex items-center rounded-sm border border-gold/35 bg-void/55 px-2.5 py-1 text-[8px] font-semibold text-gold backdrop-blur-[2px] sm:mt-3.5 sm:px-3 sm:py-1 sm:text-[9px] ${
+                    isAr ? "" : "uppercase tracking-[0.1em]"
+                  }`}
+                >
+                  {viewDetailsLabel}
+                </span>
+              ) : null}
+              {slideIndex !== undefined && slideTotal !== undefined && slideTotal > 0 ? (
+                <p className="mt-2.5 text-[7px] tabular-nums tracking-[0.18em] text-ivory-faint/75 sm:mt-3 sm:text-[8px]">
+                  {formatNumber(slideIndex + 1, locale)} / {formatNumber(slideTotal, locale)}
+                </p>
+              ) : null}
+            </div>
+          </>
+        ) : null}
       </div>
-      {imageOnly && isCenter && viewDetailsLabel ? (
-        <span
-          className={`shrink-0 border-t border-gold/30 bg-surface/90 px-2 py-2 text-center text-[9px] font-semibold text-gold sm:py-2.5 sm:text-[10px] ${
-            isAr ? "" : "uppercase tracking-[0.1em]"
-          }`}
-        >
-          {viewDetailsLabel}
-        </span>
-      ) : null}
       {!imageOnly ? (
         <div className="border-t border-gold-glow/10 bg-surface/80 p-2 sm:p-2.5">
           <p className="line-clamp-2 font-serif text-[11px] leading-tight text-ivory sm:text-xs">{name}</p>
@@ -190,9 +219,6 @@ function ProductCarousel3D({
     [products, onSelect]
   );
 
-  const activeProduct = products[selectedIndex];
-  const activeLocalized = activeProduct ? localizeProduct(activeProduct, locale) : null;
-
   return (
     <div className="flex min-h-0 w-full flex-1 flex-col">
       <CoverflowCarousel3D
@@ -209,7 +235,8 @@ function ProductCarousel3D({
         ariaLabel={t("step1Title")}
         prevLabel={t("carouselPrev")}
         nextLabel={t("carouselNext")}
-        renderSlide={({ item, isSelected, isCenter, onActivate }) => (
+        showCounter={false}
+        renderSlide={({ item, isSelected, isCenter, onActivate, index }) => (
           <ProductCardFace
             product={item}
             selected={isSelected}
@@ -221,24 +248,13 @@ function ProductCarousel3D({
             viewDetailsLabel={viewDetailsLabel}
             onOpenDetails={() => onOpenDetails(item)}
             onActivate={onActivate}
+            slideIndex={isCenter ? index : undefined}
+            slideTotal={isCenter ? products.length : undefined}
             imageOnly
             fitContain
             className="coverflow-carousel-card h-full w-full shadow-[0_16px_40px_rgba(0,0,0,0.45)]"
           />
         )}
-        overlay={
-          activeProduct && activeLocalized ? (
-            <div
-              className="pointer-events-none absolute bottom-10 inset-x-0 z-20 px-4 text-center sm:bottom-12"
-              dir={isAr ? "rtl" : "ltr"}
-            >
-              <p className="font-serif text-base text-ivory sm:text-lg md:text-xl">{activeLocalized.name}</p>
-              <p className="mt-0.5 text-xs tabular-nums text-gold sm:text-sm">
-                {formatNumber(activeProduct.price, locale)} {isAr ? "د.أ" : "JOD"}
-              </p>
-            </div>
-          ) : null
-        }
       />
     </div>
   );

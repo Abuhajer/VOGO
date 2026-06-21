@@ -742,6 +742,10 @@ body {
   line-height: 1.4;
 }
 
+.fitting-room-card-overlay {
+  pointer-events: none;
+}
+
 .collection-coverflow-meta {
   margin-top: 0.5rem;
   padding-top: 0.75rem;
@@ -823,7 +827,7 @@ body {
 
 .atelier-processing-row {
   height: 100%;
-  max-height: min(86%, calc(100dvh - 10.5rem));
+  max-height: min(92%, calc(100dvh - 8.5rem));
 }
 
 @media (min-width: 640px) {

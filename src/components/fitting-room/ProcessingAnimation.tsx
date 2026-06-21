@@ -155,18 +155,20 @@ export default function ProcessingAnimation({ product, personImageUrl }: Props) 
       aria-busy="true"
     >
       <div
-        className="pointer-events-none absolute inset-x-0 top-0 z-30 bg-gradient-to-b from-[#08080c]/96 via-[#08080c]/55 to-transparent px-3 pb-8 pt-2 sm:px-5 sm:pb-10 sm:pt-3"
+        className="pointer-events-none absolute end-3 top-3 z-40 sm:end-4 sm:top-4 md:end-5 md:top-5"
         aria-hidden={false}
       >
-        <p className="mb-0.5 text-[9px] uppercase tracking-[0.28em] text-gold sm:text-[10px]">
-          {t("stepProcessing")}
-        </p>
-        <h2 className="font-serif text-lg leading-tight text-ivory sm:text-xl md:text-2xl">
-          {t("processingTitle")}
-        </h2>
-        <p className="mt-1 max-w-xl text-[11px] leading-snug text-ivory-muted/90 line-clamp-2 sm:text-xs">
-          {t("processingDesc")}
-        </p>
+        <div className="max-w-[min(calc(100vw-2rem),17.5rem)] rounded-sm border border-gold-glow/20 bg-void/82 px-3 py-2 shadow-[0_10px_36px_rgba(0,0,0,0.5)] backdrop-blur-md sm:max-w-xs sm:px-3.5 sm:py-2.5">
+          <p className="text-[8px] uppercase tracking-[0.24em] text-gold sm:text-[9px]">
+            {t("stepProcessing")}
+          </p>
+          <h2 className="mt-0.5 font-serif text-sm leading-snug text-ivory sm:text-base md:text-lg">
+            {t("processingTitle")}
+          </h2>
+          <p className="mt-1 text-[10px] leading-snug text-ivory-muted/90 line-clamp-2 sm:text-[11px]">
+            {t("processingDesc")}
+          </p>
+        </div>
       </div>
 
       <p className="sr-only">
@@ -174,7 +176,7 @@ export default function ProcessingAnimation({ product, personImageUrl }: Props) 
       </p>
 
       <div
-        className="atelier-processing-row relative mx-auto flex min-h-0 w-full max-w-full flex-1 items-center justify-center gap-2 px-2 pb-1 pt-[5.75rem] sm:gap-3 sm:px-3 sm:pt-[6.25rem]"
+        className="atelier-processing-row relative mx-auto flex min-h-0 w-full max-w-full flex-1 items-center justify-center gap-2 px-2 pb-1 pt-0 sm:gap-3 sm:px-3"
         dir="ltr"
       >
         <div className="atelier-processing-canvas relative min-h-0 shrink overflow-hidden rounded-sm border border-gold-glow/25 bg-void/70 shadow-[inset_0_0_60px_rgba(201,168,76,0.06),0_24px_64px_rgba(0,0,0,0.45)]">
