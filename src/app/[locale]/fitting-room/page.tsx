@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { setRequestLocale } from "next-intl/server";
 import { getFittingRoomProducts } from "@/server/fitting-room";
-import { isTryOnConfigured } from "@/lib/try-on/generate";
+import { isTryOnConfigured } from "@/lib/try-on/providers/registry";
 import FittingRoomClient from "@/components/fitting-room/FittingRoomClient";
 
 export default async function FittingRoomPage({
