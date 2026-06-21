@@ -18,12 +18,12 @@ function ensureDatabaseUrlFromNetlify(): void {
   }
 }
 
-/** True when a database URL is configured (SQLite file or PostgreSQL). */
+/** True when a database URL is configured and matches the Prisma client. */
 export function isDatabaseConfigured(): boolean {
   ensureDatabaseUrlFromNetlify();
   const url = process.env.NETLIFY_DATABASE_URL?.trim() || process.env.DATABASE_URL?.trim();
   if (!url) return false;
-  // PostgreSQL Prisma client rejects file: URLs — skip DB and use static catalog instead.
+  // PostgreSQL Prisma client cannot use SQLite file: URLs — use static catalog instead.
   if (url.startsWith("file:")) {
     return false;
   }
