@@ -31,6 +31,9 @@ export type GenerateTryOnResponse = {
   url: string;
   width?: number;
   height?: number;
+  /** Person input dimensions — UI should lock compare frame to these. */
+  personWidth?: number;
+  personHeight?: number;
 };
 
 export type FittingRoomProduct = {

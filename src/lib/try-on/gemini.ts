@@ -227,6 +227,43 @@ export function geminiMissingConfigMessage(): string {
   return `Virtual try-on is not configured. Set GEMINI_API_KEY (https://aistudio.google.com/apikey). Optional: GEMINI_IMAGE_MODEL. Restart the server.${help ? ` Docs: ${help}` : " See .env.example."}`;
 }
 
+function geminiAspectRatioForDimensions(width: number, height: number): string {
+  const ratio = width / height;
+  const presets: Array<{ label: string; value: number }> = [
+    { label: "1:1", value: 1 },
+    { label: "3:4", value: 3 / 4 },
+    { label: "4:3", value: 4 / 3 },
+    { label: "9:16", value: 9 / 16 },
+    { label: "16:9", value: 16 / 9 },
+  ];
+  let best = presets[0];
+  let bestDiff = Infinity;
+  for (const preset of presets) {
+    const diff = Math.abs(ratio - preset.value);
+    if (diff < bestDiff) {
+      bestDiff = diff;
+      best = preset;
+    }
+  }
+  return best.label;
+}
+
+function buildGeminiGenerationConfig(
+  cfg: GeminiRuntimeConfig,
+  targetDimensions?: { width: number; height: number }
+): Record<string, unknown> {
+  const generationConfig = { ...cfg.effectiveGenerationConfig };
+  if (targetDimensions?.width && targetDimensions?.height) {
+    generationConfig.imageConfig = {
+      aspectRatio: geminiAspectRatioForDimensions(
+        targetDimensions.width,
+        targetDimensions.height
+      ),
+    };
+  }
+  return generationConfig;
+}
+
 export async function generateWithGemini(
   options: GenerateTryOnOptions
 ): Promise<GenerateTryOnResponse> {
@@ -261,7 +298,7 @@ export async function generateWithGemini(
 
   const body = {
     contents: [{ role: cfg.userContentRole, parts }],
-    generationConfig: cfg.effectiveGenerationConfig,
+    generationConfig: buildGeminiGenerationConfig(cfg, options.targetDimensions),
   };
 
   const timeoutMs = TRY_ON_ENV.geminiRequestTimeoutMs;

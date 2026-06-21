@@ -11,15 +11,12 @@ type Props = {
   beforeUrl: string;
   afterUrl: string;
   product: FittingRoomProduct;
-  /** Person photo dimensions — keeps compare frame aligned with the upload. */
+  /** Locked person canvas dimensions from API (preferred). */
   frameWidth?: number;
   frameHeight?: number;
   onTryAnother: () => void;
   onStartOver?: () => void;
 };
-
-const compareImgClass =
-  "absolute inset-0 h-full w-full object-fill object-center";
 
 function resolveFrameSize(
   frameWidth?: number,
@@ -34,6 +31,21 @@ function resolveFrameSize(
     return { width: naturalWidth, height: naturalHeight };
   }
   return null;
+}
+
+function loadImageSize(url: string): Promise<{ width: number; height: number } | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      if (img.naturalWidth && img.naturalHeight) {
+        resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      } else {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
 }
 
 export default function ResultReveal({
@@ -53,6 +65,7 @@ export default function ResultReveal({
   const [frameSize, setFrameSize] = useState<{ width: number; height: number } | null>(() =>
     resolveFrameSize(frameWidth, frameHeight)
   );
+  const [imagesAligned, setImagesAligned] = useState(false);
   const draggingRef = useRef(false);
 
   useEffect(() => {
@@ -62,13 +75,42 @@ export default function ResultReveal({
       return;
     }
 
-    const img = new Image();
-    img.onload = () => {
-      const size = resolveFrameSize(undefined, undefined, img.naturalWidth, img.naturalHeight);
+    void loadImageSize(beforeUrl).then((size) => {
       if (size) setFrameSize(size);
-    };
-    img.src = beforeUrl;
+    });
   }, [beforeUrl, frameWidth, frameHeight]);
+
+  useEffect(() => {
+    if (!frameSize) return;
+
+    let cancelled = false;
+    void (async () => {
+      const [beforeSize, afterSize] = await Promise.all([
+        loadImageSize(beforeUrl),
+        loadImageSize(afterUrl),
+      ]);
+      if (cancelled) return;
+
+      const aligned =
+        beforeSize?.width === frameSize.width &&
+        beforeSize?.height === frameSize.height &&
+        afterSize?.width === frameSize.width &&
+        afterSize?.height === frameSize.height;
+
+      if (!aligned) {
+        console.warn("[FittingRoom] Compare dimension mismatch", {
+          frame: frameSize,
+          before: beforeSize,
+          after: afterSize,
+        });
+      }
+      setImagesAligned(aligned);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [beforeUrl, afterUrl, frameSize]);
 
   const updateSlider = useCallback(
     (clientX: number, rect: DOMRect) => {
@@ -92,6 +134,11 @@ export default function ResultReveal({
 
   const frameAspect =
     frameSize && frameSize.height > 0 ? frameSize.width / frameSize.height : 3 / 4;
+
+  const imgProps =
+    frameSize && frameSize.width > 0 && frameSize.height > 0
+      ? { width: frameSize.width, height: frameSize.height }
+      : undefined;
 
   const actionButtons = (
     <>
@@ -140,7 +187,6 @@ export default function ResultReveal({
       dir={isAr ? "rtl" : "ltr"}
       className="relative flex min-h-0 flex-1 flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)] lg:items-stretch lg:gap-8 xl:gap-10"
     >
-      {/* Mobile — floating step intro (matches product/photo steps) */}
       <div
         className="pointer-events-none absolute inset-x-0 top-0 z-30 bg-gradient-to-b from-[#08080c]/96 via-[#08080c]/55 to-transparent px-3 pb-8 pt-1 sm:px-4 lg:hidden"
         aria-hidden={false}
@@ -148,11 +194,18 @@ export default function ResultReveal({
         {stepMeta}
       </div>
 
-      {/* Compare stage — hero image, full height on mobile */}
       <div className="fitting-room-result-stage flex min-h-0 flex-1 items-center justify-center px-2 pb-1 pt-[5.5rem] sm:px-3 sm:pt-[6rem] lg:px-0 lg:pb-0 lg:pt-0">
         <div
           className="fitting-room-result-compare fitting-room-compare relative cursor-ew-resize select-none overflow-hidden rounded-sm border border-gold-glow/15 bg-obsidian shadow-[inset_0_0_40px_rgba(201,168,76,0.04)] touch-pan-x"
-          style={{ ["--compare-aspect" as string]: String(frameAspect) }}
+          style={{
+            ["--compare-aspect" as string]: String(frameAspect),
+            ...(frameSize
+              ? {
+                  ["--compare-w" as string]: String(frameSize.width),
+                  ["--compare-h" as string]: String(frameSize.height),
+                }
+              : {}),
+          }}
           onPointerDown={(e) => {
             if (e.button !== 0) return;
             draggingRef.current = true;
@@ -174,10 +227,22 @@ export default function ResultReveal({
           }}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={beforeUrl} alt="" className={compareImgClass} draggable={false} />
+          <img
+            src={beforeUrl}
+            alt=""
+            className="fitting-room-compare-img"
+            draggable={false}
+            {...imgProps}
+          />
           <div className="absolute inset-0 overflow-hidden" style={{ clipPath: clipAfter }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={afterUrl} alt="" className={compareImgClass} draggable={false} />
+            <img
+              src={afterUrl}
+              alt=""
+              className="fitting-room-compare-img"
+              draggable={false}
+              {...imgProps}
+            />
           </div>
           <div
             className="pointer-events-none absolute bottom-0 top-0 z-20 flex -translate-x-1/2 items-center justify-center"
@@ -194,6 +259,11 @@ export default function ResultReveal({
           <div className="pointer-events-none absolute end-2 top-2 z-20 rounded-sm bg-void/80 px-1.5 py-0.5 text-[7px] uppercase tracking-wider text-gold backdrop-blur-sm sm:end-3 sm:top-3 sm:px-2 sm:py-1 sm:text-[8px]">
             {t("after")}
           </div>
+          {process.env.NODE_ENV === "development" && frameSize && !imagesAligned ? (
+            <div className="pointer-events-none absolute bottom-2 start-2 z-20 rounded-sm bg-red-900/80 px-1.5 py-0.5 text-[7px] text-ivory">
+              dim mismatch
+            </div>
+          ) : null}
           <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-void/90 via-void/40 to-transparent px-3 pb-2 pt-8 text-center lg:hidden">
             <p className="text-[8px] uppercase tracking-[0.16em] text-ivory-faint sm:text-[9px]">
               {t("dragHint")}
@@ -202,14 +272,12 @@ export default function ResultReveal({
         </div>
       </div>
 
-      {/* Desktop — side meta + actions */}
       <div className="relative z-10 hidden shrink-0 flex-col justify-center gap-4 text-start lg:flex lg:py-4">
         <div>{stepMeta}</div>
         <p className="text-[9px] uppercase tracking-[0.15em] text-ivory-faint">{t("dragHint")}</p>
         <div className="flex flex-wrap items-center justify-start gap-2 pt-1">{actionButtons}</div>
       </div>
 
-      {/* Mobile — sticky actions */}
       <div className="relative z-20 flex shrink-0 flex-wrap items-center justify-center gap-2 border-t border-gold-glow/10 bg-surface/95 px-3 py-2.5 backdrop-blur-md lg:hidden pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         {actionButtons}
       </div>

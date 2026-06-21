@@ -3,7 +3,7 @@ import {
   generateWithActiveProvider,
   tryOnMissingConfigMessage,
 } from "./providers/registry";
-import { assertExactPersonCanvas, getPersonImageDimensions } from "./normalize";
+import { getPersonImageDimensions, lockOutputToPersonDimensions, readImageBufferFromRef } from "./normalize";
 import { buildUnderlayerPromptSection, inferGarmentStyling } from "./garment-styling";
 import {
   buildClothingOnlyLockPart,
@@ -12,7 +12,6 @@ import {
   buildNvidiaKontextTryOnPrompt,
   buildNvidiaQwenTryOnPrompt,
 } from "./prompts";
-import { readImageBufferFromRef } from "./normalize";
 import { saveUploadBuffer } from "./storage";
 import { TRY_ON_ENV } from "./env";
 import { isNvidiaQwenModel, nvidiaQwenSupportsMultiImage } from "./nvidiaCommon";
@@ -31,6 +30,12 @@ export type RunTryOnInput = {
 export async function runVirtualTryOn(input: RunTryOnInput): Promise<GenerateTryOnResponse> {
   const providerId = getActiveImageProviderId();
   const personDims = await getPersonImageDimensions(input.personImageUrl);
+
+  if (!personDims?.width || !personDims?.height) {
+    throw new Error("Could not read person photo dimensions — upload a valid portrait image");
+  }
+
+  console.log(`[TryOn] Person canvas ${personDims.width}×${personDims.height}`);
 
   const garmentTitle = input.productNameEn?.trim() || null;
   const garmentDescriptionText =
@@ -101,7 +106,7 @@ export async function runVirtualTryOn(input: RunTryOnInput): Promise<GenerateTry
     prompt,
     multimodalParts,
     originalImages: providerId === "nvidia" ? nvidiaImages : geminiImages,
-    targetDimensions: personDims ?? undefined,
+    targetDimensions: personDims,
     fallbackPrompt: instructionPrompt,
     fallbackImages: geminiImages,
     fallbackMultimodalParts: multimodalParts,
@@ -118,17 +123,18 @@ export async function runVirtualTryOn(input: RunTryOnInput): Promise<GenerateTry
 
   const rawBuffer = await readImageBufferFromRef(result.url);
 
-  const { buffer, width, height } = await assertExactPersonCanvas(
-    input.personImageUrl,
-    rawBuffer
-  );
+  const {
+    buffer,
+    width,
+    height,
+    personWidth,
+    personHeight,
+  } = await lockOutputToPersonDimensions(input.personImageUrl, rawBuffer);
 
-  if (personDims && (width !== personDims.width || height !== personDims.height)) {
-    console.warn(
-      `[TryOn] Output dimensions ${width}×${height} ≠ person ${personDims.width}×${personDims.height}`
+  if (width !== personDims.width || height !== personDims.height) {
+    throw new Error(
+      `[TryOn] Output ${width}×${height} ≠ person ${personDims.width}×${personDims.height}`
     );
-  } else if (personDims) {
-    console.log(`[TryOn] Output locked to ${width}×${height} (matches person photo)`);
   }
 
   const { url: finalUrl } = await saveUploadBuffer(
@@ -141,6 +147,8 @@ export async function runVirtualTryOn(input: RunTryOnInput): Promise<GenerateTry
     url: finalUrl,
     width,
     height,
+    personWidth,
+    personHeight,
   };
 }
 

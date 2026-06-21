@@ -2,6 +2,12 @@ import type { ImageDimensions } from "./normalize";
 import type { GarmentCoverage } from "./garment-styling";
 import type { GarmentTextContext } from "./types";
 
+const INPAINTING_PREAMBLE = `You are a virtual try-on / inpainting model for luxury menswear.
+The person photo is a FIXED CANVAS and identity mask:
+- INPAINT / replace ONLY garment (clothing) pixels on the existing person.
+- Every non-garment pixel must remain identical to the person photo: face, hair, skin, hands, pose, background, lighting, camera angle, and field of view.
+- This is NOT portrait generation, NOT a new photo, NOT a re-shoot — it is an in-place clothing swap on the input image.`;
+
 function buildCriticalConstraints(dims?: ImageDimensions | null): string {
   const sizeLine =
     dims?.width && dims?.height
@@ -11,23 +17,23 @@ function buildCriticalConstraints(dims?: ImageDimensions | null): string {
   return `⚠️ CRITICAL CONSTRAINTS — MAXIMUM PRIORITY ⚠️
 1. OUTPUT DIMENSIONS: ${sizeLine}
 2. OUTPUT ASPECT RATIO: Same ratio as the person photo (portrait stays portrait).
-3. NO ZOOM IN: subject must NOT appear closer or larger in frame — match head/body size vs canvas to the person photo within ~2%.
-4. NO ZOOM OUT, NO CROP, NO REFRAME, NO ROTATION.
-5. DO NOT MOVE THE PERSON: same position left/right/up/down in the frame — no recentre or reframing.
-6. CLOTHING ONLY: replace visible garments — NOT a portrait edit, relight, or background change.
-7. IN-PLACE EDIT: treat the person photo as a fixed template; paint the new outfit onto the existing body at the same scale and position.
-8. NEVER output a square canvas (e.g. 1024×1024) when the person photo is portrait or landscape — match input pixel dimensions exactly.`;
+3. NO ZOOM IN / NO UPSCALE SUBJECT: head and body occupy the same % of frame as the person photo.
+4. NO ZOOM OUT, NO CROP, NO REFRAME, NO ROTATION, NO CANVAS RESIZE.
+5. DO NOT MOVE THE PERSON: same position left/right/up/down — no recentre or reframing.
+6. GARMENT PIXELS ONLY: inpaint clothing — NOT face, background, body, lighting, or scene edits.
+7. IN-PLACE EDIT: the person photo is the template; paint the catalog garment onto the existing body at the same scale and position.
+8. NEVER output a square canvas (e.g. 1024×1024) when the person photo is portrait — match input pixel dimensions exactly.`;
 }
 
 const CLOTHING_ONLY_LOCK = `
-=== CLOTHING-ONLY EDIT (STRICT — ZERO TOLERANCE) ===
+=== CLOTHING-ONLY INPAINTING (STRICT — ZERO TOLERANCE) ===
 - Change ONLY garment/clothing pixels. Every other pixel must stay identical to the person photo.
 - Face (eyes, nose, mouth, lips, ears, eyebrows, expression) — preserve exactly; no edits, smoothing, or replacement.
 - Hair, beard, skin tone, neck skin, hands, fingers — preserve exactly.
 - Body shape, pose, posture, limb angles, head position — preserve exactly.
 - Background, walls, floor, furniture, environment — preserve exactly; no replacement, blur, cleanup, or extension.
-- Lighting, shadows, exposure, white balance — preserve exactly.
-- NO beautification, NO retouching, NO skin smoothing, NO teeth whitening, NO makeup changes, NO portrait enhancement.
+- Lighting, shadows, exposure, white balance, camera angle, field of view — preserve exactly.
+- NO beautification, NO retouching, NO skin smoothing, NO teeth whitening, NO makeup, NO portrait enhancement.
 - NO environment change, NO scene relight, NO HDR, NO background whitening.
 - Swap only the catalog product garment onto the person — nothing else.`;
 
@@ -41,7 +47,7 @@ const LOCK_BODY_POSE = `
 
 const LOCK_OUTPUT_GEOMETRY = `
 === CAMERA & GEOMETRY LOCK ===
-- Same field of view, camera distance, and subject scale as the person photo.
+- Same field of view, camera distance, focal length, and subject scale as the person photo.
 - Subject occupies the SAME percentage of the frame as in the person photo.
 - Background shows the SAME amount of space as in the person photo.
 - NO recentring: do not shift the person left/right/up/down in the frame.
@@ -66,9 +72,9 @@ const CLOTHING_LIGHT_MATCH = `
 
 const FORBIDDEN_EDITS = `
 === FORBIDDEN (UNLESS CHANGING CLOTHING) ===
-- Zoom in or zoom out (subject closer/farther, or larger/smaller in frame)
+- Zoom in, zoom out, or upscale the subject in the frame
 - Moving, shifting, or recentring the person in the frame
-- Crop, reframe, or change subject scale in the frame
+- Crop, reframe, resize canvas, or change subject scale in the frame
 - Rotate, flip, mirror, or tilt
 - Face, hair, skin, hands, pose, or body proportion edits
 - Background replacement, whitening, relighting, environment change, or HDR beautify
@@ -80,7 +86,7 @@ function formatSize(dims?: ImageDimensions | null): string {
   if (!dims?.width || !dims?.height) {
     return "Render at the identical pixel resolution as the person photo.";
   }
-  return `Render at exactly ${dims.width}×${dims.height} pixels — every pixel of canvas matches the person photo.`;
+  return `Output image MUST be exactly ${dims.width}×${dims.height} pixels — same canvas size as the person photo. Do not return 1024×1024 or any other resolution.`;
 }
 
 function buildGarmentContextBlock(garment: GarmentTextContext): string {
@@ -114,7 +120,7 @@ function buildImageOrderNote(hasGarmentImage: boolean): string {
     return "Image order: person photo only.";
   }
   return `Image order (after this text):
-1. Person photo — the master canvas. Copy its width, height, framing, pose, face, hair, skin, hands, and background EXACTLY. Edit ONLY the clothing on this person.
+1. Person photo — the master canvas. Copy its width, height, framing, pose, face, hair, skin, hands, and background EXACTLY. Inpaint ONLY the clothing on this person.
 2. Garment reference — use ONLY for garment color, fabric, cut, lapels, buttons, and tailoring. Do NOT copy its background, mannequin, or crop.`;
 }
 
@@ -122,23 +128,23 @@ function buildVerificationBlock(dims?: ImageDimensions | null): string {
   return `=== VERIFICATION ===
 ✓ Output is exactly ${dims?.width ?? "?"}×${dims?.height ?? "?"} pixels with NO zoom or crop
 ✓ Person is in the SAME position and scale as the person photo (not moved, not closer)
-✓ ONLY clothing changed to catalog product — face, hair, skin, hands, pose, background IDENTICAL
+✓ ONLY clothing/garment pixels changed — face, hair, skin, hands, pose, background IDENTICAL
 ✓ Face and hair IDENTICAL to person photo (no gray blocks, blur, or retouching)
-✓ Pose, background, lighting, and framing IDENTICAL to person photo
+✓ Pose, background, lighting, camera angle, and framing IDENTICAL to person photo
 ✓ No beautification, environment change, or portrait edits`;
 }
 
 /** Short leading instruction: clothing-only lock (sent before person photo). */
 export function buildClothingOnlyLockPart(): string {
-  return "CLOTHING-ONLY: Change ONLY the garment to the catalog product. Preserve face, hair, skin, hands, pose, background, and lighting EXACTLY. No beautification, retouching, or environment edits.";
+  return "VIRTUAL TRY-ON INPAINTING: Change ONLY garment pixels to the catalog product. Preserve face, hair, skin, hands, pose, background, lighting, camera angle, and field of view EXACTLY. No beautification, retouching, zoom, crop, or environment edits.";
 }
 
 /** Short leading instruction sent before the person photo in the multimodal payload. */
 export function buildDimensionLockPart(dims?: ImageDimensions | null): string {
   if (!dims?.width || !dims?.height) {
-    return "Output MUST match the person photo pixel width × height exactly. Change clothing ONLY. NO zoom, crop, reframe, face, background, or body edits.";
+    return "Output MUST match the person photo pixel width × height exactly. Inpaint clothing ONLY. NO zoom, crop, reframe, canvas resize, face, background, or body edits.";
   }
-  return `OUTPUT LOCK: The next image is the person photo at ${dims.width}×${dims.height} pixels. Your output MUST be that same canvas with ONLY the clothing changed to the catalog product. FORBIDDEN: zoom, crop, reframe, rotate, relight, background edits, face/body/pose/skin/hair edits, beautification, retouching, environment change.`;
+  return `OUTPUT LOCK: The next image is the person photo at ${dims.width}×${dims.height} pixels. Your output MUST be exactly ${dims.width}×${dims.height} with ONLY the clothing inpainted to the catalog product. FORBIDDEN: zoom, crop, reframe, canvas resize, rotate, relight, background edits, face/body/pose/skin/hair edits, beautification, retouching, environment change.`;
 }
 
 /** Main try-on instruction — matches Cloth Change Platform flow (person image before garment). */
@@ -150,7 +156,7 @@ export function buildMenswearTryOnInstructionPrompt(
 ): string {
   const garmentBlock = buildGarmentContextBlock(garment);
 
-  return `You are a professional virtual try-on AI for luxury menswear.
+  return `${INPAINTING_PREAMBLE}
 
 ${buildCriticalConstraints(dims)}
 
@@ -159,14 +165,14 @@ ${CLOTHING_ONLY_LOCK}
 ${buildImageOrderNote(true)}
 ${garmentBlock}
 === TRANSFORMATION OBJECTIVE ===
-Primary task ONLY: replace visible clothing with the catalog product garment. Edit garment pixels only — nothing else.
+Primary task ONLY: inpaint / replace visible clothing with the catalog product garment. Edit garment pixels only — nothing else.
 ${formatSize(dims)}
 ${extraSections ?? ""}
 ${buildCoverageBlock(coverage)}
 ${FORBIDDEN_EDITS}
 
 === ABSOLUTE PRESERVATION (EVERYTHING EXCEPT CLOTHING) ===
-- Same person, pose, position, face, hair, skin, hands, background, lighting, and camera framing as the person photo.
+- Same person, pose, position, face, hair, skin, hands, background, lighting, camera angle, and field of view as the person photo.
 - Face shape, eyes, nose, mouth, ears, skin tone, expression — UNCHANGED.
 - Body proportions, posture, and placement in the frame — UNCHANGED.
 - When text and garment image conflict, trust the garment reference for color and fabric only.
@@ -200,14 +206,16 @@ export function buildNvidiaKontextTryOnPrompt(
     garment.description?.trim() ||
     "luxury tailored menswear from the VOGO collection";
 
-  return `${garmentBlock}Virtual try-on: replace ONLY the person's clothing with the catalog product (${garmentLabel}). Change garment pixels only.
+  return `${INPAINTING_PREAMBLE}
+
+${garmentBlock}Virtual try-on inpainting: replace ONLY the person's clothing with the catalog product (${garmentLabel}). Change garment pixels only.
 ${buildCriticalConstraints(dims)}
 ${CLOTHING_ONLY_LOCK}
 ${formatSize(dims)}
 ${extraSections ?? ""}
 ${buildCoverageBlock(coverage)}
 ${FORBIDDEN_EDITS}
-Preserve face, hair, skin, hands, pose, position, background, lighting, and full-body framing exactly. Do NOT zoom, crop, or move the person. No beautification or retouching.
+Preserve face, hair, skin, hands, pose, position, background, lighting, camera angle, and full-body framing exactly. Do NOT zoom, crop, resize canvas, or move the person. No beautification or retouching.
 ${LOCK_BODY_POSE}
 ${LOCK_OUTPUT_GEOMETRY}
 ${LOCK_LIGHTING_AND_SCENE}
@@ -231,19 +239,21 @@ export function buildNvidiaQwenTryOnPrompt(
     "luxury tailored menswear from the VOGO collection";
 
   const imageGuide = garmentImageIncluded
-    ? `Image 1 is the person photo — preserve face, hair, skin, hands, pose, background, and lighting exactly; edit clothing only. Image 2 is the catalog garment reference — match its color, cut, lapels, and fabric on the person only; ignore mannequin and background.
+    ? `Image 1 is the person photo — preserve face, hair, skin, hands, pose, background, lighting, and camera angle exactly; inpaint clothing only. Image 2 is the catalog garment reference — match its color, cut, lapels, and fabric on the person only; ignore mannequin and background.
 `
-    : `Image 1 is the person photo — preserve face, hair, skin, hands, pose, background, and lighting exactly; edit clothing only.
+    : `Image 1 is the person photo — preserve face, hair, skin, hands, pose, background, lighting, and camera angle exactly; inpaint clothing only.
 `;
 
-  return `${garmentBlock}${imageGuide}Virtual try-on: replace ONLY the person's clothing with the catalog product (${garmentLabel}). Change garment pixels only.
+  return `${INPAINTING_PREAMBLE}
+
+${garmentBlock}${imageGuide}Virtual try-on inpainting: replace ONLY the person's clothing with the catalog product (${garmentLabel}). Change garment pixels only.
 ${buildCriticalConstraints(dims)}
 ${CLOTHING_ONLY_LOCK}
 ${formatSize(dims)}
 ${extraSections ?? ""}
 ${buildCoverageBlock(coverage)}
 ${FORBIDDEN_EDITS}
-Preserve face, hair, skin, hands, pose, position, background, lighting, and full-body framing exactly. Do NOT zoom, crop, reframe, or move the person. No beautification, retouching, or environment change.
+Preserve face, hair, skin, hands, pose, position, background, lighting, camera angle, and full-body framing exactly. Do NOT zoom, crop, reframe, resize canvas, or move the person. No beautification, retouching, or environment change.
 ${LOCK_BODY_POSE}
 ${LOCK_OUTPUT_GEOMETRY}
 ${LOCK_LIGHTING_AND_SCENE}

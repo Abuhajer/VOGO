@@ -136,6 +136,8 @@ export default function FittingRoomClient({
         url?: string;
         width?: number;
         height?: number;
+        personWidth?: number;
+        personHeight?: number;
         error?: string;
         code?: string;
         retryAfterSeconds?: number;
@@ -146,8 +148,10 @@ export default function FittingRoomClient({
         return;
       }
       setResultUrl(data.url);
-      if (data.width && data.height) {
-        setResultSize({ width: data.width, height: data.height });
+      const lockW = data.personWidth ?? data.width;
+      const lockH = data.personHeight ?? data.height;
+      if (lockW && lockH) {
+        setResultSize({ width: lockW, height: lockH });
       } else {
         setResultSize(null);
       }
@@ -289,8 +293,8 @@ export default function FittingRoomClient({
               <ResultReveal
                 beforeUrl={personImageUrl}
                 afterUrl={resultUrl}
-                frameWidth={personImageSize?.width ?? resultSize?.width}
-                frameHeight={personImageSize?.height ?? resultSize?.height}
+                frameWidth={resultSize?.width ?? personImageSize?.width}
+                frameHeight={resultSize?.height ?? personImageSize?.height}
                 product={selectedProduct}
                 onTryAnother={() => {
                   goToStep("product");

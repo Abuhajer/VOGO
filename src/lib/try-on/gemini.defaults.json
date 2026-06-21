@@ -3,7 +3,8 @@
   "apiBaseUrl": "https://generativelanguage.googleapis.com/v1beta",
   "urlTemplate": "{base}/models/{model}:generateContent",
   "generationConfig": {
-    "responseModalities": ["IMAGE"]
+    "responseModalities": ["IMAGE"],
+    "temperature": 0.2
   },
   "userContentRole": "user",
   "http": {
