@@ -42,6 +42,9 @@ export const TRY_ON_ENV = {
   /** When false (default), skip hosted NVIDIA trial for custom photos and use Gemini when configured. */
   nvidiaAttemptCustomPhotos:
     process.env.NVIDIA_ATTEMPT_CUSTOM_PHOTOS?.trim().toLowerCase() === "true",
+  /** Qwen Image Edit: pass garment photo as second reference image when model supports it (2509/2511). */
+  nvidiaQwenUseGarmentImage:
+    process.env.NVIDIA_QWEN_USE_GARMENT_IMAGE?.trim().toLowerCase() !== "false",
   geminiRateLimitsDocUrl: process.env.GEMINI_RATE_LIMITS_DOC_URL?.trim() ?? "",
   imageProviderKeysHelpUrl:
     process.env.IMAGE_PROVIDER_KEYS_HELP_URL?.trim() ?? "",

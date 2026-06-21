@@ -182,6 +182,36 @@ ${LOCK_FACE_HEAD}
 ${CLOTHING_LIGHT_MATCH}`;
 }
 
+/** Qwen Image Edit — supports optional garment reference as a second image (2511/2509). */
+export function buildNvidiaQwenTryOnPrompt(
+  garment: GarmentTextContext,
+  dims?: ImageDimensions | null,
+  extraSections?: string,
+  coverage?: GarmentCoverage,
+  garmentImageIncluded = false
+): string {
+  const garmentBlock = buildGarmentContextBlock(garment);
+  const garmentLabel =
+    garment.title?.trim() ||
+    garment.description?.trim() ||
+    "luxury tailored menswear from the VOGO collection";
+
+  const imageGuide = garmentImageIncluded
+    ? `Image 1 is the person photo (preserve face, hair, pose, and background exactly). Image 2 is the garment product reference — match its color, cut, lapels, and fabric on the person only.
+`
+    : "";
+
+  return `${garmentBlock}${imageGuide}Virtual try-on: replace only the person's clothing with ${garmentLabel}.
+${formatSize(dims)}
+${extraSections ?? ""}
+${buildCoverageBlock(coverage)}
+${FORBIDDEN_EDITS}
+Keep the same face, hair, pose, position, background, lighting, and full-body framing. Do NOT zoom, crop, or move the person. Change clothing only.
+${LOCK_BODY_POSE}
+${LOCK_FACE_HEAD}
+${CLOTHING_LIGHT_MATCH}`;
+}
+
 /** @deprecated Use buildMenswearTryOnInstructionPrompt with structured multimodal parts. */
 export function buildMenswearTryOnPrompt(
   garmentDescription?: string,

@@ -5,9 +5,12 @@ import { authConfig } from "@/lib/auth.config";
 import { routing } from "./i18n/routing";
 
 const intlMiddleware = createIntlMiddleware(routing);
+const authSecret = process.env.AUTH_SECRET?.trim();
 const { auth } = NextAuth(authConfig);
 
-export default auth((request: NextRequest & { auth: unknown }) => {
+function runProtectedRouteChecks(
+  request: NextRequest & { auth: unknown }
+) {
   const session = request.auth as { user?: { role?: string } } | null;
   const { pathname } = request.nextUrl;
   const locale = pathname.split("/")[1] ?? "ar";
@@ -24,7 +27,20 @@ export default auth((request: NextRequest & { auth: unknown }) => {
   }
 
   return intlMiddleware(request);
-});
+}
+
+const middleware = authSecret
+  ? auth(runProtectedRouteChecks)
+  : (request: NextRequest) => {
+      if (process.env.NODE_ENV === "production") {
+        console.warn(
+          "[middleware] AUTH_SECRET is not set — auth route protection disabled until configured."
+        );
+      }
+      return intlMiddleware(request);
+    };
+
+export default middleware;
 
 export const config = {
   matcher: ["/((?!api|trpc|_next|_vercel|.*\\..*).*)"],

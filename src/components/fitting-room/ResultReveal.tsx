@@ -18,7 +18,8 @@ type Props = {
   onStartOver?: () => void;
 };
 
-const compareImgClass = "absolute inset-0 h-full w-full object-cover object-center";
+const compareImgClass =
+  "absolute inset-0 h-full w-full object-contain object-center";
 
 function resolveFrameSize(
   frameWidth?: number,
@@ -90,7 +91,7 @@ export default function ResultReveal({
     : `inset(0 ${100 - sliderPos}% 0 0)`;
 
   const frameAspect =
-    frameSize && frameSize.height > 0 ? frameSize.width / frameSize.height : 9 / 16;
+    frameSize && frameSize.height > 0 ? frameSize.width / frameSize.height : 3 / 4;
 
   const actionButtons = (
     <>
@@ -98,13 +99,13 @@ export default function ResultReveal({
         variant="outline"
         onClick={onTryAnother}
         isArabic={isAr}
-        className="!min-h-11 !px-5 !py-2.5"
+        className="!min-h-11 !px-4 !py-2.5 sm:!px-5"
       >
         {t("tryAnother")}
       </Button>
       <Link
         href={`/shop/${product.slug}`}
-        className="inline-flex min-h-11 items-center justify-center rounded-sm bg-gold px-5 py-2.5 font-sans text-[10px] font-semibold uppercase tracking-[0.15em] text-[#0E0D12] transition-all hover:shadow-[0_0_20px_rgba(201,168,76,0.25)]"
+        className="inline-flex min-h-11 items-center justify-center rounded-sm bg-gold px-4 py-2.5 font-sans text-[10px] font-semibold uppercase tracking-[0.15em] text-[#0E0D12] transition-all hover:shadow-[0_0_20px_rgba(201,168,76,0.25)] sm:px-5"
       >
         {t("viewInShop")}
       </Link>
@@ -120,22 +121,38 @@ export default function ResultReveal({
     </>
   );
 
+  const stepMeta = (
+    <>
+      <p className="mb-0.5 text-[9px] uppercase tracking-[0.28em] text-gold sm:text-[10px]">
+        {t("step4Label")}
+      </p>
+      <h2 className="font-serif text-lg leading-tight text-ivory sm:text-xl md:text-2xl">
+        {t("step4Title")}
+      </h2>
+      <p className="mt-1 max-w-xl text-[11px] leading-snug text-ivory-muted/90 line-clamp-2 sm:text-xs">
+        {t("step4Desc", { product: name })}
+      </p>
+    </>
+  );
+
   return (
     <div
       dir={isAr ? "rtl" : "ltr"}
-      className="flex min-h-0 flex-1 flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)] lg:items-stretch lg:gap-8 xl:gap-10"
+      className="relative flex min-h-0 flex-1 flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)] lg:items-stretch lg:gap-8 xl:gap-10"
     >
-      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2">
+      {/* Mobile — floating step intro (matches product/photo steps) */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 z-30 bg-gradient-to-b from-[#08080c]/96 via-[#08080c]/55 to-transparent px-3 pb-8 pt-1 sm:px-4 lg:hidden"
+        aria-hidden={false}
+      >
+        {stepMeta}
+      </div>
+
+      {/* Compare stage — hero image, full height on mobile */}
+      <div className="fitting-room-result-stage flex min-h-0 flex-1 items-center justify-center px-2 pb-1 pt-[5.5rem] sm:px-3 sm:pt-[6rem] lg:px-0 lg:pb-0 lg:pt-0">
         <div
-          className="fitting-room-compare relative mx-auto w-full max-w-full cursor-ew-resize select-none overflow-hidden rounded-sm border border-gold-glow/10 touch-pan-x"
-          style={{
-            aspectRatio: frameAspect,
-            height: frameSize ? "min(72vh, 820px)" : undefined,
-            width: frameSize
-              ? `min(100%, calc(min(72vh, 820px) * ${frameAspect}))`
-              : undefined,
-            maxHeight: "min(72vh, 820px)",
-          }}
+          className="fitting-room-result-compare fitting-room-compare relative cursor-ew-resize select-none overflow-hidden rounded-sm border border-gold-glow/15 bg-obsidian shadow-[inset_0_0_40px_rgba(201,168,76,0.04)] touch-pan-x"
+          style={{ ["--compare-aspect" as string]: String(frameAspect) }}
           onPointerDown={(e) => {
             if (e.button !== 0) return;
             draggingRef.current = true;
@@ -167,37 +184,33 @@ export default function ResultReveal({
             style={{ left: `${sliderPos}%` }}
           >
             <div className="h-full w-0.5 bg-gold shadow-[0_0_12px_rgba(201,168,76,0.6)]" />
-            <div className="absolute flex h-11 w-11 items-center justify-center rounded-full border border-gold bg-void/90 text-sm text-gold shadow-[0_4px_16px_rgba(0,0,0,0.4)] sm:h-12 sm:w-12">
+            <div className="absolute flex h-10 w-10 items-center justify-center rounded-full border border-gold bg-void/90 text-xs text-gold shadow-[0_4px_16px_rgba(0,0,0,0.4)] sm:h-11 sm:w-11 sm:text-sm">
               ↔
             </div>
           </div>
-          <div className="pointer-events-none absolute start-3 top-3 z-20 rounded-sm bg-void/80 px-2 py-1 text-[8px] uppercase tracking-wider text-ivory backdrop-blur-sm">
+          <div className="pointer-events-none absolute start-2 top-2 z-20 rounded-sm bg-void/80 px-1.5 py-0.5 text-[7px] uppercase tracking-wider text-ivory backdrop-blur-sm sm:start-3 sm:top-3 sm:px-2 sm:py-1 sm:text-[8px]">
             {t("before")}
           </div>
-          <div className="pointer-events-none absolute end-3 top-3 z-20 rounded-sm bg-void/80 px-2 py-1 text-[8px] uppercase tracking-wider text-gold backdrop-blur-sm">
+          <div className="pointer-events-none absolute end-2 top-2 z-20 rounded-sm bg-void/80 px-1.5 py-0.5 text-[7px] uppercase tracking-wider text-gold backdrop-blur-sm sm:end-3 sm:top-3 sm:px-2 sm:py-1 sm:text-[8px]">
             {t("after")}
           </div>
-        </div>
-        <p className="shrink-0 text-center text-[9px] uppercase tracking-[0.15em] text-ivory-faint lg:text-start">
-          {t("dragHint")}
-        </p>
-      </div>
-
-      <div className="relative z-10 flex shrink-0 flex-col justify-center gap-4 text-center lg:py-4 lg:text-start">
-        <div>
-          <p className="mb-2 text-[10px] uppercase tracking-[0.3em] text-gold">{t("step4Label")}</p>
-          <h2 className="font-serif text-2xl text-ivory sm:text-3xl md:text-4xl">{t("step4Title")}</h2>
-          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-ivory-muted lg:mx-0 lg:max-w-none">
-            {t("step4Desc", { product: name })}
-          </p>
-        </div>
-
-        <div className="hidden flex-wrap items-center justify-start gap-2 pt-1 lg:flex">
-          {actionButtons}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-void/90 via-void/40 to-transparent px-3 pb-2 pt-8 text-center lg:hidden">
+            <p className="text-[8px] uppercase tracking-[0.16em] text-ivory-faint sm:text-[9px]">
+              {t("dragHint")}
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="relative z-20 flex flex-wrap items-center justify-center gap-2 border-t border-gold-glow/10 bg-surface/95 px-3 py-3 backdrop-blur-md lg:hidden pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+      {/* Desktop — side meta + actions */}
+      <div className="relative z-10 hidden shrink-0 flex-col justify-center gap-4 text-start lg:flex lg:py-4">
+        <div>{stepMeta}</div>
+        <p className="text-[9px] uppercase tracking-[0.15em] text-ivory-faint">{t("dragHint")}</p>
+        <div className="flex flex-wrap items-center justify-start gap-2 pt-1">{actionButtons}</div>
+      </div>
+
+      {/* Mobile — sticky actions */}
+      <div className="relative z-20 flex shrink-0 flex-wrap items-center justify-center gap-2 border-t border-gold-glow/10 bg-surface/95 px-3 py-2.5 backdrop-blur-md lg:hidden pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         {actionButtons}
       </div>
     </div>

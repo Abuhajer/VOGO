@@ -9,8 +9,11 @@ import {
   buildDimensionLockPart,
   buildMenswearTryOnInstructionPrompt,
   buildNvidiaKontextTryOnPrompt,
+  buildNvidiaQwenTryOnPrompt,
 } from "./prompts";
 import { readLocalPublicFileAsync, saveUploadBuffer } from "./storage";
+import { TRY_ON_ENV } from "./env";
+import { isNvidiaQwenModel, nvidiaQwenSupportsMultiImage } from "./nvidiaCommon";
 import type { GenerateTryOnResponse, TryOnMultimodalPart } from "./types";
 
 export type RunTryOnInput = {
@@ -49,12 +52,21 @@ export async function runVirtualTryOn(input: RunTryOnInput): Promise<GenerateTry
     promptSections,
     styling.coverage
   );
-  const nvidiaPrompt = buildNvidiaKontextTryOnPrompt(
-    garmentContext,
-    personDims,
-    promptSections,
-    styling.coverage
-  );
+  const useNvidiaQwen = providerId === "nvidia" && isNvidiaQwenModel();
+  const nvidiaPrompt = useNvidiaQwen
+    ? buildNvidiaQwenTryOnPrompt(
+        garmentContext,
+        personDims,
+        promptSections,
+        styling.coverage,
+        TRY_ON_ENV.nvidiaQwenUseGarmentImage && nvidiaQwenSupportsMultiImage()
+      )
+    : buildNvidiaKontextTryOnPrompt(
+        garmentContext,
+        personDims,
+        promptSections,
+        styling.coverage
+      );
   const prompt = providerId === "nvidia" ? nvidiaPrompt : instructionPrompt;
 
   const garmentImage = {
@@ -75,7 +87,12 @@ export async function runVirtualTryOn(input: RunTryOnInput): Promise<GenerateTry
   ];
 
   const geminiImages = [personImage, garmentImage];
-  const nvidiaImages = [personImage];
+  const nvidiaImages =
+    useNvidiaQwen &&
+    TRY_ON_ENV.nvidiaQwenUseGarmentImage &&
+    nvidiaQwenSupportsMultiImage()
+      ? [personImage, garmentImage]
+      : [personImage];
 
   const result = await generateWithActiveProvider({
     prompt,

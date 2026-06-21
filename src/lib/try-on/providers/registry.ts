@@ -5,6 +5,7 @@ import {
   isNvidiaCustomImageUnsupported,
   nvidiaMissingConfigMessage,
 } from "../nvidia";
+import { isNvidiaQwenModel } from "../nvidiaCommon";
 import { TRY_ON_ENV } from "../env";
 import type { GenerateTryOnOptions, GenerateTryOnResponse } from "../types";
 import type { ImageProviderId, ImageTransformProvider } from "./types";
@@ -81,8 +82,9 @@ export async function generateWithActiveProvider(
   }
 
   if (id === "nvidia" && isGeminiConfigured() && !TRY_ON_ENV.nvidiaAttemptCustomPhotos) {
+    const backend = isNvidiaQwenModel() ? "Qwen Image Edit" : "FLUX Kontext";
     console.warn(
-      "[TryOn] Using Gemini for custom photo try-on (hosted NVIDIA NIM rejects custom uploads — set NVIDIA_ATTEMPT_CUSTOM_PHOTOS=true to try NVIDIA first)"
+      `[TryOn] Using Gemini for custom photo try-on (hosted NVIDIA ${backend} may reject uploads — set NVIDIA_ATTEMPT_CUSTOM_PHOTOS=true to try NVIDIA first)`
     );
     return geminiProvider.generate({
       prompt: options.fallbackPrompt ?? options.prompt,
