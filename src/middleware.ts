@@ -6,7 +6,6 @@ import { routing } from "./i18n/routing";
 
 const intlMiddleware = createIntlMiddleware(routing);
 const authSecret = process.env.AUTH_SECRET?.trim();
-const { auth } = NextAuth(authConfig);
 
 function runProtectedRouteChecks(
   request: NextRequest & { auth: unknown }
@@ -29,16 +28,19 @@ function runProtectedRouteChecks(
   return intlMiddleware(request);
 }
 
+function intlOnlyMiddleware(request: NextRequest) {
+  if (process.env.NODE_ENV === "production" && !authSecret) {
+    console.warn(
+      "[middleware] AUTH_SECRET is not set — auth route protection disabled until configured."
+    );
+  }
+  return intlMiddleware(request);
+}
+
+// Do not call NextAuth() at module load without AUTH_SECRET — it throws MissingSecret in production.
 const middleware = authSecret
-  ? auth(runProtectedRouteChecks)
-  : (request: NextRequest) => {
-      if (process.env.NODE_ENV === "production") {
-        console.warn(
-          "[middleware] AUTH_SECRET is not set — auth route protection disabled until configured."
-        );
-      }
-      return intlMiddleware(request);
-    };
+  ? NextAuth(authConfig).auth(runProtectedRouteChecks)
+  : intlOnlyMiddleware;
 
 export default middleware;
 
