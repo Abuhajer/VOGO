@@ -446,7 +446,7 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
               <Image
                 key={preview}
                 src={preview}
-                alt=""
+                alt={previewLabel}
                 fill
                 sizes="(max-width: 768px) 42vw, 420px"
                 className={`${portraitImgClass} ${previewTransition}`}

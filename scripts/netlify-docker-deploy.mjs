@@ -42,6 +42,9 @@ export NETLIFY_SITE_ID="$NETLIFY_SITE_ID"
 export npm_config_cache=/tmp/npm-cache
 npm ci
 npm install -g netlify-cli@23.12.3
+# Avoid ENOTEMPTY when plugin rebuilds functions-internal on a bind-mounted workspace.
+rm -rf .netlify/functions-internal .netlify/static .netlify/edge-functions .netlify/deploy
+rm -rf .next/cache
 set +e
 netlify build
 BUILD_EXIT=$?
