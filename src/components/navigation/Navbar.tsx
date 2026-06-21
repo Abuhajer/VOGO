@@ -84,9 +84,16 @@ export default function Navbar() {
     locale === "ar" ? "" : "tracking-[0.06em] xl:tracking-[0.08em] uppercase"
   }`;
 
-  const mobileLinkClass = `text-xl text-ivory hover:text-gold transition-colors duration-300 font-sans font-medium ${
+  const mobileLinkClass = `text-xl text-ivory hover:text-gold transition-colors duration-300 font-sans font-medium light:text-[#0E0D12] light:hover:text-gold ${
     locale === "ar" ? "" : "tracking-[0.15em] uppercase"
   }`;
+
+  const mobileMenuLinkClass = (href: string) =>
+    `${mobileLinkClass}${
+      pathname === href || (href === "/fitting-room" && pathname.startsWith("/fitting-room"))
+        ? " !text-gold light:!text-gold"
+        : ""
+    }`;
 
   return (
     <>
@@ -205,10 +212,10 @@ export default function Navbar() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.4, ease: "easeInOut" }}
-            className="fixed inset-0 z-30 flex flex-col items-center justify-center bg-void/98 p-8 backdrop-blur-lg select-none light:bg-void/99"
+            className="fixed inset-0 z-30 flex flex-col items-center justify-center bg-void/98 p-8 backdrop-blur-lg select-none light:bg-[#FAF7F2]/98"
           >
             <div className="absolute inset-0 z-0" onClick={() => setMobileMenuOpen(false)} />
-            <div className="pointer-events-none absolute h-[300px] w-[300px] rounded-full bg-gold-glow opacity-20 blur-[80px] light:opacity-30" />
+            <div className="pointer-events-none absolute h-[280px] w-[280px] rounded-full bg-gold-glow opacity-15 blur-[90px] light:opacity-[0.08]" />
 
             <nav
               className="relative z-10 flex flex-col items-center gap-6 text-center"
@@ -225,12 +232,16 @@ export default function Navbar() {
                     <a
                       href={link.href}
                       onClick={(event) => handleSectionClick(event, link.href)}
-                      className={mobileLinkClass}
+                      className={mobileMenuLinkClass(link.href)}
                     >
                       {link.label}
                     </a>
                   ) : (
-                    <Link href={link.href} onClick={handleLinkClick} className={mobileLinkClass}>
+                    <Link
+                      href={link.href}
+                      onClick={handleLinkClick}
+                      className={mobileMenuLinkClass(link.href)}
+                    >
                       {link.label}
                     </Link>
                   )}
@@ -239,7 +250,7 @@ export default function Navbar() {
 
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="mt-8 inline-flex items-center gap-2 text-[9px] tracking-[0.3em] uppercase text-ivory-faint hover:text-gold transition-colors duration-300 font-sans font-bold"
+                className="mt-8 inline-flex items-center gap-2 text-[9px] tracking-[0.3em] uppercase text-ivory-faint hover:text-gold transition-colors duration-300 font-sans font-bold light:text-[#4A453F]"
               >
                 {locale === "ar" ? "إغلاق القائمة" : "Close Menu"}
                 <CloseIcon size={12} />
