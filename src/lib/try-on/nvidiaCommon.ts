@@ -60,9 +60,10 @@ export function normalizeNvidiaQwenOpenAiModelId(model = TRY_ON_ENV.nvidiaImageM
   return parts[parts.length - 1] ?? slug;
 }
 
-/** OpenAI-compatible edits are scoped under the model GenAI path (not global /v1/images/edits). */
-export function buildNvidiaOpenAiEditsUrl(model = TRY_ON_ENV.nvidiaImageModel): string {
-  return `${buildNvidiaGenAiBaseUrl(model)}/images/edits`;
+/** Qwen Image Edit uses integrate.api.nvidia.com OpenAI-compatible /images/edits. */
+export function buildNvidiaOpenAiEditsUrl(): string {
+  const base = TRY_ON_ENV.nvidiaOpenAiApiBaseUrl.replace(/\/$/, "");
+  return `${base}/images/edits`;
 }
 
 export async function tryOnImageToJpegBuffer(img: TryOnImageInput): Promise<Buffer> {

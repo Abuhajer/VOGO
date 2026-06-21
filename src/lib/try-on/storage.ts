@@ -4,11 +4,33 @@ import path from "path";
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "fitting-room");
 
+/** Netlify/Vercel/Lambda deploys mount the app bundle read-only — no public/uploads writes. */
+export function isReadOnlyFilesystem(): boolean {
+  if (process.env.FITTING_ROOM_MEMORY_STORAGE?.trim().toLowerCase() === "true") {
+    return true;
+  }
+  if (process.env.FITTING_ROOM_DISK_STORAGE?.trim().toLowerCase() === "true") {
+    return false;
+  }
+  return Boolean(
+    process.env.NETLIFY ||
+      process.env.AWS_LAMBDA_FUNCTION_NAME ||
+      process.env.VERCEL ||
+      process.env.AWS_EXECUTION_ENV
+  );
+}
+
+export function bufferToDataUrl(buffer: Buffer, mimeType: string): string {
+  const mime = mimeType.split(";")[0]?.trim() || "image/jpeg";
+  return `data:${mime};base64,${buffer.toString("base64")}`;
+}
+
 export function getUploadDir(): string {
   return UPLOAD_DIR;
 }
 
 export async function ensureUploadDir(): Promise<void> {
+  if (isReadOnlyFilesystem()) return;
   await mkdir(UPLOAD_DIR, { recursive: true });
 }
 
@@ -16,11 +38,19 @@ export async function saveUploadBuffer(
   buffer: Buffer,
   filename: string,
   mimeType: string
-): Promise<{ url: string; filePath: string }> {
-  await ensureUploadDir();
+): Promise<{ url: string; filePath: string | null }> {
   const ext = mimeType.includes("png") ? "png" : mimeType.includes("webp") ? "webp" : "jpg";
   const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
   const finalName = safeName.endsWith(`.${ext}`) ? safeName : `${safeName}.${ext}`;
+
+  if (isReadOnlyFilesystem()) {
+    return {
+      url: bufferToDataUrl(buffer, mimeType),
+      filePath: null,
+    };
+  }
+
+  await ensureUploadDir();
   const filePath = path.join(UPLOAD_DIR, finalName);
   await writeFile(filePath, buffer);
   return {

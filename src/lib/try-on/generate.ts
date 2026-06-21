@@ -11,7 +11,8 @@ import {
   buildNvidiaKontextTryOnPrompt,
   buildNvidiaQwenTryOnPrompt,
 } from "./prompts";
-import { readLocalPublicFileAsync, saveUploadBuffer } from "./storage";
+import { readImageBufferFromRef } from "./normalize";
+import { saveUploadBuffer } from "./storage";
 import { TRY_ON_ENV } from "./env";
 import { isNvidiaQwenModel, nvidiaQwenSupportsMultiImage } from "./nvidiaCommon";
 import type { GenerateTryOnResponse, TryOnMultimodalPart } from "./types";
@@ -113,10 +114,7 @@ export async function runVirtualTryOn(input: RunTryOnInput): Promise<GenerateTry
     throw new Error("AI generation failed to return a valid image URL");
   }
 
-  const rawBuffer = await readLocalPublicFileAsync(result.url);
-  if (!rawBuffer) {
-    throw new Error("Generated image could not be read from storage");
-  }
+  const rawBuffer = await readImageBufferFromRef(result.url);
 
   const { buffer, width, height } = await assertExactPersonCanvas(
     input.personImageUrl,

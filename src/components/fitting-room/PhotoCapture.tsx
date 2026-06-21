@@ -212,7 +212,7 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
               fill
               sizes="(max-width: 640px) 90vw, 400px"
               className="object-contain"
-              unoptimized={preview.startsWith("/uploads") || preview.endsWith(".svg")}
+              unoptimized={preview.startsWith("data:") || preview.startsWith("/uploads") || preview.endsWith(".svg")}
               priority
             />
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-void/95 via-void/50 to-transparent p-3">

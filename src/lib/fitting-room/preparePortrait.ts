@@ -1,4 +1,4 @@
-/** Client-side resize + compress before fitting-room upload (keeps original framing). */
+/** Client-side resize + compress; portraits stay as data URLs (no server disk write). */
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -61,22 +61,18 @@ export async function preparePortraitBlob(
   return canvasToBlob(canvas);
 }
 
-/** Upload portrait blob via multipart (avoids large JSON body limits). */
-export async function uploadPortraitBlob(blob: Blob): Promise<string> {
-  const form = new FormData();
-  form.append("file", blob, "portrait.jpg");
-
-  const res = await fetch("/api/fitting-room/upload", {
-    method: "POST",
-    body: form,
+function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("Failed to encode image"));
+    reader.readAsDataURL(blob);
   });
+}
 
-  const data = (await res.json()) as { url?: string; error?: string };
-  if (!res.ok || !data.url) {
-    throw new Error(data.error ?? "Upload failed");
-  }
-
-  return data.url;
+/** Keep portrait in-memory as a data URL (no server disk write — required on Netlify). */
+export async function uploadPortraitBlob(blob: Blob): Promise<string> {
+  return blobToDataUrl(blob);
 }
 
 /** Convert a JPEG data URL (camera capture) to blob and upload. */

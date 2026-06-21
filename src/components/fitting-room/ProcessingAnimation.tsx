@@ -199,7 +199,7 @@ export default function ProcessingAnimation({ product, personImageUrl }: Props) 
               fill
               sizes="(max-width: 640px) 70vw, 420px"
               className="object-contain opacity-90"
-              unoptimized={personImageUrl.startsWith("/uploads")}
+              unoptimized={personImageUrl.startsWith("data:") || personImageUrl.startsWith("/uploads")}
               priority
             />
           ) : (

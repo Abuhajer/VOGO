@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { ensureUploadDir, saveUploadBuffer } from "@/lib/try-on/storage";
+import { saveUploadBuffer } from "@/lib/try-on/storage";
 
 const MAX_BYTES = 8 * 1024 * 1024;
 
 export async function POST(request: Request) {
   try {
-    await ensureUploadDir();
     const contentType = request.headers.get("content-type") ?? "";
 
     if (contentType.includes("multipart/form-data")) {
