@@ -1,5 +1,6 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { localizeCollectionName } from "@/lib/collections";
+import { getStaticShopProductsByCollection } from "@/lib/catalog/static-catalog";
 import { getShopProductsByCollection } from "@/server/collections";
 import ShopProductCard from "@/components/shop/ShopProductCard";
 import SectionHeading from "@/components/ui/SectionHeading";
@@ -20,7 +21,14 @@ export default async function ShopPage({
 }) {
   setRequestLocale(locale);
   const t = await getTranslations("Shop");
-  const grouped = await getShopProductsByCollection();
+  let grouped;
+
+  try {
+    grouped = await getShopProductsByCollection();
+  } catch (err) {
+    console.error("[shop] catalog load failed", err);
+    grouped = getStaticShopProductsByCollection();
+  }
 
   return (
     <main className="container mx-auto px-6 md:px-12 py-28 md:py-36" dir={locale === "ar" ? "rtl" : "ltr"}>
