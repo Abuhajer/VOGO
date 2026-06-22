@@ -1249,8 +1249,8 @@ body {
 }
 
 .fitting-room-camera-feed {
-  object-fit: contain;
-  object-position: center;
+  object-fit: cover;
+  object-position: center top;
   background: var(--color-void);
 }
 

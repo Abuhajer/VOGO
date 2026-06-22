@@ -80,14 +80,14 @@ export default function AvatarPicker({
 
   const listClassName =
     layout === "scroll"
-      ? "fitting-room-avatar-scroll flex gap-2.5 overflow-x-auto overscroll-x-contain pb-1 pt-0.5 scrollbar-hide snap-x snap-mandatory"
+      ? "fitting-room-avatar-scroll flex gap-1.5 overflow-x-auto overscroll-x-contain pb-0.5 pt-0.5 scrollbar-hide snap-x snap-mandatory"
       : layout === "sidebar"
-        ? "fitting-room-avatar-sidebar grid grid-cols-2 gap-2 sm:gap-2.5"
+        ? "fitting-room-avatar-sidebar grid grid-cols-2 gap-1.5"
         : "grid grid-cols-3 gap-2 sm:gap-2.5 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3";
 
   return (
     <div
-      className={`${layout === "sidebar" ? "flex min-h-0 flex-1 flex-col gap-3" : "space-y-2.5"}`}
+      className={`${layout === "sidebar" ? "flex min-h-0 flex-1 flex-col gap-2" : "space-y-2"}`}
       dir={isAr ? "rtl" : "ltr"}
     >
       {showHeader ? (
@@ -121,9 +121,9 @@ export default function AvatarPicker({
               onSelect={onSelect}
               className={
                 layout === "scroll"
-                  ? "w-[4.75rem] sm:w-20"
+                  ? "w-[4.25rem] sm:w-[4.75rem]"
                   : layout === "sidebar"
-                    ? "w-full max-w-[7.5rem] justify-self-center"
+                    ? "w-full max-w-[6.5rem] justify-self-center"
                     : "w-full"
               }
             />

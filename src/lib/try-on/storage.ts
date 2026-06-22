@@ -4,7 +4,21 @@ import path from "path";
 
 const UPLOAD_DIR = path.join(process.cwd(), "public", "uploads", "fitting-room");
 
-/** Netlify/Vercel/Lambda deploys mount the app bundle read-only — no public/uploads writes. */
+function isRailwayDeploy(): boolean {
+  return Boolean(
+    process.env.RAILWAY_ENVIRONMENT ||
+      process.env.RAILWAY_ENVIRONMENT_ID ||
+      process.env.RAILWAY_PROJECT_ID ||
+      process.env.RAILWAY_SERVICE_NAME ||
+      process.env.RAILWAY_STATIC_URL
+  );
+}
+
+/**
+ * When true, try-on uploads return base64 data URLs instead of `/uploads/fitting-room/*`.
+ * Required on serverless/read-only bundles and on PaaS with ephemeral disks (Railway, etc.)
+ * where runtime writes are not served reliably across instances or redeploys.
+ */
 export function isReadOnlyFilesystem(): boolean {
   if (process.env.FITTING_ROOM_MEMORY_STORAGE?.trim().toLowerCase() === "true") {
     return true;
@@ -12,12 +26,22 @@ export function isReadOnlyFilesystem(): boolean {
   if (process.env.FITTING_ROOM_DISK_STORAGE?.trim().toLowerCase() === "true") {
     return false;
   }
-  return Boolean(
+  if (
     process.env.NETLIFY ||
-      process.env.AWS_LAMBDA_FUNCTION_NAME ||
-      process.env.VERCEL ||
-      process.env.AWS_EXECUTION_ENV
-  );
+    process.env.AWS_LAMBDA_FUNCTION_NAME ||
+    process.env.VERCEL ||
+    process.env.AWS_EXECUTION_ENV
+  ) {
+    return true;
+  }
+  if (isRailwayDeploy()) {
+    return true;
+  }
+  // Production without an explicit persistent upload volume — avoid broken /uploads/* URLs.
+  if (process.env.NODE_ENV === "production") {
+    return true;
+  }
+  return false;
 }
 
 export function bufferToDataUrl(buffer: Buffer, mimeType: string): string {

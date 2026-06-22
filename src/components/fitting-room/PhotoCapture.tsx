@@ -181,26 +181,26 @@ function SourcePanel({
   uploading,
   cameraActive,
   cameraStarting,
+  cameraFacing,
   isAr,
   t,
   onOpenFilePicker,
   onStartCamera,
+  onSwitchCamera,
 }: {
   source: PhotoSource;
   uploading: boolean;
   cameraActive: boolean;
   cameraStarting: boolean;
+  cameraFacing: "user" | "environment";
   isAr: boolean;
   t: ReturnType<typeof useTranslations<"FittingRoom">>;
   onOpenFilePicker: () => void;
   onStartCamera: () => void;
+  onSwitchCamera: () => void;
 }) {
   if (source === "avatar") {
-    return (
-      <p className="text-[9px] leading-relaxed text-ivory-muted" dir={isAr ? "rtl" : "ltr"}>
-        {t("avatarHint")}
-      </p>
-    );
+    return null;
   }
 
   return (
@@ -223,19 +223,39 @@ function SourcePanel({
       {source === "camera" ? (
         <>
           <p className="text-[10px] leading-relaxed text-ivory-muted">{t("cameraIntro")}</p>
-          {!cameraActive ? (
+          {!cameraActive && !cameraStarting ? (
             <button
               type="button"
               onClick={onStartCamera}
-              disabled={cameraStarting}
-              className="flex min-h-10 w-full items-center justify-center gap-2 rounded-sm border border-gold/30 bg-gold/[0.06] px-3 text-[9px] uppercase tracking-[0.12em] text-gold transition-colors hover:border-gold/45 hover:bg-gold/[0.1] disabled:cursor-wait disabled:opacity-60"
+              className="flex min-h-10 w-full items-center justify-center gap-2 rounded-sm border border-gold/30 bg-gold/[0.06] px-3 text-[9px] uppercase tracking-[0.12em] text-gold transition-colors hover:border-gold/45 hover:bg-gold/[0.1]"
             >
               <SourceIcon id="camera" size={13} />
-              {cameraStarting ? t("cameraStarting") : t("enableCamera")}
+              {t("enableCamera")}
             </button>
-          ) : (
-            <p className="text-[10px] leading-relaxed text-ivory-faint">{t("frameGuide")}</p>
-          )}
+          ) : null}
+          {cameraStarting ? (
+            <p className="text-[10px] leading-relaxed text-ivory-faint">{t("cameraStarting")}</p>
+          ) : null}
+          {cameraActive ? (
+            <>
+              <p className="text-[10px] leading-relaxed text-ivory-faint">{t("frameGuide")}</p>
+              <button
+                type="button"
+                onClick={onSwitchCamera}
+                className="flex min-h-10 w-full items-center justify-center gap-2 rounded-sm border border-gold-glow/20 bg-void/50 px-3 text-[9px] uppercase tracking-[0.12em] text-ivory-muted transition-colors hover:border-gold/35 hover:text-gold"
+              >
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
+                  <path
+                    d="M4.5 4.5H6L7 3H9L10 4.5H11.5C12.3284 4.5 13 5.17157 13 6V11C13 11.8284 12.3284 12.5 11.5 12.5H4.5C3.67157 12.5 3 11.8284 3 11V6C3 5.17157 3.67157 4.5 4.5 4.5Z"
+                    stroke="currentColor"
+                    strokeWidth="1.2"
+                  />
+                  <circle cx="8" cy="8.25" r="1.75" stroke="currentColor" strokeWidth="1.2" />
+                </svg>
+                {t("switchCamera")} — {cameraFacing === "user" ? t("cameraFront") : t("cameraBack")}
+              </button>
+            </>
+          ) : null}
         </>
       ) : null}
     </div>
@@ -247,21 +267,25 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
   const locale = useLocale();
   const isAr = locale === "ar";
   const prefersReducedMotion = useReducedMotion();
-  const [source, setSource] = useState<PhotoSource>("avatar");
+  const [source, setSource] = useState<PhotoSource>("upload");
   const [preview, setPreview] = useState<string | null>(personImageUrl);
   const [uploading, setUploading] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraStarting, setCameraStarting] = useState(false);
+  const [cameraFacing, setCameraFacing] = useState<"user" | "environment">("user");
+  const [cameraDenied, setCameraDenied] = useState(false);
   const [, startTransition] = useTransition();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraStoppedByUserRef = useRef(false);
 
   useEffect(() => {
     setPreview(personImageUrl);
   }, [personImageUrl]);
 
-  const stopCamera = useCallback(() => {
+  const stopCamera = useCallback((byUser = false) => {
+    if (byUser) cameraStoppedByUserRef.current = true;
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
     setCameraActive(false);
@@ -274,6 +298,10 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
 
   const switchSource = (next: PhotoSource) => {
     if (next === source) return;
+    if (next === "camera") {
+      setCameraDenied(false);
+      cameraStoppedByUserRef.current = false;
+    }
     startTransition(() => {
       setSource(next);
       if (next !== "camera") stopCamera();
@@ -304,34 +332,60 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
     void uploadFile(file);
   };
 
-  const startCamera = async () => {
-    stopCamera();
-    onError(null);
-    setCameraStarting(true);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: { ideal: 720 }, height: { ideal: 1280 } },
-        audio: false,
-      });
-      streamRef.current = stream;
-      setCameraActive(true);
-      requestAnimationFrame(() => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          void videoRef.current.play();
+  const startCamera = useCallback(
+    async (facing: "user" | "environment" = cameraFacing) => {
+      stopCamera();
+      onError(null);
+      setCameraDenied(false);
+      cameraStoppedByUserRef.current = false;
+      setCameraStarting(true);
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: facing,
+            width: { ideal: 1080 },
+            height: { ideal: 1920 },
+          },
+          audio: false,
+        });
+        streamRef.current = stream;
+        setCameraFacing(facing);
+        setCameraActive(true);
+        const video = videoRef.current;
+        if (video) {
+          video.setAttribute("playsinline", "true");
+          video.muted = true;
+          video.srcObject = stream;
+          await video.play();
         }
-      });
-    } catch {
-      onError(t("cameraDenied"));
-    } finally {
-      setCameraStarting(false);
-    }
-  };
+      } catch {
+        setCameraDenied(true);
+        onError(t("cameraDenied"));
+      } finally {
+        setCameraStarting(false);
+      }
+    },
+    [cameraFacing, onError, stopCamera, t]
+  );
+
+  const switchCamera = useCallback(() => {
+    const next = cameraFacing === "user" ? "environment" : "user";
+    void startCamera(next);
+  }, [cameraFacing, startCamera]);
+
+  useEffect(() => {
+    if (source !== "camera" || cameraDenied || cameraStoppedByUserRef.current) return;
+    if (cameraActive || cameraStarting) return;
+    void startCamera(cameraFacing);
+  }, [source, cameraDenied, cameraActive, cameraStarting, cameraFacing, startCamera]);
 
   const capturePhoto = async () => {
     const video = videoRef.current;
     if (!video) return;
-    const dataUrl = capturePortrait9x16FromVideo(video, { mirror: true, rotation: 0 });
+    const mirror = cameraFacing === "user";
+    const rotation =
+      video.videoWidth > video.videoHeight ? 90 : 0;
+    const dataUrl = capturePortrait9x16FromVideo(video, { mirror, rotation });
     if (!dataUrl) {
       onError(t("captureFailed"));
       return;
@@ -392,12 +446,19 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
       uploading={uploading}
       cameraActive={cameraActive}
       cameraStarting={cameraStarting}
+      cameraFacing={cameraFacing}
       isAr={isAr}
       t={t}
       onOpenFilePicker={openFilePicker}
       onStartCamera={() => void startCamera()}
+      onSwitchCamera={switchCamera}
     />
   );
+
+  const gridColsClass =
+    source === "avatar"
+      ? "md:grid-cols-[minmax(11rem,15rem)_auto_minmax(0,1fr)]"
+      : "md:grid-cols-[minmax(11rem,15rem)_1fr]";
 
   return (
     <div className="fitting-room-photo-stage relative flex w-full flex-col md:min-h-0 md:flex-1">
@@ -427,22 +488,29 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
       </div>
 
       <div
-        className="fitting-room-photo-row relative mx-auto grid w-full max-w-[1440px] flex-1 grid-cols-1 gap-3 px-2 py-2 sm:gap-4 sm:px-3 md:min-h-0 md:grid-cols-[minmax(0,1fr)_auto_minmax(11rem,15rem)] md:items-center md:gap-5 md:py-3 lg:gap-7 lg:px-5"
+        className={`fitting-room-photo-row relative mx-auto grid w-full max-w-[1440px] flex-1 grid-cols-1 gap-3 px-2 py-2 sm:gap-4 sm:px-3 md:min-h-0 md:items-center md:gap-5 md:py-3 lg:gap-6 lg:px-5 ${gridColsClass}`}
         dir={isAr ? "rtl" : "ltr"}
       >
-        <section
-          className="fitting-room-avatar-rail hidden min-h-0 min-w-0 md:flex md:flex-col md:justify-center md:pe-1 lg:pe-2"
-          aria-label={t("avatarLabel")}
-        >
-          <AvatarPicker
-            selectedSrc={preview}
-            onSelect={selectAvatar}
-            layout="sidebar"
-            showHeader
-          />
-        </section>
+        <aside className="fitting-room-photo-sidebar order-1 flex w-full min-w-0 shrink-0 flex-col md:max-w-[15rem] md:justify-self-stretch lg:max-w-[16rem]">
+          <div className="hidden md:block">
+            <FittingRoomStepIntro step="photo" variant="sidebar" />
+            <p className="mb-2 mt-3 text-[8px] uppercase tracking-[0.2em] text-gold">{t("sourceLabel")}</p>
+            <SourceTabs
+              tabs={tabs}
+              source={source}
+              isAr={isAr}
+              stepLabel={t("step2Title")}
+              onSelect={switchSource}
+              layout="compact"
+            />
+          </div>
 
-        <div className="fitting-room-portrait-frame fitting-room-portrait-frame--step2 relative mx-auto min-h-0 w-full min-w-0 shrink-0 justify-self-center">
+          <div className="fitting-room-photo-panel mt-3 border-t border-gold-glow/10 pt-3 md:mt-3 md:min-h-0 md:flex-1 md:overflow-y-auto md:overscroll-y-contain md:pt-3">
+            {sourcePanel}
+          </div>
+        </aside>
+
+        <div className="fitting-room-portrait-frame fitting-room-portrait-frame--step2 relative order-2 mx-auto min-h-0 w-full min-w-0 shrink-0 justify-self-center">
           {showPortraitPreview ? (
             <>
               <Image
@@ -505,10 +573,11 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
               <video
                 ref={videoRef}
                 className={`fitting-room-camera-feed absolute inset-0 h-full w-full ${
-                  cameraActive ? "scale-x-[-1] opacity-100" : "opacity-0"
-                }`}
+                  cameraActive ? "opacity-100" : "opacity-0"
+                } ${cameraActive && cameraFacing === "user" ? "scale-x-[-1]" : ""}`}
                 playsInline
                 muted
+                autoPlay
               />
               {cameraActive ? (
                 <>
@@ -517,13 +586,29 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
                   <p className="pointer-events-none absolute inset-x-0 top-3 z-10 text-center text-[8px] uppercase tracking-[0.15em] text-gold/90 sm:top-4 sm:text-[9px]">
                     {t("frameGuide")}
                   </p>
-                  <div className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-3 bg-gradient-to-t from-void/95 via-void/70 to-transparent px-4 pb-4 pt-10 sm:gap-4 sm:pb-5">
+                  <div className="absolute inset-x-0 bottom-0 z-10 flex items-center justify-center gap-2 bg-gradient-to-t from-void/95 via-void/70 to-transparent px-3 pb-4 pt-10 sm:gap-3 sm:pb-5">
                     <button
                       type="button"
-                      onClick={stopCamera}
-                      className="min-h-10 rounded-sm border border-gold-glow/20 bg-void/80 px-3 text-[8px] uppercase tracking-[0.12em] text-ivory-muted backdrop-blur-sm transition-colors hover:border-gold/30 hover:text-ivory sm:min-h-11 sm:px-4 sm:text-[9px]"
+                      onClick={() => stopCamera(true)}
+                      className="min-h-10 rounded-sm border border-gold-glow/20 bg-void/80 px-2.5 text-[7px] uppercase tracking-[0.1em] text-ivory-muted backdrop-blur-sm transition-colors hover:border-gold/30 hover:text-ivory sm:min-h-11 sm:px-3 sm:text-[8px]"
                     >
                       {t("stopCamera")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={switchCamera}
+                      title={t("switchCamera")}
+                      aria-label={`${t("switchCamera")} — ${cameraFacing === "user" ? t("cameraFront") : t("cameraBack")}`}
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border border-gold-glow/25 bg-void/80 text-gold backdrop-blur-sm transition-colors hover:border-gold/40 sm:h-11 sm:w-11"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
+                        <path
+                          d="M4.5 4.5H6L7 3H9L10 4.5H11.5C12.3284 4.5 13 5.17157 13 6V11C13 11.8284 12.3284 12.5 11.5 12.5H4.5C3.67157 12.5 3 11.8284 3 11V6C3 5.17157 3.67157 4.5 4.5 4.5Z"
+                          stroke="currentColor"
+                          strokeWidth="1.2"
+                        />
+                        <circle cx="8" cy="8.25" r="1.75" stroke="currentColor" strokeWidth="1.2" />
+                      </svg>
                     </button>
                     <button
                       type="button"
@@ -564,35 +649,32 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
           ) : null}
         </div>
 
-        <aside className="fitting-room-photo-sidebar flex w-full min-w-0 shrink-0 flex-col md:max-w-[15rem] md:justify-self-end lg:max-w-[16rem]">
-          <div className="hidden md:block">
-            <FittingRoomStepIntro step="photo" variant="sidebar" />
-            <p className="mb-2 mt-3 text-[8px] uppercase tracking-[0.2em] text-gold">{t("sourceLabel")}</p>
-            <SourceTabs
-              tabs={tabs}
-              source={source}
-              isAr={isAr}
-              stepLabel={t("step2Title")}
-              onSelect={switchSource}
-              layout="compact"
+        {source === "avatar" ? (
+          <section
+            className="fitting-room-avatar-rail order-3 hidden min-h-0 min-w-0 md:flex md:flex-col md:justify-center md:ps-1 lg:ps-2"
+            aria-label={t("avatarLabel")}
+          >
+            <AvatarPicker
+              selectedSrc={preview}
+              onSelect={selectAvatar}
+              layout="sidebar"
+              showHeader
             />
-          </div>
-
-          <div className="fitting-room-photo-panel mt-3 border-t border-gold-glow/10 pt-3 md:mt-3 md:min-h-0 md:flex-1 md:overflow-y-auto md:overscroll-y-contain md:pt-3">
-            {sourcePanel}
-          </div>
-        </aside>
+          </section>
+        ) : null}
       </div>
 
-      <div className="shrink-0 px-2 pb-2 md:hidden" dir={isAr ? "rtl" : "ltr"}>
-        <p className="mb-2 text-[8px] uppercase tracking-[0.2em] text-gold">{t("avatarLabel")}</p>
-        <AvatarPicker
-          selectedSrc={preview}
-          onSelect={selectAvatar}
-          layout="scroll"
-          showHeader={false}
-        />
-      </div>
+      {source === "avatar" ? (
+        <div className="shrink-0 px-2 pb-2 md:hidden" dir={isAr ? "rtl" : "ltr"}>
+          <p className="mb-1.5 text-[8px] uppercase tracking-[0.2em] text-gold">{t("avatarLabel")}</p>
+          <AvatarPicker
+            selectedSrc={preview}
+            onSelect={selectAvatar}
+            layout="scroll"
+            showHeader={false}
+          />
+        </div>
+      ) : null}
 
       <p className="shrink-0 px-3 pb-2 pt-1 text-center text-[7px] leading-snug text-ivory-faint/85 sm:pb-3 sm:text-[8px]">
         {t("portraitHint")}
