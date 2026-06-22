@@ -2,7 +2,8 @@
 
 Bilingual (Arabic / English) luxury menswear storefront for **VOGO BY FAME** — bespoke suits, groom wear, shop, checkout, accounts, and admin in Amman, Jordan.
 
-- **Live:** [vogo-by-fame.netlify.app](https://vogo-by-fame.netlify.app)
+- **Live:** [vogo-by-fame-production.up.railway.app](https://vogo-by-fame-production.up.railway.app) (Railway)
+- **Legacy:** [vogo-by-fame.netlify.app](https://vogo-by-fame.netlify.app) (Netlify — may lag behind `master`)
 - **Repo:** [github.com/Abuhajer/VOGO](https://github.com/Abuhajer/VOGO)
 
 ## Stack
@@ -26,6 +27,7 @@ All public pages are locale-prefixed (`/ar` default, `/en`). Middleware redirect
 | `/[locale]` | 1 | Marketing landing page |
 | `/[locale]/shop` | 2 | Product catalog (DB) |
 | `/[locale]/shop/[slug]` | 2 | Product detail + add to cart |
+| `/[locale]/fitting-room` | 2 | Virtual try-on (Gemini / NVIDIA) |
 | `/[locale]/cart` | 2 | Cart (localStorage) |
 | `/[locale]/checkout` | 2 | Checkout (COD or Stripe) |
 | `/[locale]/checkout/success` | 2 | Order confirmation |
@@ -44,6 +46,8 @@ All public pages are locale-prefixed (`/ar` default, `/en`). Middleware redirect
 | Route | Purpose |
 |-------|---------|
 | `/api/auth/[...nextauth]` | Auth.js handlers |
+| `/api/fitting-room/generate` | Virtual try-on image generation |
+| `/api/fitting-room/upload` | Portrait upload for try-on |
 | `/api/stripe/webhook` | Stripe payment events |
 | `/api/newsletter` | Newsletter signup (Stage 5) |
 
@@ -104,13 +108,28 @@ Copy `.env.example` to `.env.local`:
 | `RESEND_API_KEY` | Optional | Newsletter email delivery |
 | `SEED_ADMIN_PASSWORD` | Dev only | Admin password for `db:seed` |
 
-On Netlify, use a hosted PostgreSQL database (Neon, Supabase, Railway). SQLite does not persist on serverless.
+On Netlify or Railway, use a hosted PostgreSQL database (Neon, Supabase, Railway Postgres). SQLite does not persist on serverless.
 
-## CI
+## Deploy (Railway) — production
 
-GitHub Actions (`.github/workflows/ci.yml`) runs on push/PR to `master` or `main`: `prisma generate` → lint → typecheck → build (with `DATABASE_URL` and `AUTH_SECRET`).
+The live site deploys from **`master`** via [Railway](https://railway.app) (GitHub: `Abuhajer/VOGO`).
 
-## Deploy (Netlify)
+```powershell
+# One-time: link repo in Railway dashboard or `railway link`
+# Push to master triggers auto-deploy when GitHub is connected.
+
+# Manual deploy from local:
+railway up -y
+
+# Sync secrets from local .env (never commit .env):
+node scripts/railway-sync-env.cjs
+```
+
+`railway.toml` runs `scripts/railway-build.mjs` (Prisma + Next build) and a release command for `db push` + seed.
+
+Set `NEXT_PUBLIC_SITE_URL` to your Railway public URL (e.g. `https://vogo-by-fame-production.up.railway.app`).
+
+## Deploy (Netlify) — legacy
 
 Connected via `@netlify/plugin-nextjs`. Push to `master` or run:
 
@@ -119,6 +138,10 @@ netlify deploy --prod
 ```
 
 Set production env vars in Netlify UI. Run migrations against PostgreSQL before first deploy (`prisma db push` or migrate).
+
+## CI
+
+GitHub Actions (`.github/workflows/ci.yml`) runs on push/PR to `master` or `main`: `prisma generate` → lint → typecheck → build (with `DATABASE_URL` and `AUTH_SECRET`).
 
 ## Project layout
 

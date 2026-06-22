@@ -799,7 +799,7 @@ body {
 }
 
 .fitting-room-compare {
-  touch-action: pan-x;
+  touch-action: none;
 }
 
 .fitting-room-result-stage {
@@ -906,6 +906,20 @@ body {
 .atelier-processing-row {
   height: 100%;
   max-height: min(92%, calc(100dvh - 8.5rem));
+}
+
+@media (max-width: 639px) {
+  .atelier-processing-row {
+    max-height: none;
+    flex: 1 1 auto;
+  }
+
+  .atelier-processing-canvas {
+    width: 100%;
+    max-width: min(100%, calc(100vw - 1.25rem));
+    height: auto;
+    max-height: min(50dvh, calc((100vw - 1.25rem) * 4 / 3));
+  }
 }
 
 @media (min-width: 640px) {
@@ -1265,20 +1279,22 @@ body {
     flex: 1 1 auto;
     min-height: 0;
     align-items: center;
-    justify-content: center;
-    padding-inline: 1.25rem;
-    gap: 2rem;
+    padding-inline: 1rem;
   }
 
   .fitting-room-portrait-frame {
     flex: 0 0 auto;
   }
+
+  .fitting-room-avatar-rail {
+    max-height: min(calc(100dvh - 14rem), 80dvh);
+    min-height: min(calc(100dvh - 14rem), 80dvh);
+  }
 }
 
 @media (min-width: 1024px) {
   .fitting-room-photo-row {
-    gap: 2.75rem;
-    padding-inline: 1.75rem;
+    padding-inline: 1.25rem;
   }
 }
 
@@ -1301,15 +1317,15 @@ body {
   .fitting-room-portrait-frame--step2 {
     width: auto;
     height: min(calc(100dvh - 14rem), 100%);
-    max-height: min(calc(100dvh - 14rem), 78dvh);
-    max-width: min(calc((100dvh - 14rem) * 9 / 16), min(28vw, calc(100vw - 22rem)));
+    max-height: min(calc(100dvh - 14rem), 76dvh);
+    max-width: min(calc((100dvh - 14rem) * 9 / 16), min(22vw, calc(100vw - 36rem)));
   }
 }
 
 @media (min-width: 1024px) {
   .fitting-room-portrait-frame--step2 {
-    max-height: min(calc(100dvh - 13rem), 80dvh);
-    max-width: min(calc((100dvh - 13rem) * 9 / 16), min(26vw, calc(100vw - 24rem)));
+    max-height: min(calc(100dvh - 13rem), 78dvh);
+    max-width: min(calc((100dvh - 13rem) * 9 / 16), min(20vw, calc(100vw - 40rem)));
   }
 }
 
@@ -1319,9 +1335,8 @@ body {
 
 @media (min-width: 768px) {
   .fitting-room-photo-sidebar {
-    max-width: 19rem;
+    max-width: 16rem;
     max-height: min(calc(100dvh - 14rem), 100%);
-    min-height: min(calc(100dvh - 14rem), 100%);
   }
 }
 
@@ -1395,6 +1410,14 @@ body {
 .fitting-room-avatar-panel {
   max-height: min(32dvh, 9.5rem);
   overflow: hidden;
+}
+
+.fitting-room-avatar-sidebar {
+  align-content: start;
+}
+
+.fitting-room-avatar-rail .fitting-room-avatar-sidebar {
+  max-height: 100%;
 }
 
 .fitting-room-avatar-scroll {

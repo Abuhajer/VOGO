@@ -48,6 +48,42 @@ function loadImageSize(url: string): Promise<{ width: number; height: number } |
   });
 }
 
+function DownloadIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill="none" aria-hidden>
+      <path
+        d="M8 2.5V9.5M8 9.5L5.75 7.25M8 9.5L10.25 7.25M3.5 11.5V12.25C3.5 12.94 4.06 13.5 4.75 13.5H11.25C11.94 13.5 12.5 12.94 12.5 12.25V11.5"
+        stroke="currentColor"
+        strokeWidth="1.25"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+async function downloadResultImage(url: string, filename: string) {
+  if (url.startsWith("data:")) {
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+    return;
+  }
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error("Download failed");
+  }
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = objectUrl;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(objectUrl);
+}
+
 export default function ResultReveal({
   beforeUrl,
   afterUrl,
@@ -66,6 +102,7 @@ export default function ResultReveal({
     resolveFrameSize(frameWidth, frameHeight)
   );
   const [imagesAligned, setImagesAligned] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const draggingRef = useRef(false);
 
   useEffect(() => {
@@ -112,14 +149,24 @@ export default function ResultReveal({
     };
   }, [beforeUrl, afterUrl, frameSize]);
 
-  const updateSlider = useCallback(
-    (clientX: number, rect: DOMRect) => {
-      const x = ((clientX - rect.left) / rect.width) * 100;
-      const pos = Math.min(100, Math.max(0, x));
-      setSliderPos(isAr ? 100 - pos : pos);
-    },
-    [isAr]
-  );
+  const updateSlider = useCallback((clientX: number, rect: DOMRect) => {
+    const x = ((clientX - rect.left) / rect.width) * 100;
+    const pos = Math.min(100, Math.max(0, x));
+    setSliderPos(pos);
+  }, []);
+
+  const handleDownload = useCallback(async () => {
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      const ext = afterUrl.startsWith("data:image/png") ? "png" : "jpg";
+      await downloadResultImage(afterUrl, `vogo-tryon-${product.slug}.${ext}`);
+    } catch {
+      window.open(afterUrl, "_blank", "noopener,noreferrer");
+    } finally {
+      setDownloading(false);
+    }
+  }, [afterUrl, downloading, product.slug]);
 
   const releasePointer = useCallback((element: HTMLElement, pointerId: number) => {
     if (element.hasPointerCapture(pointerId)) {
@@ -128,9 +175,7 @@ export default function ResultReveal({
     draggingRef.current = false;
   }, []);
 
-  const clipAfter = isAr
-    ? `inset(0 0 0 ${100 - sliderPos}%)`
-    : `inset(0 ${100 - sliderPos}% 0 0)`;
+  const clipAfter = `inset(0 ${100 - sliderPos}% 0 0)`;
 
   const frameAspect =
     frameSize && frameSize.height > 0 ? frameSize.width / frameSize.height : 3 / 4;
@@ -197,6 +242,7 @@ export default function ResultReveal({
       <div className="fitting-room-result-stage flex min-h-0 flex-1 items-center justify-center px-2 pb-1 pt-[5.5rem] sm:px-3 sm:pt-[6rem] lg:px-0 lg:pb-0 lg:pt-0">
         <div
           className="fitting-room-result-compare fitting-room-compare relative cursor-ew-resize select-none overflow-hidden rounded-sm border border-gold-glow/15 bg-obsidian shadow-[inset_0_0_40px_rgba(201,168,76,0.04)] light:shadow-[inset_0_0_32px_rgba(179,142,54,0.06)] touch-pan-x"
+          dir="ltr"
           style={{
             ["--compare-aspect" as string]: String(frameAspect),
             ...(frameSize
@@ -247,24 +293,51 @@ export default function ResultReveal({
           <div
             className="pointer-events-none absolute bottom-0 top-0 z-20 flex -translate-x-1/2 items-center justify-center"
             style={{ left: `${sliderPos}%` }}
+            aria-hidden
           >
             <div className="h-full w-0.5 bg-gold shadow-[0_0_12px_rgba(201,168,76,0.6)]" />
-            <div className="absolute flex h-10 w-10 items-center justify-center rounded-full border border-gold bg-void/90 text-xs text-gold shadow-[0_4px_16px_rgba(0,0,0,0.4)] sm:h-11 sm:w-11 sm:text-sm">
-              ↔
+            <div className="absolute flex h-11 w-11 items-center justify-center rounded-full border border-gold bg-void/92 text-gold shadow-[0_4px_16px_rgba(0,0,0,0.45)] light:shadow-[0_4px_16px_rgba(14,13,18,0.12)] sm:h-12 sm:w-12">
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
+                <path
+                  d="M5.5 9H2.5M2.5 9L4.5 7M2.5 9L4.5 11"
+                  stroke="currentColor"
+                  strokeWidth="1.35"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M12.5 9H15.5M15.5 9L13.5 7M15.5 9L13.5 11"
+                  stroke="currentColor"
+                  strokeWidth="1.35"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </div>
           </div>
-          <div className="pointer-events-none absolute start-2 top-2 z-20 rounded-sm bg-void/80 px-1.5 py-0.5 text-[7px] uppercase tracking-wider text-ivory backdrop-blur-sm sm:start-3 sm:top-3 sm:px-2 sm:py-1 sm:text-[8px]">
+          <div className="pointer-events-none absolute left-2 top-2 z-20 rounded-sm bg-void/80 px-1.5 py-0.5 text-[7px] uppercase tracking-wider text-ivory backdrop-blur-sm sm:left-3 sm:top-3 sm:px-2 sm:py-1 sm:text-[8px]">
             {t("before")}
           </div>
-          <div className="pointer-events-none absolute end-2 top-2 z-20 rounded-sm bg-void/80 px-1.5 py-0.5 text-[7px] uppercase tracking-wider text-gold backdrop-blur-sm sm:end-3 sm:top-3 sm:px-2 sm:py-1 sm:text-[8px]">
+          <div className="pointer-events-none absolute right-2 top-2 z-20 rounded-sm bg-void/80 px-1.5 py-0.5 text-[7px] uppercase tracking-wider text-gold backdrop-blur-sm sm:right-3 sm:top-3 sm:px-2 sm:py-1 sm:text-[8px]">
             {t("after")}
           </div>
+          <button
+            type="button"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => void handleDownload()}
+            disabled={downloading}
+            title={downloading ? t("downloadingImage") : t("downloadImage")}
+            aria-label={downloading ? t("downloadingImage") : t("downloadImage")}
+            className="absolute bottom-3 right-2 z-30 flex h-11 w-11 items-center justify-center rounded-sm border border-gold/35 bg-void/88 text-gold shadow-[0_4px_14px_rgba(0,0,0,0.35)] backdrop-blur-sm transition-colors hover:border-gold/55 hover:bg-void/95 disabled:cursor-wait disabled:opacity-60 light:shadow-[0_4px_14px_rgba(14,13,18,0.1)] sm:bottom-4 sm:right-3 sm:h-12 sm:w-12"
+          >
+            <DownloadIcon size={17} />
+          </button>
           {process.env.NODE_ENV === "development" && frameSize && !imagesAligned ? (
             <div className="pointer-events-none absolute bottom-2 start-2 z-20 rounded-sm bg-red-900/80 px-1.5 py-0.5 text-[7px] text-ivory">
               dim mismatch
             </div>
           ) : null}
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-void/90 via-void/40 to-transparent px-3 pb-2 pt-8 text-center lg:hidden">
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-void/90 via-void/40 to-transparent px-3 pb-14 pt-8 text-center sm:pb-16 lg:hidden">
             <p className="text-[8px] uppercase tracking-[0.16em] text-ivory-faint sm:text-[9px]">
               {t("dragHint")}
             </p>
@@ -275,10 +348,30 @@ export default function ResultReveal({
       <div className="relative z-10 hidden shrink-0 flex-col justify-center gap-4 text-start lg:flex lg:py-4">
         <div>{stepMeta}</div>
         <p className="text-[9px] uppercase tracking-[0.15em] text-ivory-faint">{t("dragHint")}</p>
-        <div className="flex flex-wrap items-center justify-start gap-2 pt-1">{actionButtons}</div>
+        <div className="flex flex-wrap items-center justify-start gap-2 pt-1">
+          <button
+            type="button"
+            onClick={() => void handleDownload()}
+            disabled={downloading}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-sm border border-gold/35 bg-gold/[0.08] px-4 py-2.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-gold transition-colors hover:border-gold/50 hover:bg-gold/[0.14] disabled:cursor-wait disabled:opacity-60 sm:px-5"
+          >
+            <DownloadIcon size={14} />
+            {downloading ? t("downloadingImage") : t("downloadImage")}
+          </button>
+          {actionButtons}
+        </div>
       </div>
 
       <div className="relative z-20 flex shrink-0 flex-wrap items-center justify-center gap-2 border-t border-gold-glow/10 bg-surface/95 px-3 py-2.5 backdrop-blur-md lg:hidden pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <button
+          type="button"
+          onClick={() => void handleDownload()}
+          disabled={downloading}
+          aria-label={downloading ? t("downloadingImage") : t("downloadImage")}
+          className="inline-flex h-11 w-11 items-center justify-center rounded-sm border border-gold/35 bg-gold/[0.08] text-gold transition-colors hover:border-gold/50 hover:bg-gold/[0.14] disabled:cursor-wait disabled:opacity-60"
+        >
+          <DownloadIcon size={16} />
+        </button>
         {actionButtons}
       </div>
     </div>

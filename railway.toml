@@ -1,0 +1,11 @@
+[build]
+builder = "nixpacks"
+buildCommand = "node scripts/railway-build.mjs"
+
+[deploy]
+# Postgres is only reachable at deploy time, not during the Nixpacks build.
+releaseCommand = "npx prisma db push --schema=prisma/schema.postgresql.prisma --skip-generate && npx tsx prisma/seed.ts"
+startCommand = "npm run start"
+healthcheckPath = "/en"
+healthcheckTimeout = 120
+restartPolicyType = "ON_FAILURE"

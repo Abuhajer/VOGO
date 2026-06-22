@@ -7,8 +7,9 @@ import { FITTING_ROOM_AVATARS } from "@/lib/fitting-room/avatars";
 type Props = {
   selectedSrc: string | null;
   onSelect: (src: string) => void;
-  layout?: "scroll" | "grid";
+  layout?: "scroll" | "grid" | "sidebar";
   showHeader?: boolean;
+  compact?: boolean;
 };
 
 function AvatarCard({
@@ -71,6 +72,7 @@ export default function AvatarPicker({
   onSelect,
   layout = "grid",
   showHeader = true,
+  compact = false,
 }: Props) {
   const t = useTranslations("FittingRoom");
   const locale = useLocale();
@@ -79,19 +81,34 @@ export default function AvatarPicker({
   const listClassName =
     layout === "scroll"
       ? "fitting-room-avatar-scroll flex gap-2.5 overflow-x-auto overscroll-x-contain pb-1 pt-0.5 scrollbar-hide snap-x snap-mandatory"
-      : "grid grid-cols-3 gap-2 sm:gap-2.5 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3";
+      : layout === "sidebar"
+        ? "fitting-room-avatar-sidebar grid grid-cols-2 gap-2 sm:gap-2.5"
+        : "grid grid-cols-3 gap-2 sm:gap-2.5 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3";
 
   return (
-    <div className="space-y-2.5" dir={isAr ? "rtl" : "ltr"}>
+    <div
+      className={`${layout === "sidebar" ? "flex min-h-0 flex-1 flex-col gap-3" : "space-y-2.5"}`}
+      dir={isAr ? "rtl" : "ltr"}
+    >
       {showHeader ? (
-        <div className="px-0.5">
-          <p className="text-[9px] uppercase tracking-[0.22em] text-gold">{t("avatarLabel")}</p>
-          <p className="mt-1 text-[10px] leading-relaxed text-ivory-muted sm:text-[11px]">
-            {t("avatarHint")}
+        <div className={compact ? "px-0.5" : "px-0.5"}>
+          <p
+            className={`uppercase tracking-[0.22em] text-gold ${compact ? "text-[8px]" : "text-[9px]"}`}
+          >
+            {t("avatarLabel")}
           </p>
+          {!compact ? (
+            <p className="mt-1 text-[10px] leading-relaxed text-ivory-muted sm:text-[11px]">
+              {t("avatarHint")}
+            </p>
+          ) : null}
         </div>
       ) : null}
-      <div className={listClassName} role="listbox" aria-label={t("avatarLabel")}>
+      <div
+        className={`${listClassName} ${layout === "sidebar" ? "min-h-0 flex-1 overflow-y-auto overscroll-y-contain pe-0.5" : ""}`}
+        role="listbox"
+        aria-label={t("avatarLabel")}
+      >
         {FITTING_ROOM_AVATARS.map((avatar) => {
           const selected = selectedSrc === avatar.src;
           const label = isAr ? avatar.labelAr : avatar.labelEn;
@@ -102,7 +119,13 @@ export default function AvatarPicker({
               selected={selected}
               label={label}
               onSelect={onSelect}
-              className={layout === "scroll" ? "w-[4.75rem] sm:w-20" : "w-full"}
+              className={
+                layout === "scroll"
+                  ? "w-[4.75rem] sm:w-20"
+                  : layout === "sidebar"
+                    ? "w-full max-w-[7.5rem] justify-self-center"
+                    : "w-full"
+              }
             />
           );
         })}

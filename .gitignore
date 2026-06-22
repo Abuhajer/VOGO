@@ -55,3 +55,11 @@ dev.db-journal
 
 # Local Netlify folder
 .netlify
+
+# local ops / debug artifacts
+debug.log
+deploy-log.txt
+.netlify-build-trigger.json
+.netlify-deploy-query.json
+netlify-site-dump.json
+.npm-cache/

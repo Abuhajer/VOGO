@@ -147,6 +147,147 @@ export default function ProcessingAnimation({ product, personImageUrl }: Props) 
   const currentTip = t(TIP_KEYS[tipIndex]);
   const progressLabel = `${formatNumber(displayProgress, locale)}%`;
 
+  const processingIntro = (
+    <>
+      <p className="text-[8px] uppercase tracking-[0.22em] text-gold sm:text-[9px]">
+        {t("stepProcessing")}
+      </p>
+      <h2 className="mt-0.5 font-serif text-sm leading-snug text-ivory sm:text-base md:text-lg">
+        {t("processingTitle")}
+      </h2>
+      <p className="mt-1 text-[9px] leading-snug text-ivory-muted/90 line-clamp-2 sm:text-[10px] md:text-[11px]">
+        {t("processingDesc")}
+      </p>
+    </>
+  );
+
+  const progressRail = (compact: boolean) => (
+    <aside
+      className={`atelier-processing-rail flex shrink-0 flex-col ${
+        compact ? "w-full" : "hidden w-[4.5rem] sm:flex sm:w-20 md:w-[5.5rem]"
+      }`}
+      dir={isAr ? "rtl" : "ltr"}
+      aria-label={t("processingTitle")}
+    >
+      <div
+        className={`flex ${
+          compact ? "w-full flex-row items-center gap-3" : "relative mx-auto mb-3 flex-col items-center sm:mb-4"
+        }`}
+      >
+        <div className="relative shrink-0">
+          <ProgressRing progress={displayProgress} size={compact ? 52 : 72} stroke={2.5} />
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span
+              className={`font-serif leading-none text-gold tabular-nums ${
+                compact ? "text-base" : "text-xl sm:text-2xl"
+              }`}
+            >
+              {formatNumber(displayProgress, locale)}
+            </span>
+            <span className="mt-0.5 text-[7px] uppercase tracking-[0.2em] text-gold/70 sm:text-[8px]">
+              %
+            </span>
+          </div>
+        </div>
+        {compact ? (
+          <div className="min-w-0 flex-1 text-start">
+            <p
+              key={stageIndex}
+              className="text-[9px] font-medium uppercase tracking-[0.12em] text-gold"
+            >
+              {currentStage}
+            </p>
+            <p
+              key={tipIndex}
+              className="mt-1 line-clamp-2 text-[9px] leading-relaxed text-ivory-muted/90"
+            >
+              {currentTip}
+            </p>
+          </div>
+        ) : null}
+        {!compact && !prefersReducedMotion ? (
+          <span className="atelier-processing-pulse mt-2 h-1 w-1 rounded-full bg-gold/80" aria-hidden />
+        ) : null}
+      </div>
+
+      {!compact ? (
+        <>
+          <nav className="flex min-h-0 flex-1 flex-col justify-center">
+            {STAGE_KEYS.map((key, index) => {
+              const active = index === stageIndex;
+              const done = index < stageIndex;
+              const upcoming = index > stageIndex;
+
+              return (
+                <div key={key} className="flex items-stretch gap-1.5 sm:gap-2">
+                  <div className="flex flex-col items-center pt-0.5">
+                    <span
+                      className={`relative flex h-2.5 w-2.5 shrink-0 items-center justify-center rounded-full transition-all duration-500 ${
+                        active
+                          ? "bg-gold atelier-processing-step-active shadow-[0_0_12px_rgba(201,168,76,0.55)]"
+                          : done
+                            ? "bg-gold/60"
+                            : "border border-gold-muted/30 bg-void/80"
+                      }`}
+                    >
+                      {active && !prefersReducedMotion ? (
+                        <span className="absolute inset-0 animate-ping rounded-full bg-gold/40" aria-hidden />
+                      ) : null}
+                    </span>
+                    {index < STAGE_KEYS.length - 1 ? (
+                      <span className="relative my-0.5 min-h-[1.35rem] w-px flex-1 overflow-hidden bg-gold-muted/15 sm:min-h-[1.6rem]">
+                        <span
+                          className="absolute inset-x-0 top-0 w-full bg-gradient-to-b from-gold/70 to-gold/30 transition-[height] duration-700 ease-out"
+                          style={{
+                            height: done ? "100%" : active ? `${stageSegmentProgress}%` : "0%",
+                          }}
+                        />
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className={`pb-3 sm:pb-3.5 ${index === STAGE_KEYS.length - 1 ? "pb-0" : ""}`}>
+                    <span
+                      className={`block text-start text-[7px] uppercase leading-snug tracking-[0.1em] sm:text-[8px] ${
+                        active
+                          ? "font-medium text-gold"
+                          : done
+                            ? "text-ivory-muted"
+                            : upcoming
+                              ? "text-ivory-faint/70"
+                              : "text-ivory-faint"
+                      }`}
+                    >
+                      {t(key)}
+                    </span>
+                    {active ? (
+                      <span className="mt-0.5 block text-[6px] tabular-nums text-gold/60 sm:text-[7px]">
+                        {formatNumber(stageSegmentProgress, locale)}%
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+              );
+            })}
+          </nav>
+
+          <div
+            key={tipIndex}
+            className={`mt-auto rounded-sm border border-gold-glow/12 bg-void/55 p-2 backdrop-blur-sm ${
+              prefersReducedMotion ? "" : "atelier-processing-tip"
+            }`}
+          >
+            <p className="text-[6px] uppercase tracking-[0.18em] text-gold/80 sm:text-[7px]">
+              {t("processingTipLabel")}
+            </p>
+            <p className="mt-1 line-clamp-3 text-[7px] leading-relaxed text-ivory-muted/90 sm:text-[8px]">
+              {currentTip}
+            </p>
+          </div>
+        </>
+      ) : null}
+    </aside>
+  );
+
   return (
     <div
       className="atelier-processing-root relative flex min-h-0 w-full flex-1 flex-col"
@@ -154,20 +295,16 @@ export default function ProcessingAnimation({ product, personImageUrl }: Props) 
       aria-live="polite"
       aria-busy="true"
     >
+      <div className="shrink-0 border-b border-gold-glow/10 px-3 py-2 sm:px-4 md:hidden">
+        {processingIntro}
+      </div>
+
       <div
-        className="pointer-events-none absolute end-3 top-3 z-40 sm:end-4 sm:top-4 md:end-5 md:top-5"
+        className="pointer-events-none absolute end-4 top-4 z-40 hidden max-w-xs md:block lg:end-5 lg:top-5"
         aria-hidden={false}
       >
-        <div className="max-w-[min(calc(100vw-2rem),17.5rem)] rounded-sm border border-gold-glow/20 bg-void/82 px-3 py-2 shadow-[0_10px_36px_rgba(0,0,0,0.5)] backdrop-blur-md sm:max-w-xs sm:px-3.5 sm:py-2.5">
-          <p className="text-[8px] uppercase tracking-[0.24em] text-gold sm:text-[9px]">
-            {t("stepProcessing")}
-          </p>
-          <h2 className="mt-0.5 font-serif text-sm leading-snug text-ivory sm:text-base md:text-lg">
-            {t("processingTitle")}
-          </h2>
-          <p className="mt-1 text-[10px] leading-snug text-ivory-muted/90 line-clamp-2 sm:text-[11px]">
-            {t("processingDesc")}
-          </p>
+        <div className="rounded-sm border border-gold-glow/20 bg-void/82 px-3.5 py-2.5 shadow-[0_10px_36px_rgba(0,0,0,0.5)] backdrop-blur-md">
+          {processingIntro}
         </div>
       </div>
 
@@ -176,7 +313,7 @@ export default function ProcessingAnimation({ product, personImageUrl }: Props) 
       </p>
 
       <div
-        className="atelier-processing-row relative mx-auto flex min-h-0 w-full max-w-full flex-1 items-center justify-center gap-2 px-2 pb-1 pt-0 sm:gap-3 sm:px-3"
+        className="atelier-processing-row relative mx-auto flex min-h-0 w-full max-w-full flex-1 flex-col items-center justify-center gap-2 px-2 pb-1 pt-2 sm:flex-row sm:gap-3 sm:px-3 sm:pt-0"
         dir="ltr"
       >
         <div className="atelier-processing-canvas relative min-h-0 shrink overflow-hidden rounded-sm border border-gold-glow/25 bg-void/70 shadow-[inset_0_0_60px_rgba(201,168,76,0.06),0_24px_64px_rgba(0,0,0,0.45)]">
@@ -272,96 +409,11 @@ export default function ProcessingAnimation({ product, personImageUrl }: Props) 
           </div>
         </div>
 
-        <aside
-          className="atelier-processing-rail flex w-[4.5rem] shrink-0 flex-col sm:w-20 md:w-[5.5rem]"
-          dir={isAr ? "rtl" : "ltr"}
-          aria-label={t("processingTitle")}
-        >
-          <div className="relative mx-auto mb-3 flex flex-col items-center sm:mb-4">
-            <ProgressRing progress={displayProgress} size={72} stroke={2.5} />
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="font-serif text-xl leading-none text-gold tabular-nums sm:text-2xl">
-                {formatNumber(displayProgress, locale)}
-              </span>
-              <span className="mt-0.5 text-[8px] uppercase tracking-[0.2em] text-gold/70">%</span>
-            </div>
-            {!prefersReducedMotion ? (
-              <span className="atelier-processing-pulse mt-2 h-1 w-1 rounded-full bg-gold/80" aria-hidden />
-            ) : null}
-          </div>
+        {progressRail(false)}
+      </div>
 
-          <nav className="flex min-h-0 flex-1 flex-col justify-center">
-            {STAGE_KEYS.map((key, index) => {
-              const active = index === stageIndex;
-              const done = index < stageIndex;
-              const upcoming = index > stageIndex;
-
-              return (
-                <div key={key} className="flex items-stretch gap-1.5 sm:gap-2">
-                  <div className="flex flex-col items-center pt-0.5">
-                    <span
-                      className={`relative flex h-2.5 w-2.5 shrink-0 items-center justify-center rounded-full transition-all duration-500 ${
-                        active
-                          ? "bg-gold atelier-processing-step-active shadow-[0_0_12px_rgba(201,168,76,0.55)]"
-                          : done
-                            ? "bg-gold/60"
-                            : "border border-gold-muted/30 bg-void/80"
-                      }`}
-                    >
-                      {active && !prefersReducedMotion ? (
-                        <span className="absolute inset-0 animate-ping rounded-full bg-gold/40" aria-hidden />
-                      ) : null}
-                    </span>
-                    {index < STAGE_KEYS.length - 1 ? (
-                      <span className="relative my-0.5 w-px flex-1 min-h-[1.35rem] overflow-hidden bg-gold-muted/15 sm:min-h-[1.6rem]">
-                        <span
-                          className="absolute inset-x-0 top-0 w-full bg-gradient-to-b from-gold/70 to-gold/30 transition-[height] duration-700 ease-out"
-                          style={{
-                            height: done ? "100%" : active ? `${stageSegmentProgress}%` : "0%",
-                          }}
-                        />
-                      </span>
-                    ) : null}
-                  </div>
-                  <div className={`pb-3 sm:pb-3.5 ${index === STAGE_KEYS.length - 1 ? "pb-0" : ""}`}>
-                    <span
-                      className={`block text-start text-[7px] uppercase leading-snug tracking-[0.1em] sm:text-[8px] ${
-                        active
-                          ? "font-medium text-gold"
-                          : done
-                            ? "text-ivory-muted"
-                            : upcoming
-                              ? "text-ivory-faint/70"
-                              : "text-ivory-faint"
-                      }`}
-                    >
-                      {t(key)}
-                    </span>
-                    {active ? (
-                      <span className="mt-0.5 block text-[6px] tabular-nums text-gold/60 sm:text-[7px]">
-                        {formatNumber(stageSegmentProgress, locale)}%
-                      </span>
-                    ) : null}
-                  </div>
-                </div>
-              );
-            })}
-          </nav>
-
-          <div
-            key={tipIndex}
-            className={`mt-auto rounded-sm border border-gold-glow/12 bg-void/55 p-2 backdrop-blur-sm ${
-              prefersReducedMotion ? "" : "atelier-processing-tip"
-            }`}
-          >
-            <p className="text-[6px] uppercase tracking-[0.18em] text-gold/80 sm:text-[7px]">
-              {t("processingTipLabel")}
-            </p>
-            <p className="mt-1 line-clamp-3 text-[7px] leading-relaxed text-ivory-muted/90 sm:text-[8px]">
-              {currentTip}
-            </p>
-          </div>
-        </aside>
+      <div className="shrink-0 border-t border-gold-glow/10 px-3 py-2.5 sm:hidden">
+        {progressRail(true)}
       </div>
     </div>
   );

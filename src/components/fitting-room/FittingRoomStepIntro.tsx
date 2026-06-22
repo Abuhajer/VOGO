@@ -43,19 +43,40 @@ export default function FittingRoomStepIntro({
   }
 
   if (variant === "sidebar") {
+    const titleClass =
+      step === "photo"
+        ? "font-serif text-base leading-tight text-ivory lg:text-lg"
+        : "font-serif text-xl leading-tight text-ivory lg:text-[1.65rem] lg:leading-snug";
+    const descClass =
+      step === "photo"
+        ? "mt-2 text-[9px] leading-relaxed text-ivory-muted"
+        : "mt-2.5 text-[11px] leading-relaxed text-ivory-muted";
+    const hintClass =
+      step === "photo"
+        ? "mt-2 text-[8px] leading-relaxed text-ivory-faint"
+        : "mt-3 text-[10px] leading-relaxed text-ivory-faint";
+
     return (
       <div className="flex min-h-0 flex-1 flex-col">
-        <p className="mb-1 text-[9px] uppercase tracking-[0.28em] text-gold sm:text-[10px]">{label}</p>
-        <h2 className="font-serif text-xl leading-tight text-ivory lg:text-[1.65rem] lg:leading-snug">
-          {title}
-        </h2>
-        <p className="mt-2.5 text-[11px] leading-relaxed text-ivory-muted">{desc}</p>
+        <p className="mb-1 text-[8px] uppercase tracking-[0.24em] text-gold sm:text-[9px]">{label}</p>
+        <h2 className={titleClass}>{title}</h2>
+        <p className={descClass}>{desc}</p>
         {step === "product" && showCarouselHint ? (
           <p className="mt-3 text-[10px] leading-relaxed text-ivory-faint">{t("carouselHint")}</p>
         ) : null}
-        {step === "photo" ? (
-          <p className="mt-3 text-[10px] leading-relaxed text-ivory-faint">{t("portraitHint")}</p>
-        ) : null}
+        {step === "photo" ? <p className={hintClass}>{t("portraitHint")}</p> : null}
+      </div>
+    );
+  }
+
+  if (step === "photo" && variant === "stacked") {
+    return (
+      <div className="mb-2 shrink-0 border-b border-gold-glow/10 px-3 pb-2 pt-2 sm:mb-4 sm:border-0 sm:px-0 sm:pb-0 sm:pt-0 md:mb-5">
+        <p className="mb-0.5 text-[8px] uppercase tracking-[0.24em] text-gold">{label}</p>
+        <h2 className="font-serif text-sm leading-tight text-ivory sm:text-base">{title}</h2>
+        <p className="mt-1 max-w-2xl text-[9px] leading-snug text-ivory-muted line-clamp-2 sm:line-clamp-none sm:text-[10px] sm:leading-relaxed">
+          {desc}
+        </p>
       </div>
     );
   }

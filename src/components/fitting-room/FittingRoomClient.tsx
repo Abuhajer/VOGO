@@ -197,19 +197,34 @@ export default function FittingRoomClient({
       <header
         className={`relative z-20 shrink-0 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between md:items-center md:gap-4 ${
           isImmersiveStep || isResult
-            ? "mb-1 px-3 sm:px-4 md:px-5"
+            ? isProcessingStep
+              ? "mb-0 px-3 py-1 sm:mb-1 sm:px-4 md:px-5"
+              : "mb-1 px-3 sm:px-4 md:px-5"
             : "mb-3 sm:mb-3 md:mb-4"
         }`}
       >
         <div className="min-w-0 flex-1">
-          <p className="text-[8px] uppercase tracking-[0.3em] text-gold sm:text-[9px] sm:tracking-[0.35em]">
+          <p
+            className={`text-[8px] uppercase tracking-[0.3em] text-gold sm:text-[9px] sm:tracking-[0.35em] ${
+              isProcessingStep ? "hidden sm:block" : ""
+            }`}
+          >
             {t("eyebrow")}
           </p>
-          <h1 className="truncate font-serif text-xl text-ivory sm:text-2xl md:text-3xl lg:text-[2rem]">
+          <h1
+            className={`truncate font-serif text-ivory sm:text-2xl md:text-3xl lg:text-[2rem] ${
+              isProcessingStep ? "hidden text-lg sm:block sm:text-2xl" : "text-xl"
+            }`}
+          >
             {t("title")}
           </h1>
-          {selectedName && step !== "product" ? (
+          {selectedName && step !== "product" && !isProcessingStep ? (
             <p className="mt-0.5 truncate text-[11px] text-ivory-muted sm:text-xs">{selectedName}</p>
+          ) : null}
+          {selectedName && isProcessingStep ? (
+            <p className="mt-0.5 hidden truncate text-[11px] text-ivory-muted sm:block sm:text-xs">
+              {selectedName}
+            </p>
           ) : null}
         </div>
         <FittingRoomStepper
