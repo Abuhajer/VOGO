@@ -1,16 +1,37 @@
-import {
-  getCenterCoverRectInPixels,
-  getObjectCoverSourceRect,
-} from "@/lib/objectFitCrop";
+import { getObjectCoverSourceRectInPixels } from "@/lib/objectFitCrop";
 
-const PORTRAIT_ASPECT = 9 / 16;
-
-type CameraViewRotation = 0 | 90 | 180 | 270;
+export type CameraViewRotation = 0 | 90 | 180 | 270;
+export type CameraFacingMode = "user" | "environment";
 
 function normalizeRotation(r: CameraViewRotation): CameraViewRotation {
   const n = ((r % 360) + 360) % 360;
   if (n === 0 || n === 90 || n === 180 || n === 270) return n;
   return 0;
+}
+
+/**
+ * Mobile cameras often deliver landscape sensor buffers while the browser rotates the
+ * live preview for portrait-held devices. Front and back cameras need opposite corrections.
+ */
+export function getVideoCaptureRotation(
+  videoWidth: number,
+  videoHeight: number,
+  facingMode: CameraFacingMode,
+  viewportPortrait?: boolean
+): CameraViewRotation {
+  if (!videoWidth || !videoHeight || videoHeight > videoWidth) {
+    return 0;
+  }
+
+  const portrait =
+    viewportPortrait ??
+    (typeof window !== "undefined" && window.innerHeight >= window.innerWidth);
+
+  if (!portrait) {
+    return 0;
+  }
+
+  return facingMode === "user" ? 270 : 90;
 }
 
 function scaleCanvasToMaxLongEdge(
@@ -35,52 +56,60 @@ function scaleCanvasToMaxLongEdge(
   return scaled.toDataURL("image/jpeg", quality);
 }
 
-function mirrorRotateToCanvas(
+/** Rotate raw sensor buffer to upright portrait (preview applies rotation before mirror). */
+function orientVideoFrame(
   video: HTMLVideoElement,
-  mirror: boolean,
   rotation: CameraViewRotation
 ): HTMLCanvasElement | null {
   const iw = video.videoWidth;
   const ih = video.videoHeight;
   if (!iw || !ih) return null;
 
-  const off = document.createElement("canvas");
-  off.width = iw;
-  off.height = ih;
-  const ox = off.getContext("2d");
-  if (!ox) return null;
-  if (mirror) {
-    ox.translate(iw, 0);
-    ox.scale(-1, 1);
-  }
-  ox.drawImage(video, 0, 0, iw, ih);
-
   const rot = normalizeRotation(rotation);
   if (rot === 0) {
-    return off;
+    const canvas = document.createElement("canvas");
+    canvas.width = iw;
+    canvas.height = ih;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+    ctx.drawImage(video, 0, 0);
+    return canvas;
   }
 
   const ow = rot === 90 || rot === 270 ? ih : iw;
   const oh = rot === 90 || rot === 270 ? iw : ih;
-  const out = document.createElement("canvas");
-  out.width = ow;
-  out.height = oh;
-  const octx = out.getContext("2d");
-  if (!octx) return null;
-  octx.translate(ow / 2, oh / 2);
-  octx.rotate((rot * Math.PI) / 180);
-  octx.drawImage(off, -iw / 2, -ih / 2);
-  return out;
+  const canvas = document.createElement("canvas");
+  canvas.width = ow;
+  canvas.height = oh;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  ctx.translate(ow / 2, oh / 2);
+  ctx.rotate((rot * Math.PI) / 180);
+  ctx.drawImage(video, -iw / 2, -ih / 2);
+  return canvas;
+}
+
+function mirrorCanvasHorizontal(source: HTMLCanvasElement): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  canvas.width = source.width;
+  canvas.height = source.height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return source;
+  ctx.translate(canvas.width, 0);
+  ctx.scale(-1, 1);
+  ctx.drawImage(source, 0, 0);
+  return canvas;
 }
 
 /**
- * JPEG data URL: 9:16 portrait crop matching the capture station preview
- * (`object-fit: cover` in a 9:16 box when rotation is 0).
+ * JPEG data URL: portrait crop matching the capture station preview
+ * (`object-fit: cover`, `object-position: center top`, optional front-camera mirror).
  */
 export function capturePortrait9x16FromVideo(
   video: HTMLVideoElement,
   options: {
     mirror: boolean;
+    facingMode?: CameraFacingMode;
     rotation?: CameraViewRotation;
     quality?: number;
     maxLongEdge?: number;
@@ -90,42 +119,47 @@ export function capturePortrait9x16FromVideo(
   const ih = video.videoHeight;
   if (!iw || !ih) return null;
 
+  const cw = video.clientWidth;
+  const ch = video.clientHeight;
+  if (!cw || !ch) return null;
+
   const quality = options.quality ?? 0.92;
   const maxLongEdge = options.maxLongEdge ?? 2560;
-  const rotation = normalizeRotation(options.rotation ?? 0);
+  const facingMode = options.facingMode ?? "user";
+  const rotation =
+    options.rotation ?? getVideoCaptureRotation(iw, ih, facingMode);
 
-  if (rotation === 0) {
-    const crop = getObjectCoverSourceRect(video);
-    if (!crop) return null;
-    const { sx, sy, sw, sh } = crop;
-    const out = document.createElement("canvas");
-    out.width = Math.max(1, Math.round(sw));
-    out.height = Math.max(1, Math.round(sh));
-    const octx = out.getContext("2d");
-    if (!octx) return null;
-    octx.save();
-    if (options.mirror) {
-      octx.translate(out.width, 0);
-      octx.scale(-1, 1);
-    }
-    octx.drawImage(video, sx, sy, sw, sh, 0, 0, out.width, out.height);
-    octx.restore();
-    return scaleCanvasToMaxLongEdge(out, maxLongEdge, quality);
+  let frame = orientVideoFrame(video, rotation);
+  if (!frame) return null;
+
+  if (options.mirror) {
+    frame = mirrorCanvasHorizontal(frame);
   }
 
-  const oriented = mirrorRotateToCanvas(video, options.mirror, rotation);
-  if (!oriented) return null;
-  const { sx, sy, sw, sh } = getCenterCoverRectInPixels(
-    oriented.width,
-    oriented.height,
-    PORTRAIT_ASPECT
+  const crop = getObjectCoverSourceRectInPixels(
+    frame.width,
+    frame.height,
+    cw,
+    ch,
+    "top"
   );
+
   const out = document.createElement("canvas");
-  out.width = Math.max(1, Math.round(sw));
-  out.height = Math.max(1, Math.round(sh));
+  out.width = Math.max(1, Math.round(crop.sw));
+  out.height = Math.max(1, Math.round(crop.sh));
   const octx = out.getContext("2d");
   if (!octx) return null;
-  octx.drawImage(oriented, sx, sy, sw, sh, 0, 0, out.width, out.height);
+  octx.drawImage(
+    frame,
+    crop.sx,
+    crop.sy,
+    crop.sw,
+    crop.sh,
+    0,
+    0,
+    out.width,
+    out.height
+  );
   return scaleCanvasToMaxLongEdge(out, maxLongEdge, quality);
 }
 

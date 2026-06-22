@@ -1,3 +1,31 @@
+export type ObjectPositionVertical = "center" | "top" | "bottom";
+
+/**
+ * Source rectangle in image pixel space visible with `object-fit: cover` in a viewport.
+ * `verticalPosition` matches CSS `object-position` on the vertical axis (preview uses center top).
+ */
+export function getObjectCoverSourceRectInPixels(
+  iw: number,
+  ih: number,
+  cw: number,
+  ch: number,
+  verticalPosition: ObjectPositionVertical = "center"
+): { sx: number; sy: number; sw: number; sh: number } {
+  const scale = Math.max(cw / iw, ch / ih);
+  const sw = cw / scale;
+  const sh = ch / scale;
+  const sx = (iw - sw) / 2;
+  let sy: number;
+  if (verticalPosition === "top") {
+    sy = 0;
+  } else if (verticalPosition === "bottom") {
+    sy = ih - sh;
+  } else {
+    sy = (ih - sh) / 2;
+  }
+  return { sx, sy, sw, sh };
+}
+
 /**
  * Source rectangle in video/image pixel space visible with `object-fit: cover` (center crop).
  */
@@ -14,12 +42,7 @@ export function getObjectCoverSourceRect(
     return null;
   }
 
-  const scale = Math.max(cw / iw, ch / ih);
-  const sw = cw / scale;
-  const sh = ch / scale;
-  const sx = (iw - sw) / 2;
-  const sy = (ih - sh) / 2;
-  return { sx, sy, sw, sh };
+  return getObjectCoverSourceRectInPixels(iw, ih, cw, ch, "center");
 }
 
 /** Center "cover" crop in image pixel space to a target width:height ratio (portrait 9:16 → 9/16). */
