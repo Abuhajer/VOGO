@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Link } from "@/i18n/routing";
 import { useLocale, useTranslations } from "next-intl";
 import { useCart } from "@/context/CartProvider";
+import { useAppToast } from "@/hooks/useAppToast";
 import { formatNumber } from "@/lib/format";
 import { getProductName } from "@/lib/cart";
 
@@ -11,6 +12,7 @@ export default function CartView() {
   const t = useTranslations("Cart");
   const locale = useLocale();
   const { items, subtotal, updateQuantity, removeItem } = useCart();
+  const { cartRemoved, quantityUpdated } = useAppToast();
 
   if (items.length === 0) {
     return (
@@ -46,14 +48,21 @@ export default function CartView() {
                 min={1}
                 max={10}
                 value={item.quantity}
-                onChange={(event) =>
-                  updateQuantity(item.productId, Number(event.target.value))
-                }
+                onChange={(event) => {
+                  const next = Number(event.target.value);
+                  if (next >= 1 && next <= 10 && next !== item.quantity) {
+                    updateQuantity(item.productId, next);
+                    quantityUpdated();
+                  }
+                }}
                 className="w-16 bg-void border border-gold-glow/20 rounded-sm px-2 py-1 text-sm"
               />
               <button
                 type="button"
-                onClick={() => removeItem(item.productId)}
+                onClick={() => {
+                  removeItem(item.productId);
+                  cartRemoved();
+                }}
                 className="text-xs text-ivory-faint hover:text-gold"
               >
                 {t("remove")}

@@ -10,6 +10,7 @@ import SectionLabel from "@/components/icons/SectionLabel";
 import { CloseIcon, WhatsAppIcon } from "@/components/icons/Icons";
 import { useIsMobile } from "@/hooks/useIsMobile";
 import { useCart } from "@/context/CartProvider";
+import { useAppToast } from "@/hooks/useAppToast";
 import { BUSINESS_PHONE_E164, formatNumber } from "@/lib/format";
 
 type ProductDetailModalProps = {
@@ -44,6 +45,7 @@ export default function ProductDetailModal({
   const [mounted, setMounted] = useState(false);
   const [added, setAdded] = useState(false);
   const { addItem } = useCart();
+  const { cartAdded } = useAppToast();
 
   const canShop = Boolean(slug && nameAr && nameEn);
 
@@ -95,6 +97,7 @@ export default function ProductDetailModal({
       imageSrc,
     });
     setAdded(true);
+    cartAdded(isArabic ? nameAr : nameEn);
   }
 
   if (!mounted) return null;

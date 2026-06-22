@@ -10,6 +10,7 @@ import { authInputClassName } from "@/components/auth/authInputClassName";
 import PasswordField from "@/components/auth/PasswordField";
 import PhoneInput from "@/components/form/PhoneInput";
 import { registerCustomer } from "@/server/auth-actions";
+import { useAppToast } from "@/hooks/useAppToast";
 
 export default function RegisterForm() {
   const t = useTranslations("Auth");
@@ -24,6 +25,7 @@ export default function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const isArabic = locale === "ar";
+  const { registerSuccess } = useAppToast();
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -49,6 +51,8 @@ export default function RegisterForm() {
       password: form.password,
       redirect: false,
     });
+
+    registerSuccess();
 
     router.push("/dashboard");
     router.refresh();

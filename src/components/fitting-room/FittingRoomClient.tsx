@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState, useTransition } from "react"
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import type { FittingRoomProduct } from "@/lib/try-on/types";
+import type { FittingRoomAvatarItem } from "@/lib/fitting-room/avatars";
 import { localizeProduct } from "@/lib/products";
 import ProductPicker from "./ProductPicker";
 import PhotoCapture from "./PhotoCapture";
@@ -11,17 +12,20 @@ import ProcessingAnimation from "./ProcessingAnimation";
 import ResultReveal from "./ResultReveal";
 import FittingRoomStepper, { type FittingRoomStepKey } from "./FittingRoomStepper";
 import Button from "@/components/ui/Button";
+import { useAppToast } from "@/hooks/useAppToast";
 
 type Step = "product" | "photo" | "processing" | "result";
 
 type Props = {
   products: FittingRoomProduct[];
+  avatars: FittingRoomAvatarItem[];
   initialProductSlug?: string | null;
   apiConfigured: boolean;
 };
 
 export default function FittingRoomClient({
   products,
+  avatars,
   initialProductSlug,
   apiConfigured,
 }: Props) {
@@ -50,6 +54,25 @@ export default function FittingRoomClient({
   const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const { fittingRoomSuccess, fittingRoomError } = useAppToast();
+
+  const reportError = useCallback(
+    (message: string) => {
+      setError(message);
+      fittingRoomError(message);
+    },
+    [fittingRoomError]
+  );
+
+  const handlePhotoError = useCallback(
+    (message: string | null) => {
+      setError(message);
+      if (message) {
+        fittingRoomError(message);
+      }
+    },
+    [fittingRoomError]
+  );
 
   useEffect(() => {
     if (!personImageUrl) {
@@ -113,7 +136,7 @@ export default function FittingRoomClient({
   const handleGenerate = useCallback(async () => {
     if (!selectedProduct || !personImageUrl) return;
     if (!apiConfigured) {
-      setError(t("apiNotConfigured"));
+      reportError(t("apiNotConfigured"));
       return;
     }
 
@@ -144,7 +167,7 @@ export default function FittingRoomClient({
       try {
         data = JSON.parse(raw) as typeof data;
       } catch {
-        setError(
+        reportError(
           res.ok
             ? t("generateFailed")
             : t("serverError")
@@ -153,7 +176,7 @@ export default function FittingRoomClient({
         return;
       }
       if (!res.ok || !data.url) {
-        setError(mapGenerateError(data));
+        reportError(mapGenerateError(data));
         goToStep("photo");
         return;
       }
@@ -166,13 +189,14 @@ export default function FittingRoomClient({
         setResultSize(null);
       }
       goToStep("result");
+      fittingRoomSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("generateFailed"));
+      reportError(err instanceof Error ? err.message : t("generateFailed"));
       goToStep("photo");
     } finally {
       setGenerating(false);
     }
-  }, [selectedProduct, personImageUrl, apiConfigured, t, mapGenerateError]);
+  }, [selectedProduct, personImageUrl, apiConfigured, t, mapGenerateError, reportError, fittingRoomSuccess]);
 
   const selectedName = selectedProduct
     ? localizeProduct(selectedProduct, locale).name
@@ -300,9 +324,10 @@ export default function FittingRoomClient({
 
             {step === "photo" && selectedProduct ? (
               <PhotoCapture
+                avatars={avatars}
                 personImageUrl={personImageUrl}
                 onPersonImageChange={setPersonImageUrl}
-                onError={setError}
+                onError={handlePhotoError}
               />
             ) : null}
 

@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { useLocale } from "next-intl";
+import { useAppToast } from "@/hooks/useAppToast";
 
 export default function NewsletterSignup() {
   const locale = useLocale();
   const isAr = locale === "ar";
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const { newsletterSuccess, newsletterError } = useAppToast();
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -20,10 +22,18 @@ export default function NewsletterSignup() {
         body: JSON.stringify({ email, locale }),
       });
 
-      setStatus(response.ok ? "done" : "error");
-      if (response.ok) setEmail("");
+      if (response.ok) {
+        setEmail("");
+        setStatus("idle");
+        newsletterSuccess();
+        return;
+      }
+
+      setStatus("error");
+      newsletterError();
     } catch {
       setStatus("error");
+      newsletterError();
     }
   }
 
@@ -54,16 +64,6 @@ export default function NewsletterSignup() {
             ? "اشتراك"
             : "Subscribe"}
       </button>
-      {status === "done" ? (
-        <p className="text-xs text-gold sm:col-span-2">
-          {isAr ? "تم الاشتراك بنجاح." : "Subscribed successfully."}
-        </p>
-      ) : null}
-      {status === "error" ? (
-        <p className="text-xs text-red-400 sm:col-span-2">
-          {isAr ? "تعذر الاشتراك." : "Could not subscribe."}
-        </p>
-      ) : null}
     </form>
   );
 }

@@ -8,6 +8,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import AuthShell from "@/components/auth/AuthShell";
 import { authInputClassName } from "@/components/auth/authInputClassName";
 import PasswordField from "@/components/auth/PasswordField";
+import { useAppToast } from "@/hooks/useAppToast";
 
 export default function LoginForm() {
   const t = useTranslations("Auth");
@@ -18,6 +19,7 @@ export default function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const isArabic = locale === "ar";
+  const { loginSuccess } = useAppToast();
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -36,6 +38,8 @@ export default function LoginForm() {
       setError(t("invalidCredentials"));
       return;
     }
+
+    loginSuccess();
 
     const sessionRes = await fetch("/api/auth/session");
     const session = sessionRes.ok ? await sessionRes.json() : null;

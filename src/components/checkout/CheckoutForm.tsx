@@ -7,11 +7,13 @@ import { createCheckoutOrder } from "@/server/orders";
 import PhoneInput from "@/components/form/PhoneInput";
 import { formatNumber } from "@/lib/format";
 import { trackPurchase } from "@/lib/analytics";
+import { useAppToast } from "@/hooks/useAppToast";
 
 export default function CheckoutForm({ stripeEnabled }: { stripeEnabled: boolean }) {
   const t = useTranslations("Checkout");
   const locale = useLocale();
   const { items, subtotal, clearCart } = useCart();
+  const { checkoutError } = useAppToast();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
@@ -52,7 +54,9 @@ export default function CheckoutForm({ stripeEnabled }: { stripeEnabled: boolean
       });
 
       if (!result.ok) {
-        setError(mapCheckoutError(result.error));
+        const message = mapCheckoutError(result.error);
+        setError(message);
+        checkoutError(message);
         setLoading(false);
         return;
       }
@@ -72,7 +76,9 @@ export default function CheckoutForm({ stripeEnabled }: { stripeEnabled: boolean
 
       window.location.href = result.redirectUrl;
     } catch {
-      setError(t("error"));
+      const message = t("error");
+      setError(message);
+      checkoutError(message);
       setLoading(false);
     }
   }

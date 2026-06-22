@@ -601,19 +601,19 @@ body {
 }
 
 .coverflow-carousel-shell--collection .coverflow-carousel-spinner {
-  height: min(calc(78vw * 4 / 3), 32rem);
-  min-height: 17rem;
-  width: min(78vw, 22rem);
-  max-width: min(78vw, 22rem);
+  height: min(calc(62vw * 4 / 3), 24rem);
+  min-height: 13rem;
+  width: min(62vw, 16rem);
+  max-width: min(62vw, 16rem);
   aspect-ratio: 3 / 4;
 }
 
 @media (min-width: 640px) {
   .coverflow-carousel-shell--collection .coverflow-carousel-spinner {
-    height: min(calc(46vw * 4 / 3), 34rem);
-    min-height: 19rem;
-    width: min(46vw, 24rem);
-    max-width: min(46vw, 24rem);
+    height: min(calc(36vw * 4 / 3), 26rem);
+    min-height: 14.5rem;
+    width: min(36vw, 18rem);
+    max-width: min(36vw, 18rem);
   }
 }
 
@@ -624,10 +624,10 @@ body {
   }
 
   .coverflow-carousel-shell--collection .coverflow-carousel-spinner {
-    height: min(calc(38vw * 4 / 3), 36rem);
-    min-height: 21rem;
-    width: min(38vw, 26rem);
-    max-width: min(38vw, 26rem);
+    height: min(calc(30vw * 4 / 3), 28rem);
+    min-height: 16rem;
+    width: min(30vw, 19rem);
+    max-width: min(30vw, 19rem);
   }
 }
 
@@ -638,10 +638,10 @@ body {
   }
 
   .coverflow-carousel-shell--collection .coverflow-carousel-spinner {
-    height: min(calc(30vw * 4 / 3), 38rem);
-    min-height: 23rem;
-    width: min(30vw, 28rem);
-    max-width: min(30vw, 28rem);
+    height: min(calc(24vw * 4 / 3), 30rem);
+    min-height: 17.5rem;
+    width: min(24vw, 20rem);
+    max-width: min(24vw, 20rem);
   }
 }
 
@@ -726,10 +726,10 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  height: min(calc(78vw * 4 / 3 + 2.5rem), 36rem);
-  min-height: min(calc(78vw * 4 / 3 + 2.5rem), 36rem);
+  height: min(calc(62vw * 4 / 3 + 1rem), 28rem);
+  min-height: min(calc(62vw * 4 / 3 + 1rem), 28rem);
   overflow: visible;
-  padding-block: 0.75rem;
+  padding-block: 0.5rem;
 }
 
 .coverflow-carousel-shell--collection .coverflow-carousel-3d {
@@ -740,9 +740,9 @@ body {
 
 @media (min-width: 768px) {
   .coverflow-carousel-shell--collection {
-    height: min(72vh, 40rem);
-    min-height: min(72vh, 40rem);
-    padding-block: 1rem;
+    height: min(58vh, 32rem);
+    min-height: min(58vh, 32rem);
+    padding-block: 0.75rem;
   }
 }
 
@@ -1463,3 +1463,42 @@ body {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Sonner toasts — luxury gold/dark brand */
+[data-sonner-toaster] {
+  --width: min(22rem, calc(100vw - 1.5rem));
+  z-index: 10050;
+}
+
+[data-sonner-toaster] [data-sonner-toast] {
+  backdrop-filter: blur(12px);
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-styled="true"] {
+  padding: 0.875rem 1rem;
+}
+
+[data-sonner-toaster] [data-sonner-toast] [data-title] {
+  line-height: 1.4;
+}
+
+[data-sonner-toaster] [data-sonner-toast]::before {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-gold-muted),
+    transparent
+  );
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+.light [data-sonner-toaster] .vogo-toast {
+  box-shadow: 0 12px 40px rgba(14, 13, 18, 0.12) !important;
+}
+

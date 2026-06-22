@@ -12,6 +12,7 @@ import {
 import { localizeCollectionName } from "@/lib/collections";
 import ProductFormModal from "@/components/admin/ProductFormModal";
 import Button from "@/components/ui/Button";
+import { useAppToast } from "@/hooks/useAppToast";
 import { formatNumber } from "@/lib/format";
 
 type Filter = "all" | "active" | "inactive";
@@ -31,8 +32,8 @@ export default function AdminProductsClient({ products, collections }: AdminProd
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<AdminProduct | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+  const { adminSuccess, adminError } = useAppToast();
 
   const filtered = useMemo(() => {
     if (filter === "active") return rows.filter((row) => row.active);
@@ -49,9 +50,12 @@ export default function AdminProductsClient({ products, collections }: AdminProd
     [rows]
   );
 
-  function showToast(message: string) {
-    setToast(message);
-    window.setTimeout(() => setToast(null), 3200);
+  function showToast(message: string, type: "success" | "error" = "success") {
+    if (type === "error") {
+      adminError(message);
+      return;
+    }
+    adminSuccess(message);
   }
 
   function openCreate() {
@@ -77,10 +81,10 @@ export default function AdminProductsClient({ products, collections }: AdminProd
 
   function handleError(error: string) {
     if (error === "duplicate") {
-      showToast(t("errorDuplicate"));
+      showToast(t("errorDuplicate"), "error");
       return;
     }
-    showToast(t("error"));
+    showToast(t("error"), "error");
   }
 
   async function handleToggleActive(product: AdminProduct) {
@@ -89,7 +93,7 @@ export default function AdminProductsClient({ products, collections }: AdminProd
     setBusyId(null);
 
     if (!result.ok) {
-      showToast(t("error"));
+      showToast(t("error"), "error");
       return;
     }
 
@@ -106,7 +110,7 @@ export default function AdminProductsClient({ products, collections }: AdminProd
     setConfirmId(null);
 
     if (!result.ok) {
-      showToast(t("error"));
+      showToast(t("error"), "error");
       return;
     }
 
@@ -143,15 +147,6 @@ export default function AdminProductsClient({ products, collections }: AdminProd
           {t("addProduct")}
         </Button>
       </div>
-
-      {toast ? (
-        <div
-          role="status"
-          className="mb-6 rounded-sm border border-gold/30 bg-gold/10 px-4 py-3 text-sm text-gold"
-        >
-          {toast}
-        </div>
-      ) : null}
 
       {filtered.length === 0 ? (
         <div className="rounded-sm border border-gold-glow/15 bg-obsidian px-6 py-16 text-center">
