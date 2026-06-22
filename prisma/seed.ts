@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { FITTING_ROOM_AVATARS } from "../src/lib/fitting-room/avatars";
 import { OrderStatus, PaymentMethod, Role } from "../src/types/db";
 import { applyProductDescriptions } from "./product-descriptions";
 
@@ -354,6 +355,28 @@ async function main() {
         data: { subtotal, total: subtotal },
       });
     }
+  }
+
+  for (let index = 0; index < FITTING_ROOM_AVATARS.length; index++) {
+    const avatar = FITTING_ROOM_AVATARS[index];
+    await prisma.fittingRoomAvatar.upsert({
+      where: { slug: avatar.id },
+      update: {
+        labelEn: avatar.labelEn,
+        labelAr: avatar.labelAr,
+        imageSrc: avatar.src,
+        sortOrder: index + 1,
+        active: true,
+      },
+      create: {
+        slug: avatar.id,
+        labelEn: avatar.labelEn,
+        labelAr: avatar.labelAr,
+        imageSrc: avatar.src,
+        sortOrder: index + 1,
+        active: true,
+      },
+    });
   }
 
   const newsletterEmails = ["newsletter@vogobyfame.com", "tareq@vogobyfame.com"];

@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
-import { FITTING_ROOM_AVATARS } from "@/lib/fitting-room/avatars";
+import type { FittingRoomAvatarItem } from "@/lib/fitting-room/avatars";
 
 type Props = {
+  avatars: FittingRoomAvatarItem[];
   selectedSrc: string | null;
   onSelect: (src: string) => void;
   layout?: "scroll" | "grid" | "sidebar";
@@ -19,7 +20,7 @@ function AvatarCard({
   onSelect,
   className = "",
 }: {
-  avatar: (typeof FITTING_ROOM_AVATARS)[number];
+  avatar: FittingRoomAvatarItem;
   selected: boolean;
   label: string;
   onSelect: (src: string) => void;
@@ -44,6 +45,7 @@ function AvatarCard({
         fill
         sizes="(max-width: 768px) 88px, 112px"
         className="object-cover object-top bg-obsidian"
+        unoptimized={avatar.src.startsWith("data:")}
       />
       {selected ? (
         <span className="absolute end-1.5 top-1.5 z-10 flex h-5 w-5 items-center justify-center rounded-full border border-gold/50 bg-void/92 text-gold shadow-[0_2px_8px_rgba(0,0,0,0.45)]">
@@ -68,6 +70,7 @@ function AvatarCard({
 }
 
 export default function AvatarPicker({
+  avatars,
   selectedSrc,
   onSelect,
   layout = "grid",
@@ -109,7 +112,7 @@ export default function AvatarPicker({
         role="listbox"
         aria-label={t("avatarLabel")}
       >
-        {FITTING_ROOM_AVATARS.map((avatar) => {
+        {avatars.map((avatar) => {
           const selected = selectedSrc === avatar.src;
           const label = isAr ? avatar.labelAr : avatar.labelEn;
           return (

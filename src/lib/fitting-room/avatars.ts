@@ -1,8 +1,15 @@
+export type FittingRoomAvatarItem = {
+  id: string;
+  src: string;
+  labelEn: string;
+  labelAr: string;
+};
+
 /**
  * Preset model portraits for the virtual fitting room.
  * Local JPGs in public/fitting-room/avatars/
  */
-export const FITTING_ROOM_AVATARS = [
+export const FITTING_ROOM_AVATARS: readonly FittingRoomAvatarItem[] = [
   {
     id: "model-classic",
     src: "/fitting-room/avatars/model-classic.jpg",
@@ -41,4 +48,6 @@ export const FITTING_ROOM_AVATARS = [
   },
 ] as const;
 
-export type FittingRoomAvatar = (typeof FITTING_ROOM_AVATARS)[number];
+export function staticAvatarsToItems(): FittingRoomAvatarItem[] {
+  return FITTING_ROOM_AVATARS.map((avatar) => ({ ...avatar }));
+}

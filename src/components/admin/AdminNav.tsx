@@ -11,6 +11,7 @@ export default function AdminNav({ locale, role }: { locale: string; role?: Role
   const links = [
     { href: "/admin", label: locale === "ar" ? "نظرة عامة" : "Overview", exact: true },
     { href: "/admin/products", label: locale === "ar" ? "المنتجات" : "Products" },
+    { href: "/admin/avatars", label: locale === "ar" ? "نماذج القياس" : "Fitting avatars" },
     { href: "/admin/orders", label: locale === "ar" ? "الطلبات" : "Orders" },
     { href: "/admin/customers", label: locale === "ar" ? "العملاء" : "Customers" },
   ];

@@ -12,10 +12,12 @@ import {
 } from "@/lib/fitting-room/preparePortrait";
 import AvatarPicker from "./AvatarPicker";
 import FittingRoomStepIntro from "./FittingRoomStepIntro";
+import type { FittingRoomAvatarItem } from "@/lib/fitting-room/avatars";
 
 type PhotoSource = "upload" | "camera" | "avatar";
 
 type Props = {
+  avatars: FittingRoomAvatarItem[];
   personImageUrl: string | null;
   onPersonImageChange: (url: string | null) => void;
   onError: (message: string | null) => void;
@@ -262,7 +264,7 @@ function SourcePanel({
   );
 }
 
-export default function PhotoCapture({ personImageUrl, onPersonImageChange, onError }: Props) {
+export default function PhotoCapture({ avatars, personImageUrl, onPersonImageChange, onError }: Props) {
   const t = useTranslations("FittingRoom");
   const locale = useLocale();
   const isAr = locale === "ar";
@@ -382,10 +384,10 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
   const capturePhoto = async () => {
     const video = videoRef.current;
     if (!video) return;
-    const mirror = cameraFacing === "user";
-    const rotation =
-      video.videoWidth > video.videoHeight ? 90 : 0;
-    const dataUrl = capturePortrait9x16FromVideo(video, { mirror, rotation });
+    const dataUrl = capturePortrait9x16FromVideo(video, {
+      mirror: cameraFacing === "user",
+      facingMode: cameraFacing,
+    });
     if (!dataUrl) {
       onError(t("captureFailed"));
       return;
@@ -655,6 +657,7 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
             aria-label={t("avatarLabel")}
           >
             <AvatarPicker
+              avatars={avatars}
               selectedSrc={preview}
               onSelect={selectAvatar}
               layout="sidebar"
@@ -668,6 +671,7 @@ export default function PhotoCapture({ personImageUrl, onPersonImageChange, onEr
         <div className="shrink-0 px-2 pb-2 md:hidden" dir={isAr ? "rtl" : "ltr"}>
           <p className="mb-1.5 text-[8px] uppercase tracking-[0.2em] text-gold">{t("avatarLabel")}</p>
           <AvatarPicker
+            avatars={avatars}
             selectedSrc={preview}
             onSelect={selectAvatar}
             layout="scroll"
