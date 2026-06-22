@@ -1,7 +1,8 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCart } from "@/context/CartProvider";
+import { useAppToast } from "@/hooks/useAppToast";
 
 type Product = {
   id: string;
@@ -15,17 +16,29 @@ type Product = {
 export default function AddToCartButton({
   product,
   quantity = 1,
+  size = "default",
+  className = "",
 }: {
   product: Product;
   quantity?: number;
+  size?: "default" | "compact";
+  className?: string;
 }) {
   const t = useTranslations("Shop");
+  const locale = useLocale();
   const { addItem } = useCart();
+  const { cartAdded } = useAppToast();
+  const productName = locale === "ar" ? product.nameAr : product.nameEn;
+
+  const sizeClasses =
+    size === "compact"
+      ? "w-full px-2.5 py-1.5 text-[10px] uppercase tracking-[0.12em]"
+      : "px-4 py-2 text-xs";
 
   return (
     <button
       type="button"
-      onClick={() =>
+      onClick={() => {
         addItem(
           {
             productId: product.id,
@@ -36,9 +49,10 @@ export default function AddToCartButton({
             imageSrc: product.imageSrc,
           },
           quantity
-        )
-      }
-      className="px-4 py-2 bg-gold text-void text-xs font-semibold rounded-sm hover:bg-gold-muted transition-colors"
+        );
+        cartAdded(productName);
+      }}
+      className={`${sizeClasses} ${className} bg-gold text-void font-semibold rounded-sm hover:bg-gold-muted transition-colors cursor-pointer`}
     >
       {t("addToCart")}
     </button>

@@ -4,6 +4,7 @@ import {
   getStaticShopProductsByCollection,
   STATIC_COLLECTIONS,
 } from "@/lib/catalog/static-catalog";
+import type { ShopProduct } from "@/lib/shop/filters";
 
 export type CollectionSummary = {
   id: string;
@@ -71,6 +72,48 @@ export async function getShopProductsByCollection() {
     logDbFallback("getShopProductsByCollection", err);
     return getStaticShopProductsByCollection();
   }
+}
+
+export async function getShopCatalog(): Promise<{
+  collections: CollectionSummary[];
+  products: ShopProduct[];
+}> {
+  const grouped = await getShopProductsByCollection();
+
+  const collections: CollectionSummary[] = grouped.map((collection) => ({
+    id: collection.id,
+    slug: collection.slug,
+    nameAr: collection.nameAr,
+    nameEn: collection.nameEn,
+    sortOrder: collection.sortOrder,
+  }));
+
+  const products: ShopProduct[] = grouped.flatMap((collection) =>
+    collection.products.map((product) => ({
+      id: product.id,
+      slug: product.slug,
+      sku: product.sku,
+      nameAr: product.nameAr,
+      nameEn: product.nameEn,
+      descAr: product.descAr,
+      descEn: product.descEn,
+      price: product.price,
+      imageSrc: product.imageSrc,
+      active: product.active,
+      featuredCarousel: product.featuredCarousel,
+      collectionId: product.collectionId,
+      createdAt: product.createdAt.toISOString(),
+      updatedAt: product.updatedAt.toISOString(),
+      collection: {
+        id: collection.id,
+        slug: collection.slug,
+        nameAr: collection.nameAr,
+        nameEn: collection.nameEn,
+      },
+    }))
+  );
+
+  return { collections, products };
 }
 
 export async function getCarouselProducts() {
