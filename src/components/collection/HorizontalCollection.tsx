@@ -30,19 +30,25 @@ type SelectedProduct = {
 function CollectionCoverflowSlide({
   product,
   locale,
+  isAr,
   isCenter,
   viewLabel,
+  currencyLabel,
   onOpenDetails,
   onActivate,
   index,
+  slideTotal,
 }: {
   product: CollectionCarouselProduct;
   locale: string;
+  isAr: boolean;
   isCenter: boolean;
   viewLabel: string;
+  currencyLabel: string;
   onOpenDetails: () => void;
   onActivate: () => void;
   index: number;
+  slideTotal: number;
 }) {
   const { name } = localizeProduct(product, locale);
 
@@ -67,55 +73,45 @@ function CollectionCoverflowSlide({
           alt={name}
           fill
           quality={index < 2 ? 85 : 78}
-          sizes="(max-width: 640px) 70vw, 420px"
+          sizes="(max-width: 640px) 180px, 240px"
           priority={index < 2}
           loading={index < 3 ? "eager" : "lazy"}
           fetchPriority={index < 2 ? "high" : "low"}
           className="carousel-product-image object-contain object-center"
         />
+        {isCenter ? (
+          <>
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-[46%] bg-gradient-to-t from-void/95 via-void/55 to-transparent"
+              aria-hidden
+            />
+            <div
+              className="fitting-room-card-overlay absolute inset-x-0 bottom-0 z-10 flex flex-col items-center px-3 pb-2 pt-10 text-center sm:px-4 sm:pb-2.5 sm:pt-11"
+              dir={isAr ? "rtl" : "ltr"}
+            >
+              <p className="line-clamp-2 max-w-[92%] font-serif text-[10px] leading-snug text-ivory sm:text-[11px]">
+                {name}
+              </p>
+              <p className="mt-2 text-[9px] tabular-nums text-gold sm:mt-2.5 sm:text-[10px]">
+                {formatNumber(product.price, locale)} {currencyLabel}
+              </p>
+              <span
+                className={`mt-3 inline-flex items-center rounded-sm border border-gold/35 bg-void/55 px-2.5 py-1 text-[8px] font-semibold text-gold backdrop-blur-[2px] sm:mt-3.5 sm:px-3 sm:py-1 sm:text-[9px] ${
+                  isAr ? "" : "uppercase tracking-[0.1em]"
+                }`}
+              >
+                {viewLabel}
+              </span>
+              {slideTotal > 0 ? (
+                <p className="mt-2.5 text-[7px] tabular-nums tracking-[0.18em] text-ivory-faint/75 sm:mt-3 sm:text-[8px]">
+                  {formatNumber(index + 1, locale)} / {formatNumber(slideTotal, locale)}
+                </p>
+              ) : null}
+            </div>
+          </>
+        ) : null}
       </div>
     </button>
-  );
-}
-
-function CollectionCarouselMeta({
-  product,
-  locale,
-  isAr,
-  viewLabel,
-  currencyLabel,
-  onOpenDetails,
-}: {
-  product: CollectionCarouselProduct;
-  locale: string;
-  isAr: boolean;
-  viewLabel: string;
-  currencyLabel: string;
-  onOpenDetails: () => void;
-}) {
-  const { name } = localizeProduct(product, locale);
-
-  return (
-    <div
-      className="collection-coverflow-meta relative z-20 mx-auto w-full max-w-lg px-4 sm:px-6"
-      dir={isAr ? "rtl" : "ltr"}
-    >
-      <h3 className="font-serif text-lg leading-snug text-ivory sm:text-xl md:text-2xl">{name}</h3>
-      <p className="mt-2 text-sm tabular-nums text-gold sm:mt-2.5 sm:text-base">
-        {formatNumber(product.price, locale)} {currencyLabel}
-      </p>
-      <div className="mt-5 flex justify-center sm:mt-6">
-        <button
-          type="button"
-          onClick={onOpenDetails}
-          className={`inline-flex min-h-[44px] min-w-[9.5rem] items-center justify-center rounded-sm border border-gold/40 bg-surface/80 px-6 py-2.5 text-[10px] font-semibold text-gold transition-colors hover:border-gold/60 hover:bg-surface sm:text-[11px] ${
-            isAr ? "" : "uppercase tracking-[0.12em]"
-          }`}
-        >
-          {viewLabel}
-        </button>
-      </div>
-    </div>
   );
 }
 
@@ -201,8 +197,6 @@ export default function HorizontalCollection({ products }: HorizontalCollectionP
     [locale, openProductDetails]
   );
 
-  const activeProduct = products[activeIndex] ?? null;
-
   const header = (
     <div
       className="relative z-10 mx-auto mb-4 max-w-7xl select-none px-4 sm:mb-6 sm:px-6 md:mb-8 md:px-12"
@@ -241,7 +235,7 @@ export default function HorizontalCollection({ products }: HorizontalCollectionP
           >
             <CoverflowCarousel3D
               variant="collection"
-              className="collection-coverflow-carousel relative mx-auto w-full max-w-6xl"
+              className="collection-coverflow-carousel relative mx-auto w-full max-w-4xl"
               items={products}
               activeIndex={activeIndex}
               onActiveIndexChange={setActiveIndex}
@@ -252,28 +246,22 @@ export default function HorizontalCollection({ products }: HorizontalCollectionP
               ariaLabel={t("title")}
               prevLabel={t("carouselPrev")}
               nextLabel={t("carouselNext")}
+              showCounter={false}
               renderSlide={({ item, index, isCenter, onActivate }) => (
                 <CollectionCoverflowSlide
                   product={item}
                   locale={locale}
+                  isAr={isAr}
                   isCenter={isCenter}
                   viewLabel={t("view")}
+                  currencyLabel={t("currency")}
                   onOpenDetails={() => openFromProduct(item)}
                   onActivate={onActivate}
                   index={index}
+                  slideTotal={productCount}
                 />
               )}
             />
-            {activeProduct ? (
-              <CollectionCarouselMeta
-                product={activeProduct}
-                locale={locale}
-                isAr={isAr}
-                viewLabel={t("view")}
-                currencyLabel={t("currency")}
-                onOpenDetails={() => openFromProduct(activeProduct)}
-              />
-            ) : null}
           </div>
         )}
       </section>
