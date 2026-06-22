@@ -27,6 +27,28 @@ export function getObjectCoverSourceRectInPixels(
 }
 
 /**
+ * Draw image/video into a viewport using `object-fit: contain` (full frame visible, letterboxed).
+ */
+export function drawObjectContainInCanvas(
+  ctx: CanvasRenderingContext2D,
+  source: CanvasImageSource,
+  iw: number,
+  ih: number,
+  cw: number,
+  ch: number,
+  fillStyle = "#050508"
+): void {
+  const scale = Math.min(cw / iw, ch / ih);
+  const dw = iw * scale;
+  const dh = ih * scale;
+  const dx = (cw - dw) / 2;
+  const dy = (ch - dh) / 2;
+  ctx.fillStyle = fillStyle;
+  ctx.fillRect(0, 0, cw, ch);
+  ctx.drawImage(source, 0, 0, iw, ih, dx, dy, dw, dh);
+}
+
+/**
  * Source rectangle in video/image pixel space visible with `object-fit: cover` (center crop).
  */
 export function getObjectCoverSourceRect(

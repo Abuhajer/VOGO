@@ -90,15 +90,27 @@ function ProductCardFace({
           imageOnly ? "h-full w-full" : "aspect-[3/4] w-full shrink-0"
         }`}
       >
-        <Image
-          src={product.imageSrc}
-          alt={name}
-          fill
-          sizes="(max-width: 640px) 180px, 240px"
-          loading="lazy"
-          className={fitContain ? "carousel-product-image object-contain object-center" : "object-cover object-center"}
-        />
-        {selected ? (
+        <div
+          className={
+            showCenterOverlay
+              ? "absolute inset-0 bottom-[38%] sm:bottom-0"
+              : "absolute inset-0"
+          }
+        >
+          <Image
+            src={product.imageSrc}
+            alt={name}
+            fill
+            sizes="(max-width: 640px) 180px, 240px"
+            loading="lazy"
+            className={
+              fitContain
+                ? "carousel-product-image object-contain object-top sm:object-center"
+                : "object-cover object-center"
+            }
+          />
+        </div>
+        {selected && !showCenterOverlay ? (
           <span className="absolute end-1.5 top-1.5 z-20 rounded-sm border border-gold/30 bg-void/85 px-1.5 py-0.5 text-[7px] font-semibold uppercase tracking-wider text-gold">
             {selectedLabel}
           </span>
@@ -106,22 +118,27 @@ function ProductCardFace({
         {showCenterOverlay ? (
           <>
             <div
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-[46%] bg-gradient-to-t from-void/95 via-void/55 to-transparent"
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-[50%] bg-gradient-to-t from-void via-void/88 to-transparent sm:h-[46%]"
               aria-hidden
             />
             <div
-              className="fitting-room-card-overlay absolute inset-x-0 bottom-0 z-10 flex flex-col items-center px-3 pb-2 pt-10 text-center sm:px-4 sm:pb-2.5 sm:pt-11"
+              className="fitting-room-card-overlay absolute inset-x-0 bottom-0 z-10 flex flex-col items-center justify-end px-2.5 pb-2.5 pt-6 text-center sm:px-4 sm:pb-3 sm:pt-10"
               dir={isAr ? "rtl" : "ltr"}
             >
-              <p className="line-clamp-2 max-w-[92%] font-serif text-[10px] leading-snug text-ivory sm:text-[11px]">
+              {selected ? (
+                <span className="mb-1.5 inline-flex items-center rounded-sm border border-gold/35 bg-void/75 px-2 py-0.5 text-[7px] font-semibold uppercase tracking-[0.14em] text-gold backdrop-blur-sm sm:mb-2 sm:text-[8px]">
+                  {selectedLabel}
+                </span>
+              ) : null}
+              <p className="line-clamp-2 max-w-[94%] font-serif text-[11px] leading-snug text-ivory sm:max-w-[92%] sm:text-[11px]">
                 {name}
               </p>
-              <p className="mt-2 text-[9px] tabular-nums text-gold sm:mt-2.5 sm:text-[10px]">
+              <p className="mt-1.5 text-[10px] tabular-nums text-gold sm:mt-2 sm:text-[10px]">
                 {formatNumber(product.price, locale)} {isAr ? "د.أ" : "JOD"}
               </p>
               {viewDetailsLabel ? (
                 <span
-                  className={`mt-3 inline-flex items-center rounded-sm border border-gold/35 bg-void/55 px-2.5 py-1 text-[8px] font-semibold text-gold backdrop-blur-[2px] sm:mt-3.5 sm:px-3 sm:py-1 sm:text-[9px] ${
+                  className={`mt-2 inline-flex min-h-9 items-center justify-center rounded-sm border border-gold/40 bg-void/70 px-3 py-1.5 text-[9px] font-semibold text-gold backdrop-blur-[2px] sm:mt-2.5 sm:min-h-0 sm:px-3 sm:py-1 sm:text-[9px] ${
                     isAr ? "" : "uppercase tracking-[0.1em]"
                   }`}
                 >
@@ -129,7 +146,10 @@ function ProductCardFace({
                 </span>
               ) : null}
               {slideIndex !== undefined && slideTotal !== undefined && slideTotal > 0 ? (
-                <p className="mt-2.5 text-[7px] tabular-nums tracking-[0.18em] text-ivory-faint/75 sm:mt-3 sm:text-[8px]">
+                <p
+                  className="mt-1.5 text-[8px] tabular-nums tracking-[0.12em] text-ivory-faint/80 sm:mt-2 sm:text-[8px]"
+                  dir="ltr"
+                >
                   {formatNumber(slideIndex + 1, locale)} / {formatNumber(slideTotal, locale)}
                 </p>
               ) : null}
@@ -339,16 +359,16 @@ export default function ProductPicker({
   return (
     <>
       <div className="fitting-room-product-stage relative flex min-h-0 w-full flex-1 flex-col">
-        <div className="shrink-0 px-2 pt-1 md:hidden" dir={isAr ? "rtl" : "ltr"}>
+        <div className="shrink-0 px-2 pt-0.5 md:hidden" dir={isAr ? "rtl" : "ltr"}>
           <FittingRoomStepIntro
             step="product"
             variant="stacked"
-            showCarouselHint={showCarouselHint}
+            showCarouselHint={false}
           />
         </div>
 
         <div
-          className="fitting-room-product-row relative mx-auto flex min-h-0 w-full max-w-full flex-1 items-stretch justify-center gap-2 px-2 py-2 sm:gap-3 sm:px-3 md:items-center md:gap-6 md:py-3 lg:gap-8"
+          className="fitting-room-product-row relative mx-auto flex min-h-0 w-full max-w-full flex-1 items-stretch justify-center gap-2 px-1 py-1 sm:gap-3 sm:px-3 md:items-center md:gap-6 md:py-3 lg:gap-8"
           dir="ltr"
         >
           <div className="fitting-room-product-carousel relative mx-auto flex min-h-0 min-w-0 flex-1 flex-col">

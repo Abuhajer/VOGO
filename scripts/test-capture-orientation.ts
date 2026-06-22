@@ -61,6 +61,17 @@ assert(
   "landscape source crops horizontal edges for tall viewport"
 );
 
+// object-fit: contain fits the full frame (no crop) — scale is the smaller of both axes
+const containScale = Math.min(360 / 1920, 640 / 1080);
+assert(
+  Math.abs(containScale - 360 / 1920) < 0.001,
+  "contain fits landscape frame without horizontal crop"
+);
+assert(
+  containScale < 640 / 1080,
+  "contain is width-limited in a tall portrait viewport"
+);
+
 if (failed > 0) {
   console.error(`\n${failed} assertion(s) failed`);
   process.exit(1);

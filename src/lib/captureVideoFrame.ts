@@ -1,4 +1,4 @@
-import { getObjectCoverSourceRectInPixels } from "@/lib/objectFitCrop";
+import { drawObjectContainInCanvas } from "@/lib/objectFitCrop";
 
 export type CameraViewRotation = 0 | 90 | 180 | 270;
 export type CameraFacingMode = "user" | "environment";
@@ -102,8 +102,8 @@ function mirrorCanvasHorizontal(source: HTMLCanvasElement): HTMLCanvasElement {
 }
 
 /**
- * JPEG data URL: portrait crop matching the capture station preview
- * (`object-fit: cover`, `object-position: center top`, optional front-camera mirror).
+ * JPEG data URL: portrait frame matching the capture station preview
+ * (`object-fit: contain`, `object-position: center`, optional front-camera mirror).
  */
 export function capturePortrait9x16FromVideo(
   video: HTMLVideoElement,
@@ -136,30 +136,17 @@ export function capturePortrait9x16FromVideo(
     frame = mirrorCanvasHorizontal(frame);
   }
 
-  const crop = getObjectCoverSourceRectInPixels(
-    frame.width,
-    frame.height,
-    cw,
-    ch,
-    "top"
-  );
+  const scale = maxLongEdge / Math.max(cw, ch);
+  const outW = Math.max(1, Math.round(cw * scale));
+  const outH = Math.max(1, Math.round(ch * scale));
 
   const out = document.createElement("canvas");
-  out.width = Math.max(1, Math.round(crop.sw));
-  out.height = Math.max(1, Math.round(crop.sh));
+  out.width = outW;
+  out.height = outH;
   const octx = out.getContext("2d");
   if (!octx) return null;
-  octx.drawImage(
-    frame,
-    crop.sx,
-    crop.sy,
-    crop.sw,
-    crop.sh,
-    0,
-    0,
-    out.width,
-    out.height
-  );
+
+  drawObjectContainInCanvas(octx, frame, frame.width, frame.height, outW, outH);
   return scaleCanvasToMaxLongEdge(out, maxLongEdge, quality);
 }
 

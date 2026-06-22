@@ -770,6 +770,58 @@ body {
 
 .fitting-room-card-overlay {
   pointer-events: none;
+  max-height: 52%;
+}
+
+.coverflow-carousel-shell--fitting-room .coverflow-carousel-3d {
+  perspective: 820px;
+  perspective-origin: 50% 46%;
+  overflow: hidden;
+}
+
+.coverflow-carousel-shell--fitting-room .coverflow-carousel-ring {
+  transform: none;
+}
+
+.coverflow-carousel-shell--fitting-room .coverflow-carousel-spinner {
+  height: min(calc(56vw * 4 / 3), 21rem);
+  min-height: 12rem;
+  width: min(56vw, 14.5rem);
+  max-width: min(56vw, 14.5rem);
+  aspect-ratio: 3 / 4;
+}
+
+@media (max-width: 767px) {
+  .fitting-room-product-carousel {
+    min-height: min(46dvh, 19rem);
+  }
+
+  .fitting-room-product-carousel .coverflow-carousel-viewport {
+    min-height: min(42dvh, 17.5rem);
+  }
+
+  .fitting-room-product-carousel .coverflow-carousel-nav {
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0.5rem;
+  }
+
+  .coverflow-carousel-shell--fitting-room .coverflow-carousel-item:not(.is-center) {
+    filter: brightness(0.72) saturate(0.8);
+  }
+
+  .coverflow-carousel-shell--fitting-room .coverflow-carousel-item.is-center .coverflow-carousel-card {
+    border-color: rgba(201, 168, 76, 0.5);
+  }
+}
+
+@media (min-width: 640px) {
+  .coverflow-carousel-shell--fitting-room .coverflow-carousel-spinner {
+    height: min(calc(34vw * 4 / 3), 24rem);
+    min-height: 14rem;
+    width: min(34vw, 17rem);
+    max-width: min(34vw, 17rem);
+  }
 }
 
 .collection-coverflow-meta {
@@ -1249,8 +1301,8 @@ body {
 }
 
 .fitting-room-camera-feed {
-  object-fit: cover;
-  object-position: center top;
+  object-fit: contain;
+  object-position: center center;
   background: var(--color-void);
 }
 

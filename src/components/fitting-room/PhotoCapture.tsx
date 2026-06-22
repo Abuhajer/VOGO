@@ -345,8 +345,9 @@ export default function PhotoCapture({ avatars, personImageUrl, onPersonImageCha
         const stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: facing,
-            width: { ideal: 1080 },
-            height: { ideal: 1920 },
+            // Wide FOV — forcing portrait resolution often triggers digital zoom on phones.
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
           },
           audio: false,
         });
