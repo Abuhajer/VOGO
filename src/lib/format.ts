@@ -64,15 +64,15 @@ export function getPhoneCountryPrefix(): string {
   return `${LTR_MARK}+${JORDAN_COUNTRY_CODE}`;
 }
 
-export function getJordanCountryPrefix(_locale?: string): string {
+export function getJordanCountryPrefix(): string {
   return `${LTR_MARK}+${JORDAN_COUNTRY_CODE}`;
 }
 
-export function getDisplayPhone(_locale?: string): string {
+export function getDisplayPhone(): string {
   return `${LTR_MARK}+${JORDAN_COUNTRY_CODE} ${JORDAN_PHONE_NATIONAL}`;
 }
 
 /** Placeholder for phone inputs — always Western digits, LTR. */
-export function getPhoneInputPlaceholder(_locale?: string): string {
+export function getPhoneInputPlaceholder(): string {
   return `${LTR_MARK}${JORDAN_PHONE_LOCAL}`;
 }

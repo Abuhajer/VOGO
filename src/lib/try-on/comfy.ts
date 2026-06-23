@@ -123,14 +123,12 @@ function watchComfyUiProgress(
   }
 
   let lastSamplerStep = 0;
-  let lastSamplerMax = totalSteps;
   const started = Date.now();
   let closed = false;
 
   const reportSampler = (value: number, max: number) => {
     if (max <= 0) return;
     lastSamplerStep = value;
-    lastSamplerMax = max;
     const stepRatio = Math.min(1, value / max);
     const percent = clampProgressPercent(18 + stepRatio * 72);
     onProgress({
@@ -189,10 +187,7 @@ function watchComfyUiProgress(
   };
 }
 
-async function pollHistory(
-  promptId: string,
-  onProgress?: TryOnProgressCallback
-): Promise<ComfyHistoryEntry> {
+async function pollHistory(promptId: string): Promise<ComfyHistoryEntry> {
   const deadline = Date.now() + TRY_ON_ENV.comfyRequestTimeoutMs;
   while (Date.now() < deadline) {
     const res = await fetch(`${baseUrl()}/history/${promptId}`, {
@@ -289,7 +284,7 @@ export async function generateWithComfy(options: GenerateTryOnOptions) {
   const stopWatch = watchComfyUiProgress(promptId, clientId, totalSteps, onProgress, estimatedMs);
   let history: ComfyHistoryEntry;
   try {
-    history = await pollHistory(promptId, onProgress);
+    history = await pollHistory(promptId);
   } finally {
     stopWatch();
   }

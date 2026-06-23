@@ -12,7 +12,6 @@ type PhoneInputProps = {
   id: string;
   value: string;
   onChange: (value: string) => void;
-  locale: string;
   required?: boolean;
   className?: string;
 };
@@ -21,7 +20,6 @@ export default function PhoneInput({
   id,
   value,
   onChange,
-  locale,
   required = true,
   className = "",
 }: PhoneInputProps) {
@@ -47,7 +45,7 @@ export default function PhoneInput({
         required={required}
         value={displayValue}
         onChange={(event) => onChange(toWesternDigits(event.target.value))}
-        placeholder={getPhoneInputPlaceholder(locale)}
+        placeholder={getPhoneInputPlaceholder()}
         className="min-w-0 flex-1 bg-surface px-4 py-3.5 text-sm text-ivory text-left placeholder:text-ivory-faint focus:outline-none tabular-nums"
       />
     </div>

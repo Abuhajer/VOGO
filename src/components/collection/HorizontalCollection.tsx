@@ -35,7 +35,6 @@ function CollectionCoverflowSlide({
   isAr,
   isCenter,
   viewLabel,
-  currencyLabel,
   onOpenDetails,
   onActivate,
   index,
@@ -46,7 +45,6 @@ function CollectionCoverflowSlide({
   isAr: boolean;
   isCenter: boolean;
   viewLabel: string;
-  currencyLabel: string;
   onOpenDetails: () => void;
   onActivate: () => void;
   index: number;
@@ -274,7 +272,6 @@ export default function HorizontalCollection({ products }: HorizontalCollectionP
                   isAr={isAr}
                   isCenter={isCenter}
                   viewLabel={t("view")}
-                  currencyLabel={t("currency")}
                   onOpenDetails={() => openFromProduct(item)}
                   onActivate={onActivate}
                   index={index}

@@ -152,7 +152,6 @@ export default function ContactSection() {
               </label>
               <PhoneInput
                 id="phone"
-                locale={locale}
                 value={phone}
                 onChange={setPhone}
               />

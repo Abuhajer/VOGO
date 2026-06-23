@@ -197,7 +197,6 @@ export default function CheckoutForm({
         />
         <PhoneInput
           id="checkout-phone"
-          locale={locale}
           value={form.customerPhone}
           onChange={(customerPhone) => setForm({ ...form, customerPhone })}
           className="bg-obsidian"

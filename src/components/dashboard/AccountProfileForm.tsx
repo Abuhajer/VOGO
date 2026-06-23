@@ -279,7 +279,6 @@ export default function AccountProfileForm({ user, onProfileSaved }: AccountProf
                 id="profile-phone"
                 value={phone}
                 onChange={setPhone}
-                locale={locale}
                 required={false}
               />
             </div>

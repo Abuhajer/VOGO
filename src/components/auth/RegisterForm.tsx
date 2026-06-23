@@ -106,7 +106,6 @@ export default function RegisterForm() {
           </label>
           <PhoneInput
             id="register-phone"
-            locale={locale}
             value={form.phone}
             onChange={(phone) => setForm({ ...form, phone })}
           />

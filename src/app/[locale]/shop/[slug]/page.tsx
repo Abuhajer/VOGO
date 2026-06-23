@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { setRequestLocale } from "next-intl/server";
 import { getProductBySlug } from "@/server/products";
 import { getProductSalePricing } from "@/server/promotions";
 import { localizeProduct } from "@/lib/products";

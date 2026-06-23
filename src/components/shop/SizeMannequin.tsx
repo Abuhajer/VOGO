@@ -6,7 +6,6 @@ import gsap from "gsap";
 import {
   type MannequinHighlight,
   type MannequinMeasurements,
-  MANNEQUIN_BASELINE,
   mannequinScales,
 } from "@/lib/size-mannequin";
 

@@ -6,7 +6,6 @@ import { gsap } from "@/lib/gsap";
 import { useGSAP } from "@gsap/react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { hasSeenIntroThisSession, markIntroSeenThisSession } from "@/lib/intro";
-import { siteImages } from "@/lib/images";
 import BrandLogo from "@/components/brand/BrandLogo";
 
 type IntroLoaderProps = {

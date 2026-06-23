@@ -14,7 +14,6 @@ type Props = {
 export default function SelectedProductCard({ product, compact }: Props) {
   const t = useTranslations("FittingRoom");
   const locale = useLocale();
-  const isAr = locale === "ar";
   const { name } = localizeProduct(product, locale);
 
   return (

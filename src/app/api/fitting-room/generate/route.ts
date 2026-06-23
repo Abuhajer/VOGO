@@ -6,7 +6,6 @@ import {
   getFittingRoomProductBySlug,
 } from "@/server/fitting-room";
 
-import type { GenerateTryOnResponse } from "@/lib/try-on/types";
 import type { TryOnProgressUpdate } from "@/lib/try-on/progress";
 
 export const maxDuration = 180;
