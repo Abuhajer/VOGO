@@ -147,28 +147,20 @@ export function buildDimensionLockPart(dims?: ImageDimensions | null): string {
   return `OUTPUT LOCK: The next image is the person photo at ${dims.width}×${dims.height} pixels. Your output MUST be exactly ${dims.width}×${dims.height} with ONLY the clothing inpainted to the catalog product. FORBIDDEN: zoom, crop, reframe, canvas resize, rotate, relight, background edits, face/body/pose/skin/hair edits, beautification, retouching, environment change.`;
 }
 
-/** Single text prompt for local FLUX Klein — mirrors Gemini multimodal order (locks → instruction). */
+/** Single text prompt for local FLUX Klein — dual-reference edit with Flux-optimized instructions. */
 export function buildLocalKleinTryOnPrompt(
   garment: GarmentTextContext,
   dims?: ImageDimensions | null,
   extraSections?: string,
   coverage?: GarmentCoverage
 ): string {
-  const instruction = buildMenswearTryOnInstructionPrompt(
-    garment,
-    dims,
-    extraSections,
-    coverage
-  );
   const imageNote =
-    "Reference images (in order): Image 1 = person photo (identity canvas — preserve face, hair, skin, pose, background exactly). Image 2 = catalog garment (color, cut, fabric only — ignore mannequin/background).";
+    "Reference images: Image 1 = person (identity canvas — change clothing only). Image 2 = catalog garment (match color, fabric, cut, lapels — ignore mannequin and background).";
 
-  return [buildClothingOnlyLockPart(), buildDimensionLockPart(dims), imageNote, instruction].join(
-    "\n\n"
-  );
+  return [imageNote, buildFluxTryOnPromptCore(garment, dims, extraSections, coverage)].join("\n\n");
 }
 
-/** Main try-on instruction — matches Cloth Change Platform flow (person image before garment). */
+/** Main try-on instruction — Gemini multimodal path (production-stable; do not change for Flux). */
 export function buildMenswearTryOnInstructionPrompt(
   garment: GarmentTextContext,
   dims?: ImageDimensions | null,
@@ -214,8 +206,17 @@ export function buildGarmentDescriptionPart(description: string): string {
   return `Garment description: ${description.trim()}`;
 }
 
-/** Short prompt for NVIDIA FLUX Kontext (person image only — no garment photo). */
-export function buildNvidiaKontextTryOnPrompt(
+// --- FLUX Kontext / Klein only (concise edit-diff prompts; Gemini uses buildMenswearTryOnInstructionPrompt) ---
+
+function buildFluxCoverageBlock(coverage?: GarmentCoverage): string {
+  if (coverage === "upper") {
+    return `Scope: upper body only — replace the jacket/blazer and visible shirt or tie; keep the person's existing trousers and lower body exactly as in the input photo.`;
+  }
+  return `Scope: full outfit — replace jacket, shirt, tie, and trousers to match the catalog garment.`;
+}
+
+/** FLUX Kontext / Klein — concise edit-diff prompt (change + preserve, not scene redescription). */
+function buildFluxTryOnPromptCore(
   garment: GarmentTextContext,
   dims?: ImageDimensions | null,
   extraSections?: string,
@@ -225,24 +226,43 @@ export function buildNvidiaKontextTryOnPrompt(
   const garmentLabel =
     garment.title?.trim() ||
     garment.description?.trim() ||
-    "luxury tailored menswear from the VOGO collection";
+    "the catalog luxury menswear product";
 
-  return `${INPAINTING_PREAMBLE}
+  const changeLead =
+    coverage === "upper"
+      ? `Change only the jacket/blazer and visible shirt on this person: dress them in ${garmentLabel}.`
+      : `Change only the clothing on this person: dress them in ${garmentLabel}.`;
 
-${garmentBlock}Virtual try-on inpainting: replace ONLY the person's clothing with the catalog product (${garmentLabel}). Change garment pixels only.
-${buildCriticalConstraints(dims)}
-${CLOTHING_ONLY_LOCK}
-${formatSize(dims)}
-${extraSections ?? ""}
-${buildCoverageBlock(coverage)}
-${FORBIDDEN_EDITS}
-Preserve face, hair, skin, hands, pose, position, background, lighting, camera angle, and full-body framing exactly. Do NOT zoom, crop, resize canvas, or move the person. No beautification or retouching.
-${LOCK_BODY_POSE}
-${LOCK_OUTPUT_GEOMETRY}
-${LOCK_LIGHTING_AND_SCENE}
-${LOCK_FACE_HEAD}
-${CLOTHING_LIGHT_MATCH}
-${buildVerificationBlock(dims)}`;
+  const dimsLine =
+    dims?.width && dims?.height
+      ? `Output must remain exactly ${dims.width}×${dims.height} pixels with the same framing and subject scale as the input.`
+      : "Output must keep the identical pixel dimensions, framing, and subject scale as the input photo.";
+
+  return `${changeLead}
+
+${garmentBlock}${extraSections ? `${extraSections.trim()}\n` : ""}${buildFluxCoverageBlock(coverage)}
+Match the garment's color, fabric, lapels, buttons, and tailoring from the product description.
+
+KEEP IDENTICAL TO THE INPUT PHOTO:
+- Face, eyes, expression, hair, beard, skin tone, neck, hands, and fingers
+- Body pose, posture, limb angles, and exact position in the frame
+- Background, floor, furniture, plants, windows, and environment
+- Lighting direction, shadow softness, exposure, white balance, camera angle, and field of view
+- ${dimsLine}
+
+FORBIDDEN: new portrait, re-shoot, zoom in, zoom out, crop, reframe, rotate, recenter, beautify, skin smoothing, background change, relighting, HDR, or any edit except the outfit.
+
+In-place clothing swap only — maintain the exact same composition and identity while changing the outfit.`;
+}
+
+/** NVIDIA FLUX Kontext — person image + text prompt (concise edit-diff for Kontext). */
+export function buildNvidiaKontextTryOnPrompt(
+  garment: GarmentTextContext,
+  dims?: ImageDimensions | null,
+  extraSections?: string,
+  coverage?: GarmentCoverage
+): string {
+  return buildFluxTryOnPromptCore(garment, dims, extraSections, coverage);
 }
 
 /** Qwen Image Edit — supports optional garment reference as a second image (2511/2509). */

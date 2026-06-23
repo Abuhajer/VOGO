@@ -1194,6 +1194,77 @@ html.light .mobile-nav-close {
   color: #f5f0e8;
 }
 
+.collection-card-price > div {
+  align-items: center;
+  justify-content: center;
+}
+
+/* Homepage collection carousel — light mode */
+html.light .coverflow-carousel-card {
+  background: var(--color-surface);
+}
+
+html.light .collection-coverflow-slide-inner {
+  background: var(--color-surface);
+}
+
+html.light .collection-card-scrim {
+  display: none;
+}
+
+html.light .collection-card-panel {
+  background: var(--color-surface);
+  border-top: 1px solid rgba(179, 142, 54, 0.16);
+  box-shadow: 0 -6px 16px rgba(14, 13, 18, 0.04);
+  max-height: 42%;
+}
+
+html.light .collection-card-image-wrap {
+  bottom: 38%;
+}
+
+@media (min-width: 640px) {
+  html.light .collection-card-image-wrap {
+    bottom: 36%;
+  }
+}
+
+html.light .collection-coverflow-overlay {
+  color: var(--color-ivory);
+}
+
+html.light .collection-coverflow-overlay .carousel-card-title {
+  color: var(--color-ivory);
+  text-shadow: none;
+}
+
+html.light .collection-coverflow-overlay .carousel-card-counter {
+  color: var(--color-ivory-faint);
+}
+
+html.light .collection-coverflow-overlay .carousel-card-cta {
+  color: var(--color-gold);
+  background: rgba(250, 247, 242, 0.96);
+  border-color: rgba(179, 142, 54, 0.38);
+}
+
+html.light .collection-coverflow-overlay .carousel-card-price--sale {
+  color: var(--color-gold);
+}
+
+html.light .collection-coverflow-overlay .carousel-card-price--original {
+  color: var(--color-ivory-faint);
+}
+
+html.light .coverflow-carousel-shell--collection .coverflow-carousel-item:not(.is-center) {
+  filter: brightness(0.94) saturate(0.88);
+}
+
+html.light .coverflow-carousel-shell--collection .coverflow-carousel-item.is-center .coverflow-carousel-card {
+  border-color: rgba(179, 142, 54, 0.42);
+  box-shadow: 0 16px 40px rgba(14, 13, 18, 0.12);
+}
+
 .collection-coverflow-overlay .carousel-card-title {
   color: #f5f0e8;
   text-shadow: 0 1px 12px rgba(0, 0, 0, 0.65);

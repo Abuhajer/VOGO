@@ -379,7 +379,10 @@ export default function FittingRoomClient({
                 products={products}
                 selectedId={selectedProduct?.id ?? null}
                 onSelect={setSelectedProduct}
-                onContinue={() => goToStep("photo")}
+                onContinue={() => {
+                  setError(null);
+                  goToStep("photo");
+                }}
                 canContinue={Boolean(selectedProduct)}
                 continueLabel={t("continue")}
               />

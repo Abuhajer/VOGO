@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useCallback, useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { useTheme } from "@/context/ThemeProvider";
 import CoverflowCarousel3D from "@/components/carousel/CoverflowCarousel3D";
 import ProductCard from "./ProductCard";
 import ProductDetailModal from "./ProductDetailModal";
@@ -52,6 +53,9 @@ function CollectionCoverflowSlide({
   slideTotal: number;
 }) {
   const { name } = localizeProduct(product, locale);
+  const { theme } = useTheme();
+  const isLight = theme === "light";
+  const priceSurface = isLight ? "default" : "on-image";
 
   return (
     <button
@@ -64,43 +68,53 @@ function CollectionCoverflowSlide({
       aria-label={isCenter ? `${viewLabel} — ${name}` : name}
       className={`group relative h-full w-full overflow-hidden rounded-sm border text-start transition-[border-color,box-shadow] duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/50 active:scale-[0.98] ${
         isCenter
-          ? "coverflow-carousel-card border-gold shadow-[0_0_20px_rgba(201,168,76,0.28)] ring-1 ring-gold/45"
-          : "coverflow-carousel-card border-gold-glow/15 hover:border-gold/35"
+          ? "coverflow-carousel-card border-gold shadow-[0_0_20px_rgba(201,168,76,0.28)] ring-1 ring-gold/45 light:shadow-[0_0_20px_rgba(179,142,54,0.16)]"
+          : "coverflow-carousel-card border-gold-glow/15 hover:border-gold/35 light:border-[#0E0D12]/10 light:hover:border-gold/35"
       }`}
     >
-      <div className="relative h-full w-full bg-[#0E0D12]">
-        <Image
-          src={product.imageSrc}
-          alt={name}
-          fill
-          quality={index < 2 ? 85 : 78}
-          sizes="(max-width: 640px) 180px, 240px"
-          priority={index < 2}
-          loading={index < 3 ? "eager" : "lazy"}
-          fetchPriority={index < 2 ? "high" : "low"}
-          className="carousel-product-image object-contain object-center"
-        />
+      <div className="collection-coverflow-slide-inner relative h-full w-full bg-obsidian">
+        <div
+          className={
+            isCenter
+              ? "collection-card-image-wrap absolute inset-0 bottom-[36%] sm:bottom-[34%]"
+              : "absolute inset-0"
+          }
+        >
+          <Image
+            src={product.imageSrc}
+            alt={name}
+            fill
+            quality={index < 2 ? 85 : 78}
+            sizes="(max-width: 640px) 180px, 240px"
+            priority={index < 2}
+            loading={index < 3 ? "eager" : "lazy"}
+            fetchPriority={index < 2 ? "high" : "low"}
+            className="carousel-product-image object-contain object-center"
+          />
+        </div>
         {isCenter ? (
           <>
             <div
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-[58%] bg-gradient-to-t from-[#050508]/96 via-[#050508]/62 to-transparent sm:h-[60%]"
+              className="collection-card-scrim pointer-events-none absolute inset-x-0 bottom-0 h-[58%] bg-gradient-to-t from-void via-void/62 to-transparent sm:h-[60%]"
               aria-hidden
             />
             <div
-              className="collection-coverflow-overlay absolute inset-x-0 bottom-0 z-10 flex flex-col items-center justify-end gap-1 px-3 pb-2 pt-8 text-center sm:gap-1.5 sm:px-4 sm:pb-2.5 sm:pt-10"
+              className="collection-card-panel collection-coverflow-overlay absolute inset-x-0 bottom-0 z-10 flex flex-col items-center justify-end gap-1 px-3 pb-2 pt-6 text-center sm:gap-1.5 sm:px-4 sm:pb-2.5 sm:pt-8"
               dir={isAr ? "rtl" : "ltr"}
             >
               <h3 className="carousel-card-title shrink-0 max-w-[94%] line-clamp-2">
                 {name}
               </h3>
-              <PriceDisplay
-                price={product.price}
-                salePrice={product.salePrice}
-                locale={locale}
-                size="sm"
-                surface="on-image"
-                className="mt-0.5 shrink-0 justify-center sm:mt-1"
-              />
+              <div className="collection-card-price mt-0.5 shrink-0 sm:mt-1">
+                <PriceDisplay
+                  price={product.price}
+                  salePrice={product.salePrice}
+                  locale={locale}
+                  size="sm"
+                  surface={priceSurface}
+                  className="justify-center"
+                />
+              </div>
               <span
                 className={`carousel-card-cta mt-2 shrink-0 inline-flex items-center rounded-sm border px-2.5 py-1 text-[8px] font-semibold backdrop-blur-[2px] sm:mt-2.5 sm:px-3 sm:py-1 sm:text-[9px] ${
                   isAr ? "" : "uppercase tracking-[0.1em]"

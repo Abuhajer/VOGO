@@ -39,7 +39,7 @@ export const TRY_ON_ENV = {
   nvidiaAspectRatio:
     process.env.NVIDIA_ASPECT_RATIO?.trim() || "match_input_image",
   nvidiaSteps: intEnv("NVIDIA_STEPS", 30),
-  nvidiaCfgScale: floatEnv("NVIDIA_CFG_SCALE", 3.5),
+  nvidiaCfgScale: floatEnv("NVIDIA_CFG_SCALE", 3),
   nvidiaSeed: intEnv("NVIDIA_SEED", 0),
   imageHttp429MaxAttempts: intEnv("IMAGE_HTTP_429_MAX_ATTEMPTS", 1),
   /** When false (default), skip hosted NVIDIA trial for custom photos and use Gemini when configured. */

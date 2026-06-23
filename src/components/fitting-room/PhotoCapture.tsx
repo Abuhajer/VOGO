@@ -348,15 +348,19 @@ export default function PhotoCapture({
   const streamRef = useRef<MediaStream | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraStoppedByUserRef = useRef(false);
+  const cameraSessionRef = useRef(0);
 
   useEffect(() => {
     setPreview(personImageUrl);
   }, [personImageUrl]);
 
-  const stopCamera = useCallback((byUser = false) => {
+  const stopCamera = useCallback((byUser = false, invalidateSession = true) => {
+    if (invalidateSession) cameraSessionRef.current += 1;
     if (byUser) cameraStoppedByUserRef.current = true;
     streamRef.current?.getTracks().forEach((track) => track.stop());
     streamRef.current = null;
+    const video = videoRef.current;
+    if (video) video.srcObject = null;
     setCameraActive(false);
     setCameraStarting(false);
   }, []);
@@ -401,9 +405,23 @@ export default function PhotoCapture({
     void uploadFile(file);
   };
 
+  const attachStreamToVideo = useCallback(async (stream: MediaStream) => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.setAttribute("playsinline", "true");
+    video.muted = true;
+    video.srcObject = stream;
+    try {
+      await video.play();
+    } catch {
+      // autoPlay may still render; play() can reject without blocking the feed
+    }
+  }, []);
+
   const startCamera = useCallback(
     async (facing: "user" | "environment" = cameraFacing) => {
-      stopCamera();
+      const session = ++cameraSessionRef.current;
+      stopCamera(false, false);
       onError(null);
       setCameraDenied(false);
       cameraStoppedByUserRef.current = false;
@@ -417,24 +435,30 @@ export default function PhotoCapture({
           },
           audio: false,
         });
+        if (session !== cameraSessionRef.current) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
         streamRef.current = stream;
         setCameraFacing(facing);
         setCameraActive(true);
-        const video = videoRef.current;
-        if (video) {
-          video.setAttribute("playsinline", "true");
-          video.muted = true;
-          video.srcObject = stream;
-          await video.play();
-        }
+        setCameraDenied(false);
+        onError(null);
+        await attachStreamToVideo(stream);
       } catch {
+        if (session !== cameraSessionRef.current) return;
+        streamRef.current?.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+        setCameraActive(false);
         setCameraDenied(true);
         onError(t("cameraDenied"));
       } finally {
-        setCameraStarting(false);
+        if (session === cameraSessionRef.current) {
+          setCameraStarting(false);
+        }
       }
     },
-    [cameraFacing, onError, stopCamera, t]
+    [attachStreamToVideo, cameraFacing, onError, stopCamera, t]
   );
 
   const switchCamera = useCallback(() => {
@@ -447,6 +471,15 @@ export default function PhotoCapture({
     if (cameraActive || cameraStarting) return;
     void startCamera(cameraFacing);
   }, [source, cameraDenied, cameraActive, cameraStarting, cameraFacing, startCamera]);
+
+  useEffect(() => {
+    if (!cameraActive || !streamRef.current) return;
+    void attachStreamToVideo(streamRef.current);
+  }, [cameraActive, source, attachStreamToVideo]);
+
+  useEffect(() => {
+    if (cameraActive) onError(null);
+  }, [cameraActive, onError]);
 
   const capturePhoto = async () => {
     const video = videoRef.current;

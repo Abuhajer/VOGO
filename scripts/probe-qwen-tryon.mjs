@@ -78,7 +78,9 @@ const garmentPath = resolve(
 
 const promptQwen = `Virtual try-on inpainting for luxury menswear. Image 1 is the person — preserve face, hair, skin, hands, pose, background, lighting, and camera angle exactly; change clothing only. Image 2 is the catalog garment reference — match its color, cut, lapels, and fabric on the person. Do NOT zoom, crop, reframe, or beautify.`;
 
-const promptFlux = `Virtual try-on inpainting for luxury menswear on the person in the photo. Replace ONLY the clothing with a classic black evening tuxedo: black jacket, peaked lapels, white shirt, black bow tie. Preserve face, hair, skin, hands, pose, background, lighting, and camera angle exactly. Do NOT zoom, crop, reframe, or beautify.`;
+const promptFlux = `Change only the clothing on this person: dress them in a classic black evening tuxedo with black jacket, peaked lapels, white shirt, and black bow tie.
+
+KEEP IDENTICAL TO THE INPUT PHOTO: face, expression, hair, skin, hands, pose, position in frame, background, lighting, camera angle, and field of view. No zoom, crop, reframe, beautify, or background change. In-place outfit swap only.`;
 
 const timeoutMs = Number(process.env.NVIDIA_REQUEST_TIMEOUT_MS || 180_000);
 
