@@ -7,11 +7,15 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { formatNumber } from "@/lib/format";
 import { localizeProduct } from "@/lib/products";
 import type { FittingRoomProduct } from "@/lib/try-on/types";
+import type { TryOnProgressUpdate } from "@/lib/try-on/progress";
+import { phaseToStageIndex } from "@/lib/try-on/progress";
 
 type Props = {
   compact?: boolean;
   product?: FittingRoomProduct | null;
   personImageUrl?: string | null;
+  /** Live server progress — disables fake looping timer when set */
+  generationProgress?: TryOnProgressUpdate | null;
 };
 
 const STAGE_KEYS = [
@@ -86,11 +90,16 @@ function ProgressRing({
   );
 }
 
-export default function ProcessingAnimation({ product, personImageUrl }: Props) {
+export default function ProcessingAnimation({
+  product,
+  personImageUrl,
+  generationProgress,
+}: Props) {
   const t = useTranslations("FittingRoom");
   const locale = useLocale();
   const isAr = locale === "ar";
   const prefersReducedMotion = useReducedMotion();
+  const liveProgress = generationProgress != null;
 
   const [stageIndex, setStageIndex] = useState(0);
   const [tipIndex, setTipIndex] = useState(0);
@@ -103,11 +112,11 @@ export default function ProcessingAnimation({ product, personImageUrl }: Props) 
   }, [product, locale]);
 
   useEffect(() => {
-    if (prefersReducedMotion) return;
+    if (liveProgress || prefersReducedMotion) return;
 
     const stageTimer = window.setInterval(() => {
       stageStartRef.current = Date.now();
-      setStageIndex((i) => (i + 1) % STAGE_KEYS.length);
+      setStageIndex((i) => Math.min(i + 1, STAGE_KEYS.length - 1));
     }, STAGE_MS);
 
     const tipTimer = window.setInterval(() => {
@@ -123,9 +132,16 @@ export default function ProcessingAnimation({ product, personImageUrl }: Props) 
       window.clearInterval(tipTimer);
       window.clearInterval(tickTimer);
     };
-  }, [prefersReducedMotion]);
+  }, [liveProgress, prefersReducedMotion]);
+
+  const liveStageIndex = liveProgress
+    ? phaseToStageIndex(generationProgress.phase)
+    : stageIndex;
 
   const displayProgress = useMemo(() => {
+    if (liveProgress) {
+      return Math.min(100, Math.max(0, Math.round(generationProgress.percent)));
+    }
     void tick;
     if (prefersReducedMotion) return Math.round(((stageIndex + 1) / STAGE_KEYS.length) * 100);
 
@@ -134,16 +150,27 @@ export default function ProcessingAnimation({ product, personImageUrl }: Props) 
       99,
       Math.round(((stageIndex + stageFraction) / STAGE_KEYS.length) * 100)
     );
-  }, [tick, stageIndex, prefersReducedMotion]);
+  }, [liveProgress, generationProgress, tick, stageIndex, prefersReducedMotion]);
 
   const stageSegmentProgress = useMemo(() => {
+    if (liveProgress) {
+      if (
+        generationProgress.phase === "generate" &&
+        generationProgress.step != null &&
+        generationProgress.totalSteps
+      ) {
+        return Math.round((generationProgress.step / generationProgress.totalSteps) * 100);
+      }
+      if (generationProgress.phase === "finalize") return 100;
+      return displayProgress;
+    }
     void tick;
     if (prefersReducedMotion) return stageIndex >= STAGE_KEYS.length - 1 ? 100 : 50;
     const stageFraction = Math.min(1, (Date.now() - stageStartRef.current) / STAGE_MS);
     return Math.round(stageFraction * 100);
-  }, [tick, stageIndex, prefersReducedMotion]);
+  }, [liveProgress, generationProgress, displayProgress, tick, stageIndex, prefersReducedMotion]);
 
-  const currentStage = t(STAGE_KEYS[stageIndex]);
+  const currentStage = t(STAGE_KEYS[liveStageIndex]);
   const currentTip = t(TIP_KEYS[tipIndex]);
   const progressLabel = `${formatNumber(displayProgress, locale)}%`;
 
@@ -192,7 +219,7 @@ export default function ProcessingAnimation({ product, personImageUrl }: Props) 
         {compact ? (
           <div className="min-w-0 flex-1 text-start">
             <p
-              key={stageIndex}
+              key={liveStageIndex}
               className="text-[9px] font-medium uppercase tracking-[0.12em] text-gold"
             >
               {currentStage}
@@ -214,9 +241,9 @@ export default function ProcessingAnimation({ product, personImageUrl }: Props) 
         <>
           <nav className="flex min-h-0 flex-1 flex-col justify-center">
             {STAGE_KEYS.map((key, index) => {
-              const active = index === stageIndex;
-              const done = index < stageIndex;
-              const upcoming = index > stageIndex;
+              const active = index === liveStageIndex;
+              const done = index < liveStageIndex;
+              const upcoming = index > liveStageIndex;
 
               return (
                 <div key={key} className="flex items-stretch gap-1.5 sm:gap-2">
@@ -261,7 +288,12 @@ export default function ProcessingAnimation({ product, personImageUrl }: Props) 
                     </span>
                     {active ? (
                       <span className="mt-0.5 block text-[6px] tabular-nums text-gold/60 sm:text-[7px]">
-                        {formatNumber(stageSegmentProgress, locale)}%
+                        {liveProgress &&
+                        generationProgress?.phase === "generate" &&
+                        generationProgress.step != null &&
+                        generationProgress.totalSteps
+                          ? `${formatNumber(generationProgress.step, locale)} / ${formatNumber(generationProgress.totalSteps, locale)}`
+                          : `${formatNumber(stageSegmentProgress, locale)}%`}
                       </span>
                     ) : null}
                   </div>
@@ -390,7 +422,7 @@ export default function ProcessingAnimation({ product, personImageUrl }: Props) 
 
           <div className="absolute start-3 top-3 z-10 rounded-sm border border-gold/25 bg-void/75 px-2 py-1 backdrop-blur-sm">
             <span className="text-[8px] uppercase tracking-[0.18em] text-gold/90">
-              {formatNumber(stageIndex + 1, locale)} / {formatNumber(STAGE_KEYS.length, locale)}
+              {formatNumber(liveStageIndex + 1, locale)} / {formatNumber(STAGE_KEYS.length, locale)}
             </span>
           </div>
 
@@ -400,7 +432,7 @@ export default function ProcessingAnimation({ product, personImageUrl }: Props) 
             ) : null}
             {!prefersReducedMotion ? (
               <p
-                key={stageIndex}
+                key={liveStageIndex}
                 className="atelier-processing-stage-label mt-1 truncate text-[8px] uppercase tracking-[0.16em] text-gold/85 sm:text-[9px]"
               >
                 {currentStage}

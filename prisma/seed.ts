@@ -1,10 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { FITTING_ROOM_AVATARS } from "../src/lib/fitting-room/avatars";
+import { serializeProductSizeChart, defaultProductSizeChart } from "../src/lib/product-sizes";
 import { OrderStatus, PaymentMethod, Role } from "../src/types/db";
 import { applyProductDescriptions } from "./product-descriptions";
 
 const prisma = new PrismaClient();
+const defaultSizeChartJson = serializeProductSizeChart(defaultProductSizeChart());
 
 const collections = [
   {
@@ -233,12 +235,16 @@ async function main() {
       update: {
         ...data,
         featuredCarousel,
+        sizeChartJson: defaultSizeChartJson,
+        customSizeEnabled: true,
         collectionId: collectionBySlug.get(collectionSlug) ?? null,
         active: true,
       },
       create: {
         ...data,
         featuredCarousel,
+        sizeChartJson: defaultSizeChartJson,
+        customSizeEnabled: true,
         collectionId: collectionBySlug.get(collectionSlug) ?? null,
         active: true,
       },
@@ -246,8 +252,18 @@ async function main() {
   }
 
   const catalogSlugs = products.map((product) => product.slug);
+
+  // Purge hidden products that are not tied to any orders.
+  await prisma.product.deleteMany({
+    where: { active: false, orderItems: { none: {} } },
+  });
+
+  // Drop catalog orphans; keep rows only when order history references them.
+  await prisma.product.deleteMany({
+    where: { slug: { notIn: catalogSlugs }, orderItems: { none: {} } },
+  });
   await prisma.product.updateMany({
-    where: { slug: { notIn: catalogSlugs } },
+    where: { slug: { notIn: catalogSlugs }, orderItems: { some: {} } },
     data: { active: false, featuredCarousel: false },
   });
 
@@ -353,6 +369,104 @@ async function main() {
       await prisma.order.update({
         where: { id: saved.id },
         data: { subtotal, total: subtotal },
+      });
+    }
+  }
+
+  const adminUser = await prisma.user.findUnique({ where: { email: adminEmail } });
+  const omarId = customerUsers.get("omar@vogobyfame.com");
+  const tareqId = customerUsers.get("tareq@vogobyfame.com");
+
+  if (adminUser && omarId) {
+    const omarNotes = await prisma.customerNote.count({ where: { userId: omarId } });
+    if (omarNotes === 0) {
+      await prisma.customerNote.create({
+        data: {
+          userId: omarId,
+          authorId: adminUser.id,
+          content:
+            "Prefers slim-fit jackets. Interested in groom collection for September wedding.",
+        },
+      });
+    }
+
+    const omarFeedback = await prisma.customerFeedback.count({ where: { userId: omarId } });
+    if (omarFeedback === 0) {
+      await prisma.customerFeedback.create({
+        data: {
+          userId: omarId,
+          rating: 5,
+          comment: "Very happy with the fitting session — requested minor sleeve adjustment.",
+          source: "in_store",
+        },
+      });
+    }
+  }
+
+  if (adminUser && tareqId) {
+    const tareqFeedback = await prisma.customerFeedback.count({ where: { userId: tareqId } });
+    if (tareqFeedback === 0) {
+      await prisma.customerFeedback.create({
+        data: {
+          userId: tareqId,
+          rating: 4,
+          comment: "Loved the fabric quality. Asked about express tailoring for one piece.",
+          source: "whatsapp",
+        },
+      });
+    }
+  }
+
+  const promoCount = await prisma.promotion.count();
+  if (promoCount === 0) {
+    const weddingCollectionId = collectionBySlug.get("wedding-groom");
+    const tuxedoId = productBySlug.get("classic-black-tuxedo")?.id;
+
+    if (weddingCollectionId) {
+      await prisma.promotion.create({
+        data: {
+          nameEn: "Wedding Season",
+          nameAr: "موسم الأعراس",
+          code: null,
+          discountType: "PERCENT",
+          discountValue: 15,
+          scope: "COLLECTION",
+          collectionId: weddingCollectionId,
+          badgeEn: "15% OFF",
+          badgeAr: "خصم 15%",
+          active: true,
+        },
+      });
+    }
+
+    await prisma.promotion.create({
+      data: {
+        nameEn: "Welcome offer",
+        nameAr: "عرض الترحيب",
+        code: "VOGO10",
+        discountType: "PERCENT",
+        discountValue: 10,
+        scope: "ORDER",
+        usageLimit: 100,
+        minSubtotal: 200,
+        active: true,
+      },
+    });
+
+    if (tuxedoId) {
+      await prisma.promotion.create({
+        data: {
+          nameEn: "Black Tuxedo Spotlight",
+          nameAr: "عرض البدلة السوداء",
+          code: null,
+          discountType: "FIXED",
+          discountValue: 30,
+          scope: "PRODUCT",
+          badgeEn: "30 JOD OFF",
+          badgeAr: "خصم 30 د.أ",
+          active: true,
+          targets: { create: [{ productId: tuxedoId }] },
+        },
       });
     }
   }

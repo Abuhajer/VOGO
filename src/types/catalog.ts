@@ -6,6 +6,9 @@ export type CollectionCarouselProduct = {
   descAr: string;
   descEn: string;
   price: number;
+  salePrice?: number;
+  saleBadgeEn?: string;
+  saleBadgeAr?: string;
   imageSrc: string;
 };
 

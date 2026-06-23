@@ -16,6 +16,7 @@ type Props = {
   compact?: boolean;
   reachableSteps?: FittingRoomStepKey[];
   onStepClick?: (step: FittingRoomStepKey) => void;
+  className?: string;
 };
 
 export default function FittingRoomStepper({
@@ -23,6 +24,7 @@ export default function FittingRoomStepper({
   compact,
   reachableSteps = [],
   onStepClick,
+  className = "",
 }: Props) {
   const t = useTranslations("FittingRoom");
   const locale = useLocale();
@@ -40,12 +42,12 @@ export default function FittingRoomStepper({
   return (
     <nav
       aria-label={t("stepperLabel")}
-      className={compact ? "w-full sm:w-auto" : "w-full"}
+      className={compact ? `w-full sm:w-auto ${className}`.trim() : `w-full ${className}`.trim()}
       dir={isAr ? "rtl" : "ltr"}
     >
       <ol
         className={`flex items-center ${
-          compact ? "justify-between gap-0.5 sm:justify-end sm:gap-1 md:gap-1.5" : "justify-between gap-1"
+          compact ? "justify-between gap-0 sm:justify-end sm:gap-1 md:gap-1.5" : "justify-between gap-1"
         }`}
       >
         {STEPS.map((step, index) => {
@@ -58,7 +60,7 @@ export default function FittingRoomStepper({
             !isProcessing &&
             reachableSteps.includes(step.key);
 
-          const badgeClass = `flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold transition-colors duration-200 sm:h-8 sm:w-8 ${
+          const badgeClass = `flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[9px] font-semibold transition-colors duration-200 sm:h-8 sm:w-8 sm:text-[10px] ${
             active
               ? "border-gold bg-gold/20 text-gold"
               : done

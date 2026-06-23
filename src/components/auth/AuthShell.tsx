@@ -8,7 +8,6 @@ import { gsap } from "@/lib/gsap";
 import { useGSAP } from "@gsap/react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { siteImages } from "@/lib/images";
-import { BRAND_LOGO } from "@/lib/brand";
 
 type AuthShellProps = {
   children: ReactNode;
@@ -49,6 +48,8 @@ export default function AuthShell({ children, mode }: AuthShellProps) {
   );
 
   const eyebrow = mode === "login" ? t("loginEyebrow") : t("registerEyebrow");
+  const title = mode === "login" ? t("loginTitle") : t("registerTitle");
+  const subtitle = mode === "login" ? t("loginSubtitle") : t("registerSubtitle");
   const quote = mode === "login" ? t("loginQuote") : t("registerQuote");
 
   return (
@@ -64,7 +65,7 @@ export default function AuthShell({ children, mode }: AuthShellProps) {
       <div className="relative z-10 grid min-h-screen lg:grid-cols-[1.05fr_0.95fr]">
         <div
           ref={panelRef}
-          className="relative hidden lg:flex flex-col justify-between overflow-hidden border-e border-gold-glow/10"
+          className="relative hidden lg:flex flex-col justify-end overflow-hidden border-e border-gold-glow/10"
         >
           <div className="absolute inset-0">
             <Image
@@ -77,18 +78,6 @@ export default function AuthShell({ children, mode }: AuthShellProps) {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#050508] via-[#050508]/55 to-[#050508]/20" />
             <div className="absolute inset-0 bg-gradient-to-r from-[#050508]/30 to-transparent" />
-          </div>
-
-          <div className="auth-panel-glow relative z-10 p-10 xl:p-14">
-            <div className="relative w-36 h-24 xl:w-44 xl:h-28">
-              <Image
-                src={BRAND_LOGO.path}
-                alt={BRAND_LOGO.alt}
-                fill
-                sizes="176px"
-                className="object-contain object-start"
-              />
-            </div>
           </div>
 
           <div className="relative z-10 p-10 xl:p-14 space-y-8">
@@ -122,9 +111,22 @@ export default function AuthShell({ children, mode }: AuthShellProps) {
           initial={prefersReducedMotion ? false : { opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-          className="flex items-center justify-center px-6 py-28 md:px-10 lg:px-14 xl:px-20"
+          className="flex flex-col justify-center px-4 py-[calc(var(--site-nav-height)+1.5rem)] sm:px-6 md:px-10 md:py-28 lg:px-14 xl:px-20"
         >
-          <div className="w-full max-w-md">{children}</div>
+          <div className="mx-auto w-full max-w-md">
+            <header className="auth-form-header mb-6 space-y-2 text-center md:mb-8 lg:text-start">
+              <p
+                className={`text-gold text-[11px] font-sans lg:hidden ${
+                  isArabic ? "" : "tracking-[0.35em] uppercase"
+                }`}
+              >
+                {eyebrow}
+              </p>
+              <h1 className="font-serif text-3xl text-ivory md:text-4xl">{title}</h1>
+              <p className="text-sm leading-relaxed text-ivory-muted">{subtitle}</p>
+            </header>
+            {children}
+          </div>
         </motion.div>
       </div>
     </main>

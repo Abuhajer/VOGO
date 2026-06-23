@@ -51,4 +51,12 @@ export const TRY_ON_ENV = {
   geminiRateLimitsDocUrl: process.env.GEMINI_RATE_LIMITS_DOC_URL?.trim() ?? "",
   imageProviderKeysHelpUrl:
     process.env.IMAGE_PROVIDER_KEYS_HELP_URL?.trim() ?? "",
+  comfyBaseUrl:
+    process.env.COMFYUI_BASE_URL?.trim() || "http://127.0.0.1:8188",
+  comfyRequestTimeoutMs: intEnv("COMFYUI_REQUEST_TIMEOUT_MS", 180_000),
+  comfyMegapixels: floatEnv("COMFYUI_MEGAPIXELS", 0.5),
+  comfyCfg: floatEnv("COMFYUI_CFG", 1.0),
+  comfySteps: intEnv("COMFYUI_STEPS", 6),
+  comfyProviderDisplayName:
+    process.env.COMFYUI_PROVIDER_DISPLAY_NAME?.trim() || "Local FLUX Klein",
 } as const;

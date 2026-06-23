@@ -11,6 +11,9 @@ export type ShopProduct = {
   descAr: string;
   descEn: string;
   price: number;
+  salePrice?: number;
+  saleBadgeEn?: string;
+  saleBadgeAr?: string;
   imageSrc: string;
   active: boolean;
   featuredCarousel: boolean;
@@ -24,6 +27,12 @@ export type ShopProduct = {
     nameEn: string;
   };
 };
+
+export function getShopDisplayPrice(product: Pick<ShopProduct, "price" | "salePrice">) {
+  return product.salePrice != null && product.salePrice < product.price
+    ? product.salePrice
+    : product.price;
+}
 
 export type ShopCollection = {
   id: string;
@@ -82,9 +91,9 @@ function sortProducts(products: ShopProduct[], sort: ShopSortOption, locale: str
 
   switch (sort) {
     case "price-asc":
-      return sorted.sort((a, b) => a.price - b.price);
+      return sorted.sort((a, b) => getShopDisplayPrice(a) - getShopDisplayPrice(b));
     case "price-desc":
-      return sorted.sort((a, b) => b.price - a.price);
+      return sorted.sort((a, b) => getShopDisplayPrice(b) - getShopDisplayPrice(a));
     case "name": {
       const key = locale === "ar" ? "nameAr" : "nameEn";
       return sorted.sort((a, b) => a[key].localeCompare(b[key], locale));
@@ -125,7 +134,7 @@ export function filterAndSortShopProducts({
   }
 
   if (priceRange) {
-    filtered = filtered.filter((p) => matchesPriceRange(p.price, priceRange));
+    filtered = filtered.filter((p) => matchesPriceRange(getShopDisplayPrice(p), priceRange));
   }
 
   return sortProducts(filtered, sort, locale);

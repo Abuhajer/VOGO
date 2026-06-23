@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { getOrderStatusLabels } from "@/lib/order-status";
 import { getAccountDashboardData } from "@/server/dashboard";
 import AccountDashboardView from "@/components/dashboard/AccountDashboardView";
+import PageShell from "@/components/layout/PageShell";
 
 export default async function DashboardPage({
   params: { locale },
@@ -19,8 +20,8 @@ export default async function DashboardPage({
   const data = await getAccountDashboardData(session.user.id, locale, statusLabels);
 
   return (
-    <main className="container mx-auto px-6 md:px-12 py-28 md:py-36" dir={locale === "ar" ? "rtl" : "ltr"}>
+    <PageShell dir={locale === "ar" ? "rtl" : "ltr"} width="wide">
       <AccountDashboardView data={data} statusLabels={statusLabels} />
-    </main>
+    </PageShell>
   );
 }

@@ -1,13 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import { useLocale } from "next-intl";
 import { gsap } from "@/lib/gsap";
 import { useGSAP } from "@gsap/react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { hasSeenIntroThisSession, markIntroSeenThisSession } from "@/lib/intro";
-import { BRAND_LOGO } from "@/lib/brand";
+import { siteImages } from "@/lib/images";
+import BrandLogo from "@/components/brand/BrandLogo";
 
 type IntroLoaderProps = {
   onComplete?: () => void;
@@ -123,14 +123,7 @@ export default function IntroLoader({ onComplete }: IntroLoaderProps) {
       />
 
       <div ref={logoRef} className="relative z-10 w-40 h-28 md:w-48 md:h-32 opacity-0">
-        <Image
-          src={BRAND_LOGO.path}
-          alt={BRAND_LOGO.alt}
-          fill
-          priority
-          sizes="200px"
-          className="object-contain"
-        />
+        <BrandLogo tone="on-dark" priority />
       </div>
 
       {showSkip && (

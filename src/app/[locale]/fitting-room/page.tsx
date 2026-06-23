@@ -29,7 +29,7 @@ export default async function FittingRoomPage({
   }
 
   return (
-    <main className="mt-[calc(5.75rem+env(safe-area-inset-top))] flex h-[calc(100dvh-5.75rem-env(safe-area-inset-top))] max-h-[calc(100dvh-5.75rem-env(safe-area-inset-top))] flex-col overflow-hidden bg-void">
+    <main className="mt-[calc(var(--site-nav-height)+env(safe-area-inset-top))] flex h-[calc(100dvh-var(--site-nav-height)-env(safe-area-inset-top))] max-h-[calc(100dvh-var(--site-nav-height)-env(safe-area-inset-top))] flex-col overflow-hidden bg-void">
       <Suspense fallback={null}>
         <FittingRoomErrorBoundary>
           <FittingRoomClient

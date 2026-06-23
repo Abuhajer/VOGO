@@ -1,3 +1,8 @@
+import {
+  comfyMissingConfigMessage,
+  generateWithComfy,
+  isComfyConfigured,
+} from "../comfy";
 import { generateWithGemini, geminiMissingConfigMessage, isGeminiConfigured } from "../gemini";
 import {
   generateWithNvidia,
@@ -7,6 +12,7 @@ import {
 } from "../nvidia";
 import { isNvidiaFallbackEligible, isNvidiaQwenModel } from "../nvidiaCommon";
 import { TRY_ON_ENV } from "../env";
+import { getTryOnImageProvider } from "@/server/try-on-settings";
 import type { GenerateTryOnOptions, GenerateTryOnResponse } from "../types";
 import type { ImageProviderId, ImageTransformProvider } from "./types";
 
@@ -26,14 +32,32 @@ const nvidiaProvider: ImageTransformProvider = {
   generate: generateWithNvidia,
 };
 
+const localProvider: ImageTransformProvider = {
+  id: "local",
+  displayName: TRY_ON_ENV.comfyProviderDisplayName,
+  isConfigured: isComfyConfigured,
+  missingConfigurationMessage: comfyMissingConfigMessage,
+  generate: generateWithComfy,
+};
+
 const providers: Record<ImageProviderId, ImageTransformProvider> = {
   gemini: geminiProvider,
   nvidia: nvidiaProvider,
+  local: localProvider,
 };
 
+/** Env-only default — prefer {@link resolveActiveImageProviderId} at runtime. */
 export function getActiveImageProviderId(): ImageProviderId {
   const raw = TRY_ON_ENV.imageProvider.trim().toLowerCase();
   if (raw === "nvidia") return "nvidia";
+  if (raw === "local" || raw === "comfy") return "local";
+  return "gemini";
+}
+
+/** Effective provider: admin DB/file setting overrides env (gemini | local only). */
+export async function resolveActiveImageProviderId(): Promise<ImageProviderId> {
+  const adminChoice = await getTryOnImageProvider();
+  if (adminChoice === "local") return "local";
   return "gemini";
 }
 
@@ -41,8 +65,7 @@ export function supportedImageProviders(): ImageProviderId[] {
   return Object.keys(providers) as ImageProviderId[];
 }
 
-export function getImageTransformProvider(): ImageTransformProvider {
-  const id = getActiveImageProviderId();
+export function getImageTransformProvider(id = getActiveImageProviderId()): ImageTransformProvider {
   const provider = providers[id];
   if (!provider) {
     throw new Error(
@@ -53,32 +76,45 @@ export function getImageTransformProvider(): ImageTransformProvider {
 }
 
 /** True when the active provider (or Gemini fallback for NVIDIA trial) can run. */
-export function isTryOnConfigured(): boolean {
-  const id = getActiveImageProviderId();
+export async function isTryOnConfigured(): Promise<boolean> {
+  const id = await resolveActiveImageProviderId();
+  if (id === "local") {
+    return isComfyConfigured();
+  }
   if (id === "nvidia") {
     return isNvidiaConfigured() || isGeminiConfigured();
   }
   return isGeminiConfigured();
 }
 
-export function tryOnMissingConfigMessage(): string {
-  const id = getActiveImageProviderId();
+export async function tryOnMissingConfigMessage(): Promise<string> {
+  const id = await resolveActiveImageProviderId();
+  if (id === "local") {
+    return localProvider.missingConfigurationMessage();
+  }
   if (id === "nvidia" && !isNvidiaConfigured() && !isGeminiConfigured()) {
     return `${nvidiaMissingConfigMessage()} Or set GEMINI_API_KEY for automatic fallback.`;
   }
-  return getImageTransformProvider().missingConfigurationMessage();
+  return getImageTransformProvider(id).missingConfigurationMessage();
 }
 
 export async function generateWithActiveProvider(
   options: GenerateTryOnOptions
 ): Promise<GenerateTryOnResponse> {
-  const id = getActiveImageProviderId();
+  const id = await resolveActiveImageProviderId();
   const provider = providers[id];
 
   if (!provider) {
     throw new Error(
       `Unknown IMAGE_PROVIDER "${TRY_ON_ENV.imageProvider}". Supported: ${supportedImageProviders().join(", ")}.`
     );
+  }
+
+  if (id === "local") {
+    if (!provider.isConfigured()) {
+      throw new Error(provider.missingConfigurationMessage());
+    }
+    return localProvider.generate(options);
   }
 
   if (id === "nvidia" && isGeminiConfigured() && !TRY_ON_ENV.nvidiaAttemptCustomPhotos) {
@@ -91,6 +127,7 @@ export async function generateWithActiveProvider(
       originalImages: options.fallbackImages ?? options.originalImages,
       multimodalParts: options.fallbackMultimodalParts ?? options.multimodalParts,
       targetDimensions: options.targetDimensions,
+      onProgress: options.onProgress,
     });
   }
 
@@ -129,6 +166,7 @@ export async function generateWithActiveProvider(
         prompt: options.fallbackPrompt ?? options.prompt,
         originalImages: options.fallbackImages ?? options.originalImages,
         multimodalParts: options.fallbackMultimodalParts ?? options.multimodalParts,
+        onProgress: options.onProgress,
       });
     }
     throw err;

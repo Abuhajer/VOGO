@@ -45,5 +45,11 @@ export function useAppToast() {
     adminError(message: string) {
       toast.error(message);
     },
+    profileSaved() {
+      toast.success(t("profileSaved"));
+    },
+    profileError(message: string) {
+      toast.error(message);
+    },
   };
 }

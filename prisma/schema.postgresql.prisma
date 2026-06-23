@@ -81,6 +81,8 @@ model Product {
   descEn           String
   price            Int
   imageSrc         String
+  sizeChartJson    String?
+  customSizeEnabled Boolean     @default(true)
   active           Boolean      @default(true)
   featuredCarousel Boolean      @default(false)
   collectionId     String?
@@ -139,5 +141,11 @@ model FittingRoomAvatar {
   sortOrder Int      @default(0)
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AppSetting {
+  key       String   @id
+  value     String
   updatedAt DateTime @updatedAt
 }

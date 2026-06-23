@@ -10,6 +10,8 @@ import {
   setAvatarActive,
 } from "@/server/fitting-room-avatars";
 import AvatarFormModal from "@/components/admin/AvatarFormModal";
+import AdminStatusBadge from "@/components/admin/AdminStatusBadge";
+import AdminTableScroll from "@/components/admin/AdminTableScroll";
 import Button from "@/components/ui/Button";
 import { formatNumber } from "@/lib/format";
 
@@ -212,7 +214,7 @@ export default function AdminAvatarsClient({ avatars }: AdminAvatarsClientProps)
           </Button>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-sm border border-gold-glow/15">
+        <AdminTableScroll hint={locale === "ar" ? "اسحب لعرض المزيد ←" : "Swipe to see more →"}>
           <table className="min-w-full text-sm">
             <thead className="bg-void/80 text-[11px] uppercase tracking-wider text-ivory-faint">
               <tr>
@@ -276,15 +278,10 @@ export default function AdminAvatarsClient({ avatars }: AdminAvatarsClientProps)
                     </div>
                   </td>
                   <td className="px-4 py-4">
-                    <span
-                      className={`inline-flex px-2.5 py-1 rounded-sm text-[10px] uppercase tracking-wider ${
-                        avatar.active
-                          ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20"
-                          : "bg-ivory-faint/10 text-ivory-faint border border-ivory-faint/20"
-                      }`}
-                    >
-                      {avatar.active ? t("active") : t("inactive")}
-                    </span>
+                    <AdminStatusBadge
+                      variant={avatar.active ? "active" : "inactive"}
+                      label={avatar.active ? t("active") : t("inactive")}
+                    />
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex flex-wrap justify-end gap-2">
@@ -319,7 +316,7 @@ export default function AdminAvatarsClient({ avatars }: AdminAvatarsClientProps)
               ))}
             </tbody>
           </table>
-        </div>
+        </AdminTableScroll>
       )}
 
       <AvatarFormModal

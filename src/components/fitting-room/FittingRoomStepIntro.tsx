@@ -71,12 +71,12 @@ export default function FittingRoomStepIntro({
 
   if (variant === "stacked") {
     return (
-      <div className="mb-1.5 shrink-0 border-b border-gold-glow/10 px-2 pb-1.5 pt-1 sm:mb-4 sm:border-0 sm:px-0 sm:pb-0 sm:pt-0 md:mb-5">
-        <p className="mb-0.5 text-[8px] uppercase tracking-[0.24em] text-gold">{label}</p>
-        <h2 className="font-serif text-sm leading-tight text-ivory sm:text-base md:text-2xl">
+      <div className="mb-1 shrink-0 border-b border-gold-glow/10 px-1 pb-2 pt-0 sm:mb-4 sm:border-0 sm:px-0 sm:pb-0 sm:pt-0 md:mb-5">
+        <p className="mb-0.5 text-[8px] uppercase tracking-[0.22em] text-gold sm:text-[9px]">{label}</p>
+        <h2 className="font-serif text-base leading-tight text-ivory sm:text-base md:text-2xl">
           {title}
         </h2>
-        <p className="mt-0.5 max-w-2xl text-[9px] leading-snug text-ivory-muted line-clamp-1 sm:mt-1 sm:line-clamp-2 sm:text-[10px] sm:leading-relaxed md:line-clamp-none md:text-sm">
+        <p className="mt-1 max-w-2xl text-[10px] leading-relaxed text-ivory-muted line-clamp-2 sm:mt-1 sm:text-[10px] sm:leading-relaxed md:line-clamp-none md:text-sm">
           {desc}
         </p>
         {step === "product" && showCarouselHint ? (

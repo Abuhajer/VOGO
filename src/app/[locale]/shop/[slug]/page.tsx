@@ -1,14 +1,11 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { Link } from "@/i18n/routing";
 import { getProductBySlug } from "@/server/products";
+import { getProductSalePricing } from "@/server/promotions";
 import { localizeProduct } from "@/lib/products";
-import { localizeCollectionName } from "@/lib/collections";
-import { formatNumber } from "@/lib/format";
 import { absoluteUrl } from "@/lib/site";
-import AddToCartButton from "@/components/shop/AddToCartButton";
+import ProductDetailClient from "@/components/shop/ProductDetailClient";
 
 export async function generateMetadata({
   params: { locale, slug },
@@ -45,38 +42,37 @@ export default async function ProductPage({
   const product = await getProductBySlug(slug);
   if (!product) notFound();
 
-  const t = await getTranslations("Shop");
-  const { name, description } = localizeProduct(product, locale);
+  const pricing = await getProductSalePricing({
+    id: product.id,
+    price: product.price,
+    collectionId: product.collectionId ?? null,
+  });
 
   return (
-    <main
-      className="container mx-auto px-6 md:px-12 py-28 md:py-36 grid lg:grid-cols-2 gap-12"
-      dir={locale === "ar" ? "rtl" : "ltr"}
-    >
-      <div className="relative aspect-[3/4] overflow-hidden rounded-sm border border-gold-glow/15">
-        <Image src={product.imageSrc} alt={name} fill className="object-cover" priority />
-      </div>
-      <div>
-        <p className="text-[10px] uppercase tracking-[0.3em] text-gold mb-3">
-          {product.collection
-            ? localizeCollectionName(product.collection, locale)
-            : t("detailLabel")}
-        </p>
-        <h1 className="font-serif text-4xl text-ivory">{name}</h1>
-        <p className="mt-4 text-gold text-2xl font-serif">
-          {formatNumber(product.price, locale)} {locale === "ar" ? "د.أ" : "JOD"}
-        </p>
-        <p className="mt-6 text-ivory-muted leading-relaxed">{description}</p>
-        <div className="mt-8 flex flex-wrap gap-4">
-          <AddToCartButton product={product} />
-          <Link
-            href={`/fitting-room?product=${product.slug}`}
-            className="inline-flex items-center justify-center px-8 py-3.5 rounded-sm font-sans text-xs font-semibold border border-gold-muted text-gold hover:bg-gold/10 transition-all duration-300 uppercase tracking-[0.2em]"
-          >
-            {t("tryInFittingRoom")}
-          </Link>
-        </div>
-      </div>
-    </main>
+    <ProductDetailClient
+      product={{
+        id: product.id,
+        slug: product.slug,
+        nameAr: product.nameAr,
+        nameEn: product.nameEn,
+        descAr: product.descAr,
+        descEn: product.descEn,
+        price: product.price,
+        salePrice: pricing.onSale ? pricing.salePrice : undefined,
+        saleBadgeEn: pricing.badgeEn ?? undefined,
+        saleBadgeAr: pricing.badgeAr ?? undefined,
+        imageSrc: product.imageSrc,
+        sizeChartJson: "sizeChartJson" in product ? (product.sizeChartJson as string | null) : null,
+        customSizeEnabled:
+          "customSizeEnabled" in product ? Boolean(product.customSizeEnabled) : true,
+        collection: product.collection
+          ? {
+              slug: product.collection.slug,
+              nameAr: product.collection.nameAr,
+              nameEn: product.collection.nameEn,
+            }
+          : null,
+      }}
+    />
   );
 }

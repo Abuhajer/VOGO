@@ -82,7 +82,7 @@ export default function HeroSection({ introReady = true }: HeroSectionProps) {
       gsap.set(ctaRef.current, { opacity: 1, y: 0 });
     }
 
-    // 2. Parallax scroll effect
+    // Parallax scroll effect
     if (!prefersReducedMotion && bgRef.current) {
       gsap.to(bgRef.current, {
         yPercent: 18,
@@ -152,14 +152,11 @@ export default function HeroSection({ introReady = true }: HeroSectionProps) {
   return (
     <section
       ref={sectionRef}
-      className="surface-dark relative h-screen w-full flex items-center justify-center overflow-hidden bg-[#050508]"
+      className="surface-dark hero-section relative flex w-full items-center justify-center overflow-hidden bg-[#050508] pb-[max(1.25rem,env(safe-area-inset-bottom))]"
       id="hero"
     >
       {/* Parallax Background Container */}
-      <div
-        ref={bgRef}
-        className="absolute inset-0 w-full h-[120%] -top-[10%] z-0 will-change-transform"
-      >
+      <div ref={bgRef} className="hero-media absolute inset-0 z-0 will-change-transform">
         {/* Dark overlay for text readability */}
         <div className="absolute inset-0 bg-[#050508]/40 z-10 pointer-events-none" />
         <div
@@ -169,8 +166,7 @@ export default function HeroSection({ introReady = true }: HeroSectionProps) {
               "radial-gradient(circle at center, transparent 30%, rgba(5, 5, 8, 0.75) 100%)",
           }}
         />
-        
-        {/* Next.js Optimized Background Image */}
+
         <Image
           src={siteImages.hero}
           alt="VOGO BY FAME bespoke suit"
@@ -178,7 +174,7 @@ export default function HeroSection({ introReady = true }: HeroSectionProps) {
           priority
           quality={85}
           sizes="100vw"
-          className="object-cover object-center"
+          className="hero-image"
         />
       </div>
 
@@ -189,20 +185,20 @@ export default function HeroSection({ introReady = true }: HeroSectionProps) {
       />
 
       {/* Decorative vertical lines */}
-      <div className="absolute left-[10%] top-0 bottom-0 w-[1px] bg-gold-glow opacity-10 z-10 hidden md:block" />
-      <div className="absolute right-[10%] top-0 bottom-0 w-[1px] bg-gold-glow opacity-10 z-10 hidden md:block" />
+      <div className="absolute left-[10%] top-0 bottom-0 z-10 hidden w-px bg-gold-glow opacity-10 md:block" />
+      <div className="absolute right-[10%] top-0 bottom-0 z-10 hidden w-px bg-gold-glow opacity-10 md:block" />
 
       {/* Hero Content */}
       <div
         ref={textContainerRef}
-        className="relative z-25 container mx-auto px-6 md:px-12 flex flex-col items-center text-center mt-8"
+        className="relative z-20 container mx-auto flex flex-col items-center px-4 py-4 text-center sm:px-6 md:px-12 lg:max-w-3xl lg:py-6 xl:max-w-4xl"
       >
         {/* Cinematic Headline */}
         <h1
-          className={`font-light max-w-4xl text-balance ${
+          className={`hero-headline font-light max-w-4xl text-balance ${
             isArabic
-              ? "text-5xl md:text-7xl lg:text-[5.25rem] leading-[1.45]"
-              : "text-4xl md:text-6xl lg:text-7xl leading-[1.15]"
+              ? "text-4xl leading-[1.45] sm:text-5xl md:text-6xl lg:text-[3.25rem] xl:text-[5.25rem]"
+              : "text-3xl leading-[1.15] sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl"
           }`}
           dir={isArabic ? "rtl" : "ltr"}
         >
@@ -217,7 +213,7 @@ export default function HeroSection({ introReady = true }: HeroSectionProps) {
 
         {/* Brand Statement Subtitle */}
         <p
-          className={`hero-sub max-w-xl text-ivory-muted font-sans leading-relaxed text-balance ${
+          className={`hero-sub hero-subtitle max-w-xl text-ivory-muted font-sans leading-relaxed text-balance ${
             isArabic ? "text-base md:text-lg" : "text-sm md:text-base"
           }`}
           dir={isArabic ? "rtl" : "ltr"}
@@ -228,7 +224,7 @@ export default function HeroSection({ introReady = true }: HeroSectionProps) {
         {/* Call to Actions */}
         <div
           ref={ctaRef}
-          className="mt-8 flex flex-col sm:flex-row gap-4 sm:gap-6"
+          className="hero-cta-row mt-6 flex flex-col gap-4 sm:flex-row sm:gap-6 md:mt-8"
         >
           <a
             href="#collection"
@@ -265,7 +261,7 @@ export default function HeroSection({ introReady = true }: HeroSectionProps) {
           event.preventDefault();
           scrollToSection("#collection");
         }}
-        className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center space-y-2 opacity-70 hover:opacity-100 transition-opacity duration-300"
+        className="hero-scroll-cue absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center space-y-2 opacity-70 transition-opacity duration-300 hover:opacity-100 sm:bottom-8"
       >
         <span
           className={`text-[9px] text-ivory-muted font-sans font-light ${

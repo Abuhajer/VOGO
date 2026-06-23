@@ -1,4 +1,5 @@
 import { getPrisma, isDatabaseConfigured } from "@/lib/db";
+import { enrichShopProducts } from "@/server/promotions";
 import {
   getStaticCarouselProducts,
   getStaticShopProductsByCollection,
@@ -113,8 +114,9 @@ export async function getShopCatalog(): Promise<{
     }))
   );
 
-  return { collections, products };
+  return { collections, products: await enrichShopProducts(products) };
 }
+
 
 export async function getCarouselProducts() {
   if (!isDatabaseConfigured()) {
@@ -125,10 +127,43 @@ export async function getCarouselProducts() {
     const prisma = getPrisma();
     if (!prisma) return getStaticCarouselProducts();
 
-    return await prisma.product.findMany({
+    const raw = await prisma.product.findMany({
       where: { active: true, featuredCarousel: true },
       orderBy: { createdAt: "asc" },
+      include: { collection: true },
     });
+
+    const products: ShopProduct[] = raw.map((product) => ({
+      id: product.id,
+      slug: product.slug,
+      sku: product.sku,
+      nameAr: product.nameAr,
+      nameEn: product.nameEn,
+      descAr: product.descAr,
+      descEn: product.descEn,
+      price: product.price,
+      imageSrc: product.imageSrc,
+      active: product.active,
+      featuredCarousel: product.featuredCarousel,
+      collectionId: product.collectionId,
+      createdAt: product.createdAt.toISOString(),
+      updatedAt: product.updatedAt.toISOString(),
+      collection: product.collection
+        ? {
+            id: product.collection.id,
+            slug: product.collection.slug,
+            nameAr: product.collection.nameAr,
+            nameEn: product.collection.nameEn,
+          }
+        : {
+            id: "",
+            slug: "general",
+            nameAr: "عام",
+            nameEn: "General",
+          },
+    }));
+
+    return await enrichShopProducts(products);
   } catch (err) {
     logDbFallback("getCarouselProducts", err);
     return getStaticCarouselProducts();

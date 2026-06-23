@@ -98,6 +98,45 @@ export function MoonIcon({ size = 20, className, ...props }: IconProps) {
   );
 }
 
+/** Globe — language / locale switcher */
+/** Shopping bag — cart */
+export function BagIcon({ size = 20, className, ...props }: IconProps) {
+  return (
+    <svg {...iconProps({ size, className, fill: "none", ...props })}>
+      <path
+        d="M8 8V6.5a4 4 0 1 1 8 0V8"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M5 8h14l-1.2 12.2c-.07.77-.73 1.3-1.5 1.3H7.7c-.77 0-1.43-.53-1.5-1.3L5 8Z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export function GlobeIcon({ size = 20, className, ...props }: IconProps) {
+  return (
+    <svg
+      {...iconProps({ size, className, ...props })}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18" />
+      <path d="M12 3c2.6 3.2 4 6.8 4 9s-1.4 5.8-4 9" />
+      <path d="M12 3c-2.6 3.2-4 6.8-4 9s1.4 5.8 4 9" />
+    </svg>
+  );
+}
+
 export function CloseIcon({ size = 20, className, ...props }: IconProps) {
   return (
     <svg {...iconProps({ size, className, ...props })}>

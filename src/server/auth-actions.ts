@@ -3,6 +3,7 @@
 import bcrypt from "bcryptjs";
 import { Role } from "@/types/db";
 import { getPrisma } from "@/lib/db";
+import { linkGuestOrdersToUser } from "@/server/customer-orders";
 import { z } from "zod";
 
 const registerSchema = z.object({
@@ -10,6 +11,7 @@ const registerSchema = z.object({
   email: z.string().email(),
   phone: z.string().min(7).max(20),
   password: z.string().min(8).max(72),
+  preferredLocale: z.enum(["ar", "en"]).optional(),
 });
 
 export async function registerCustomer(input: z.infer<typeof registerSchema>) {
@@ -26,19 +28,23 @@ export async function registerCustomer(input: z.infer<typeof registerSchema>) {
     return { ok: false as const, error: "EMAIL_EXISTS" };
   }
 
-  await prisma.user.create({
+  const user = await prisma.user.create({
     data: {
       email,
       name: data.name,
       phone: data.phone,
       role: Role.CUSTOMER,
+      preferredLocale: data.preferredLocale ?? "ar",
       passwordHash: await bcrypt.hash(data.password, 12),
     },
   });
 
+  await linkGuestOrdersToUser(user.id, email);
+
   return { ok: true as const };
 }
 
+// Deprecated — use getCustomerOrderDetail / getCustomerOrdersList from customer-orders.ts
 export async function getCustomerOrders(userId: string) {
   const prisma = getPrisma();
   if (!prisma) return [];

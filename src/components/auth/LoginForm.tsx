@@ -9,6 +9,7 @@ import AuthShell from "@/components/auth/AuthShell";
 import { authInputClassName } from "@/components/auth/authInputClassName";
 import PasswordField from "@/components/auth/PasswordField";
 import { useAppToast } from "@/hooks/useAppToast";
+import { syncCustomerAccount } from "@/server/customer-orders";
 
 export default function LoginForm() {
   const t = useTranslations("Auth");
@@ -41,9 +42,9 @@ export default function LoginForm() {
 
     loginSuccess();
 
-    const sessionRes = await fetch("/api/auth/session");
-    const session = sessionRes.ok ? await sessionRes.json() : null;
-    router.push(session?.user?.role === "ADMIN" ? "/admin" : "/dashboard");
+    await syncCustomerAccount();
+
+    router.push("/");
     router.refresh();
   }
 
@@ -51,24 +52,12 @@ export default function LoginForm() {
     <AuthShell mode="login">
       <motion.form
         onSubmit={handleSubmit}
-        className="relative space-y-5 rounded-sm border border-gold-glow/20 bg-obsidian/80 p-8 md:p-10 backdrop-blur-sm shadow-[0_24px_80px_rgba(0,0,0,0.35)]"
+        className="relative space-y-5 rounded-sm border border-gold-glow/20 bg-obsidian/80 p-6 sm:p-8 md:p-10 backdrop-blur-sm shadow-[0_24px_80px_rgba(0,0,0,0.35)]"
         dir={isArabic ? "rtl" : "ltr"}
         animate={error ? { x: [0, -6, 6, -3, 3, 0] } : { x: 0 }}
         transition={{ duration: 0.45 }}
       >
         <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
-
-        <div className="space-y-2 pb-2">
-          <p
-            className={`text-gold text-[11px] font-sans ${
-              isArabic ? "" : "tracking-[0.35em] uppercase"
-            }`}
-          >
-            {t("loginEyebrow")}
-          </p>
-          <h1 className="font-serif text-3xl md:text-4xl text-ivory">{t("loginTitle")}</h1>
-          <p className="text-sm text-ivory-muted leading-relaxed">{t("loginSubtitle")}</p>
-        </div>
 
         <div className="space-y-2">
           <label htmlFor="login-email" className="text-xs text-ivory-muted font-sans">

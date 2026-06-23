@@ -98,16 +98,20 @@ type StaticProduct = (typeof RAW_PRODUCTS)[number] & {
 
 export const STATIC_PRODUCTS: StaticProduct[] = RAW_PRODUCTS as StaticProduct[];
 
-export const FITTING_ROOM_STATIC_CATALOG: FittingRoomProduct[] = STATIC_PRODUCTS.map((p) => ({
-  id: p.slug,
-  slug: p.slug,
-  nameAr: p.nameAr,
-  nameEn: p.nameEn,
-  descAr: p.descAr,
-  descEn: p.descEn,
-  imageSrc: p.imageSrc,
-  price: p.price,
-}));
+export const FITTING_ROOM_STATIC_CATALOG: FittingRoomProduct[] = STATIC_PRODUCTS.map((p) => {
+  const collection = STATIC_COLLECTIONS.find((c) => c.slug === p.collectionSlug);
+  return {
+    id: p.slug,
+    slug: p.slug,
+    nameAr: p.nameAr,
+    nameEn: p.nameEn,
+    descAr: p.descAr,
+    descEn: p.descEn,
+    imageSrc: p.imageSrc,
+    price: p.price,
+    collectionId: collection?.id ?? null,
+  };
+});
 
 export function getStaticFittingRoomProductById(id: string): FittingRoomProduct | null {
   return FITTING_ROOM_STATIC_CATALOG.find((p) => p.id === id || p.slug === id) ?? null;

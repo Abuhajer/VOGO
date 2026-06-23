@@ -72,7 +72,7 @@ export default function TestimonialCarousel() {
       <div className="absolute w-[320px] h-[320px] rounded-full bg-gold-glow filter blur-[60px] pointer-events-none opacity-15 z-0" />
 
       <div
-        className="container mx-auto px-6 text-center mb-12 md:mb-16 z-10"
+        className="container mx-auto px-4 text-center mb-12 sm:px-6 md:mb-16 z-10"
         dir={locale === "ar" ? "rtl" : "ltr"}
       >
         <SectionLabel className="mb-2 text-gold font-light block justify-center">{t("title")}</SectionLabel>

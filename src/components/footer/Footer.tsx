@@ -1,12 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import { useTranslations, useLocale } from "next-intl";
 import { scrollToSection } from "@/lib/scroll";
 import { NAV_SECTIONS } from "@/lib/navigation";
 import SocialLinks from "@/components/icons/SocialLinks";
 import NewsletterSignup from "@/components/marketing/NewsletterSignup";
-import { BRAND_LOGO } from "@/lib/brand";
+import BrandLogo from "@/components/brand/BrandLogo";
 
 export default function Footer() {
   const t = useTranslations("Footer");
@@ -23,18 +22,12 @@ export default function Footer() {
     <footer className="relative w-full bg-void pt-16 pb-8 border-t border-gold-glow/10 z-10">
       {/* Container */}
       <div
-        className="container mx-auto px-6 md:px-12 flex flex-col items-center justify-center text-center"
+        className="container mx-auto px-4 sm:px-6 md:px-12 flex flex-col items-center justify-center text-center"
         dir={locale === "ar" ? "rtl" : "ltr"}
       >
         {/* Brand Logo (Centered) */}
         <div className="mb-8 relative w-36 h-28 md:w-40 md:h-32">
-          <Image
-            src={BRAND_LOGO.path}
-            alt={BRAND_LOGO.alt}
-            fill
-            sizes="200px"
-            className="object-contain"
-          />
+          <BrandLogo tone="on-dark" priority />
         </div>
 
         {/* Navigation Links */}

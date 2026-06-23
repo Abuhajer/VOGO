@@ -21,7 +21,8 @@
     "products:fetch-images": "node scripts/fetch-product-images.mjs",
     "products:restore-images": "node scripts/restore-original-product-images.mjs",
     "tunnel": "node scripts/tunnel-quick.mjs",
-    "tunnel:run": "cloudflared tunnel run vogo-by-fame"
+    "tunnel:run": "cloudflared tunnel run vogo-by-fame",
+    "probe:qwen": "node --env-file=.env scripts/probe-qwen-tryon.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",

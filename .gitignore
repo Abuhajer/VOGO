@@ -28,6 +28,9 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+
+# runtime admin settings fallback (when DB unavailable)
+/data/app-settings.json
 CREDENTIALS.txt
 
 # prisma local db

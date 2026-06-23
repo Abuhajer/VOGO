@@ -8,9 +8,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Link } from "@/i18n/routing";
 import SectionLabel from "@/components/icons/SectionLabel";
 import { CloseIcon, WhatsAppIcon } from "@/components/icons/Icons";
+import PriceDisplay from "@/components/shop/PriceDisplay";
 import { useIsMobile } from "@/hooks/useIsMobile";
-import { useCart } from "@/context/CartProvider";
-import { useAppToast } from "@/hooks/useAppToast";
 import { BUSINESS_PHONE_E164, formatNumber } from "@/lib/format";
 
 type ProductDetailModalProps = {
@@ -19,6 +18,7 @@ type ProductDetailModalProps = {
   name: string;
   description: string;
   price: number;
+  salePrice?: number;
   imageSrc: string;
   slug?: string;
   nameAr?: string;
@@ -31,6 +31,7 @@ export default function ProductDetailModal({
   name,
   description,
   price,
+  salePrice,
   imageSrc,
   slug,
   nameAr,
@@ -39,23 +40,17 @@ export default function ProductDetailModal({
   const t = useTranslations("Collection");
   const locale = useLocale();
   const isArabic = locale === "ar";
-  const formattedPrice = formatNumber(price, locale);
+  const formattedPrice = formatNumber(salePrice != null && salePrice < price ? salePrice : price, locale);
   const isMobile = useIsMobile();
   const isMobileView = isMobile ?? true;
   const [mounted, setMounted] = useState(false);
-  const [added, setAdded] = useState(false);
-  const { addItem } = useCart();
-  const { cartAdded } = useAppToast();
 
   const canShop = Boolean(slug && nameAr && nameEn);
 
   useEffect(() => setMounted(true), []);
 
   useEffect(() => {
-    if (!open) {
-      setAdded(false);
-      return;
-    }
+    if (!open) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
@@ -85,20 +80,6 @@ export default function ProductDetailModal({
     price: formattedPrice,
   });
   const whatsappHref = `https://wa.me/${BUSINESS_PHONE_E164.replace("+", "")}?text=${encodeURIComponent(whatsappMessage)}`;
-
-  function handleAddToCart() {
-    if (!canShop || !slug || !nameAr || !nameEn) return;
-    addItem({
-      productId: slug,
-      slug,
-      nameAr,
-      nameEn,
-      price,
-      imageSrc,
-    });
-    setAdded(true);
-    cartAdded(isArabic ? nameAr : nameEn);
-  }
 
   if (!mounted) return null;
 
@@ -178,9 +159,15 @@ export default function ProductDetailModal({
                   <h3 className="font-serif text-xl sm:text-2xl md:text-3xl text-ivory font-light leading-tight text-balance">
                     {name}
                   </h3>
-                  <p className="mt-2 sm:mt-3 text-gold font-sans text-base sm:text-lg md:text-xl">
-                    {formattedPrice} {t("currency")}
-                  </p>
+                  <div className="mt-2 sm:mt-3">
+                    <PriceDisplay
+                      price={price}
+                      salePrice={salePrice}
+                      locale={locale}
+                      size="md"
+                      surface="default"
+                    />
+                  </div>
                   <div className="w-14 sm:w-16 h-px bg-gradient-to-r from-gold/80 to-transparent mt-4 sm:mt-5 mb-4 sm:mb-6" />
                 </div>
 
@@ -203,15 +190,15 @@ export default function ProductDetailModal({
                 <div className="mt-6 sm:mt-8 lg:mt-auto lg:pt-8 flex flex-col gap-3 sticky bottom-0 bg-obsidian pt-3 sm:pt-0 sm:static">
                   {canShop ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <button
-                        type="button"
-                        onClick={handleAddToCart}
+                      <Link
+                        href={`/shop/${slug}`}
+                        onClick={onClose}
                         className={`inline-flex w-full items-center justify-center min-h-[48px] px-5 py-3.5 bg-gold text-[#0E0D12] font-sans text-xs sm:text-sm font-semibold rounded-sm transition-all duration-300 hover:bg-gold-muted active:scale-[0.98] ${
                           isArabic ? "" : "uppercase tracking-[0.12em]"
                         }`}
                       >
-                        {added ? t("addedToCart") : t("addToCart")}
-                      </button>
+                        {t("selectSizeInShop")}
+                      </Link>
                       <Link
                         href={`/fitting-room?product=${slug}`}
                         onClick={onClose}
@@ -222,18 +209,6 @@ export default function ProductDetailModal({
                         {t("tryOn")}
                       </Link>
                     </div>
-                  ) : null}
-
-                  {canShop ? (
-                    <Link
-                      href={`/shop/${slug}`}
-                      onClick={onClose}
-                      className={`inline-flex w-full items-center justify-center min-h-[48px] px-5 py-3.5 border border-gold-muted/40 text-ivory font-sans text-xs font-medium rounded-sm transition-all duration-300 hover:bg-surface/80 active:scale-[0.98] ${
-                        isArabic ? "" : "uppercase tracking-[0.12em]"
-                      }`}
-                    >
-                      {t("viewInShop")}
-                    </Link>
                   ) : null}
 
                   <a

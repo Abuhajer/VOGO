@@ -32,7 +32,7 @@ export default function RegisterForm() {
     setLoading(true);
     setError(null);
 
-    const result = await registerCustomer(form);
+    const result = await registerCustomer({ ...form, preferredLocale: locale as "ar" | "en" });
 
     if (!result.ok) {
       setError(
@@ -54,7 +54,7 @@ export default function RegisterForm() {
 
     registerSuccess();
 
-    router.push("/dashboard");
+    router.push("/");
     router.refresh();
   }
 
@@ -62,22 +62,10 @@ export default function RegisterForm() {
     <AuthShell mode="register">
       <motion.form
         onSubmit={handleSubmit}
-        className="relative space-y-5 rounded-sm border border-gold-glow/20 bg-obsidian/80 p-8 md:p-10 backdrop-blur-sm shadow-[0_24px_80px_rgba(0,0,0,0.35)]"
+        className="relative space-y-5 rounded-sm border border-gold-glow/20 bg-obsidian/80 p-6 sm:p-8 md:p-10 backdrop-blur-sm shadow-[0_24px_80px_rgba(0,0,0,0.35)]"
         dir={isArabic ? "rtl" : "ltr"}
       >
         <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
-
-        <div className="space-y-2 pb-2">
-          <p
-            className={`text-gold text-[11px] font-sans ${
-              isArabic ? "" : "tracking-[0.35em] uppercase"
-            }`}
-          >
-            {t("registerEyebrow")}
-          </p>
-          <h1 className="font-serif text-3xl md:text-4xl text-ivory">{t("registerTitle")}</h1>
-          <p className="text-sm text-ivory-muted leading-relaxed">{t("registerSubtitle")}</p>
-        </div>
 
         <div className="space-y-2">
           <label htmlFor="register-name" className="text-xs text-ivory-muted font-sans">

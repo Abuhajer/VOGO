@@ -30,8 +30,8 @@ export async function loadFittingRoomPageData(): Promise<FittingRoomPageData> {
   }
 
   try {
-    const { isTryOnConfiguredFromEnv } = await import("@/lib/try-on/try-on-config");
-    apiConfigured = isTryOnConfiguredFromEnv();
+    const { isTryOnConfiguredForRuntime } = await import("@/lib/try-on/try-on-config");
+    apiConfigured = await isTryOnConfiguredForRuntime();
   } catch (err) {
     console.error("[fitting-room] try-on config check failed", err);
   }

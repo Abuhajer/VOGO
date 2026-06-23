@@ -5,6 +5,7 @@ import {
   getStaticFittingRoomProductBySlug,
 } from "@/lib/catalog/fitting-room-catalog";
 import type { FittingRoomProduct } from "@/lib/try-on/types";
+import { enrichFittingRoomProducts } from "@/server/promotions";
 
 const productSelect = {
   id: true,
@@ -15,6 +16,7 @@ const productSelect = {
   descEn: true,
   imageSrc: true,
   price: true,
+  collectionId: true,
 } as const;
 
 function logDbFallback(context: string, err: unknown) {
@@ -22,62 +24,86 @@ function logDbFallback(context: string, err: unknown) {
   console.warn(`[fitting-room] ${context}: database unavailable — using static catalog (${message})`);
 }
 
+async function withSalePricing(products: FittingRoomProduct[]): Promise<FittingRoomProduct[]> {
+  try {
+    return await enrichFittingRoomProducts(products);
+  } catch (err) {
+    console.error("[fitting-room] sale pricing enrichment failed", err);
+    return products;
+  }
+}
+
 export async function getFittingRoomProducts(): Promise<FittingRoomProduct[]> {
   if (!isDatabaseConfigured()) {
-    return FITTING_ROOM_STATIC_CATALOG;
+    return withSalePricing(FITTING_ROOM_STATIC_CATALOG);
   }
 
   try {
     const prisma = getPrisma();
-    if (!prisma) return FITTING_ROOM_STATIC_CATALOG;
+    if (!prisma) return withSalePricing(FITTING_ROOM_STATIC_CATALOG);
 
-    return await prisma.product.findMany({
+    const products = await prisma.product.findMany({
       where: { active: true },
       select: productSelect,
       orderBy: { createdAt: "asc" },
     });
+    return withSalePricing(products);
   } catch (err) {
     logDbFallback("getFittingRoomProducts", err);
-    return FITTING_ROOM_STATIC_CATALOG;
+    return withSalePricing(FITTING_ROOM_STATIC_CATALOG);
   }
 }
 
 export async function getFittingRoomProductById(id: string): Promise<FittingRoomProduct | null> {
+  let product: FittingRoomProduct | null = null;
+
   if (!isDatabaseConfigured()) {
-    return getStaticFittingRoomProductById(id);
+    product = getStaticFittingRoomProductById(id);
+  } else {
+    try {
+      const prisma = getPrisma();
+      if (!prisma) {
+        product = getStaticFittingRoomProductById(id);
+      } else {
+        product = await prisma.product.findFirst({
+          where: { id, active: true },
+          select: productSelect,
+        });
+      }
+    } catch (err) {
+      logDbFallback("getFittingRoomProductById", err);
+    }
+    product ??= getStaticFittingRoomProductById(id);
   }
 
-  try {
-    const prisma = getPrisma();
-    if (!prisma) return getStaticFittingRoomProductById(id);
-
-    const product = await prisma.product.findFirst({
-      where: { id, active: true },
-      select: productSelect,
-    });
-    if (product) return product;
-  } catch (err) {
-    logDbFallback("getFittingRoomProductById", err);
-  }
-  return getStaticFittingRoomProductById(id);
+  if (!product) return null;
+  const [enriched] = await withSalePricing([product]);
+  return enriched ?? product;
 }
 
 export async function getFittingRoomProductBySlug(slug: string): Promise<FittingRoomProduct | null> {
+  let product: FittingRoomProduct | null = null;
+
   if (!isDatabaseConfigured()) {
-    return getStaticFittingRoomProductBySlug(slug);
+    product = getStaticFittingRoomProductBySlug(slug);
+  } else {
+    try {
+      const prisma = getPrisma();
+      if (!prisma) {
+        product = getStaticFittingRoomProductBySlug(slug);
+      } else {
+        product = await prisma.product.findFirst({
+          where: { slug, active: true },
+          select: productSelect,
+        });
+      }
+    } catch (err) {
+      logDbFallback("getFittingRoomProductBySlug", err);
+    }
+    product ??= getStaticFittingRoomProductBySlug(slug);
   }
 
-  try {
-    const prisma = getPrisma();
-    if (!prisma) return getStaticFittingRoomProductBySlug(slug);
-
-    const product = await prisma.product.findFirst({
-      where: { slug, active: true },
-      select: productSelect,
-    });
-    if (product) return product;
-  } catch (err) {
-    logDbFallback("getFittingRoomProductBySlug", err);
-  }
-  return getStaticFittingRoomProductBySlug(slug);
+  if (!product) return null;
+  const [enriched] = await withSalePricing([product]);
+  return enriched ?? product;
 }

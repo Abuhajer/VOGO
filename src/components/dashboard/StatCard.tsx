@@ -8,7 +8,7 @@ type StatCardProps = {
 const accentClass = {
   gold: "text-gold",
   ivory: "text-ivory",
-  emerald: "text-emerald-300",
+  emerald: "admin-stat-success",
 };
 
 export default function StatCard({ label, value, hint, accent = "gold" }: StatCardProps) {

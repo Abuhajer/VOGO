@@ -25,6 +25,8 @@ export function classifyTryOnError(message: string): TryOnErrorPayload {
   if (
     message.includes("GEMINI_API_KEY") ||
     message.includes("NVIDIA_API_KEY") ||
+    message.includes("COMFYUI") ||
+    message.includes("ComfyUI") ||
     message.includes("not configured") ||
     message.includes("authorization failed")
   ) {

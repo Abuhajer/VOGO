@@ -113,7 +113,7 @@ export default function ShopToolbar({
 
   return (
     <>
-      <div className="sticky top-[4.5rem] z-30 -mx-6 md:-mx-12 px-6 md:px-12 py-4 bg-void/90 backdrop-blur-md border-y border-gold-glow/10">
+      <div className="shop-toolbar sticky z-20 -mx-4 px-4 py-3 sm:-mx-6 sm:px-6 md:-mx-12 md:px-12 md:py-4 bg-void/90 backdrop-blur-md border-y border-gold-glow/10 light:bg-[#FAF7F2]/95 light:border-[#0E0D12]/8 light:shadow-[0_4px_22px_rgba(14,13,18,0.06)]">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <p className="text-xs text-ivory-muted tracking-wide">
             {t("resultCount", { count: resultCount })}

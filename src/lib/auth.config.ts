@@ -15,10 +15,17 @@ export const authConfig = {
     },
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id!;
         token.role = (user as { role?: Role }).role ?? Role.CUSTOMER;
+        token.name = user.name;
+        token.picture = user.image;
+      }
+      if (trigger === "update" && session) {
+        const patch = session as { name?: string; image?: string | null };
+        if (patch.name !== undefined) token.name = patch.name;
+        if (patch.image !== undefined) token.picture = patch.image ?? undefined;
       }
       return token;
     },
@@ -26,6 +33,8 @@ export const authConfig = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = (token.role as Role) ?? Role.CUSTOMER;
+        session.user.name = (token.name as string | undefined) ?? session.user.name;
+        session.user.image = (token.picture as string | undefined) ?? session.user.image;
       }
       return session;
     },

@@ -15,7 +15,7 @@ export default function FittingRoomError({
   }, [error]);
 
   return (
-    <main className="mt-[calc(5.75rem+env(safe-area-inset-top))] flex min-h-[calc(100dvh-5.75rem-env(safe-area-inset-top))] flex-col overflow-hidden bg-void">
+    <main className="mt-[calc(var(--site-nav-height)+env(safe-area-inset-top))] flex min-h-[calc(100dvh-var(--site-nav-height)-env(safe-area-inset-top))] flex-col overflow-hidden bg-void">
       <FittingRoomErrorFallback onRetry={reset} />
     </main>
   );

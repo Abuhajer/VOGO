@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import SectionLabel from "@/components/icons/SectionLabel";
 import { WhatsAppIcon } from "@/components/icons/Icons";
-import { BUSINESS_PHONE_E164, getDisplayPhone } from "@/lib/format";
+import { BUSINESS_PHONE_E164, getDisplayPhone, PHONE_LTR_CLASS } from "@/lib/format";
 import PhoneInput from "@/components/form/PhoneInput";
 import { getGoogleMapsLink, getLocationAddress } from "@/lib/location";
 import SocialLinks from "@/components/icons/SocialLinks";
@@ -55,7 +55,7 @@ export default function ContactSection() {
       id="contact"
     >
       <div 
-        className="container mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20"
+        className="container mx-auto px-4 sm:px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20"
         dir={locale === "ar" ? "rtl" : "ltr"}
       >
         {/* Left Column: Contact details (5 cols) */}
@@ -75,8 +75,8 @@ export default function ContactSection() {
                 href={`tel:${BUSINESS_PHONE_E164}`}
                 className="text-gold hover:text-ivory text-lg md:text-xl font-light tracking-wide transition-colors duration-300 w-fit inline-block"
               >
-                <span className="block dir-ltr text-start [unicode-bidi:isolate] tabular-nums">
-                  {getDisplayPhone(locale)}
+                <span dir="ltr" className={`block text-start ${PHONE_LTR_CLASS}`}>
+                  {getDisplayPhone()}
                 </span>
               </a>
             </div>

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState, useTransition } from "react"
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import type { FittingRoomProduct } from "@/lib/try-on/types";
+import type { TryOnProgressUpdate } from "@/lib/try-on/progress";
 import type { FittingRoomAvatarItem } from "@/lib/fitting-room/avatars";
 import { localizeProduct } from "@/lib/products";
 import ProductPicker from "./ProductPicker";
@@ -53,6 +54,7 @@ export default function FittingRoomClient({
   const [resultSize, setResultSize] = useState<{ width: number; height: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState<TryOnProgressUpdate | null>(null);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
   const { fittingRoomSuccess, fittingRoomError } = useAppToast();
 
@@ -142,10 +144,11 @@ export default function FittingRoomClient({
 
     setError(null);
     setGenerating(true);
+    setGenerationProgress({ percent: 0, phase: "prepare" });
     goToStep("processing");
 
     try {
-      const res = await fetch("/api/fitting-room/generate", {
+      const res = await fetch("/api/fitting-room/generate?stream=1", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -153,36 +156,92 @@ export default function FittingRoomClient({
           productId: selectedProduct.id,
         }),
       });
-      const raw = await res.text();
-      let data: {
+
+      if (!res.ok && res.headers.get("content-type")?.includes("application/json")) {
+        const data = (await res.json()) as {
+          error?: string;
+          code?: string;
+          retryAfterSeconds?: number;
+        };
+        reportError(mapGenerateError(data));
+        goToStep("photo");
+        return;
+      }
+
+      if (!res.body) {
+        reportError(t("generateFailed"));
+        goToStep("photo");
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let complete: {
         url?: string;
         width?: number;
         height?: number;
         personWidth?: number;
         personHeight?: number;
-        error?: string;
-        code?: string;
-        retryAfterSeconds?: number;
-      };
-      try {
-        data = JSON.parse(raw) as typeof data;
-      } catch {
-        reportError(
-          res.ok
-            ? t("generateFailed")
-            : t("serverError")
-        );
+      } | null = null;
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          let msg: {
+            type?: string;
+            percent?: number;
+            phase?: TryOnProgressUpdate["phase"];
+            step?: number;
+            totalSteps?: number;
+            url?: string;
+            width?: number;
+            height?: number;
+            personWidth?: number;
+            personHeight?: number;
+            error?: string;
+            code?: string;
+            retryAfterSeconds?: number;
+          };
+          try {
+            msg = JSON.parse(line) as typeof msg;
+          } catch {
+            continue;
+          }
+
+          if (msg.type === "progress" && typeof msg.percent === "number" && msg.phase) {
+            setGenerationProgress({
+              percent: msg.percent,
+              phase: msg.phase,
+              step: msg.step,
+              totalSteps: msg.totalSteps,
+            });
+          } else if (msg.type === "complete" && msg.url) {
+            complete = msg;
+            setGenerationProgress({ percent: 100, phase: "finalize" });
+          } else if (msg.type === "error") {
+            reportError(mapGenerateError(msg));
+            goToStep("photo");
+            return;
+          }
+        }
+      }
+
+      if (!complete?.url) {
+        reportError(t("generateFailed"));
         goToStep("photo");
         return;
       }
-      if (!res.ok || !data.url) {
-        reportError(mapGenerateError(data));
-        goToStep("photo");
-        return;
-      }
-      setResultUrl(data.url);
-      const lockW = data.personWidth ?? data.width;
-      const lockH = data.personHeight ?? data.height;
+
+      setResultUrl(complete.url);
+      const lockW = complete.personWidth ?? complete.width;
+      const lockH = complete.personHeight ?? complete.height;
       if (lockW && lockH) {
         setResultSize({ width: lockW, height: lockH });
       } else {
@@ -195,6 +254,7 @@ export default function FittingRoomClient({
       goToStep("photo");
     } finally {
       setGenerating(false);
+      setGenerationProgress(null);
     }
   }, [selectedProduct, personImageUrl, apiConfigured, t, mapGenerateError, reportError, fittingRoomSuccess]);
 
@@ -219,15 +279,17 @@ export default function FittingRoomClient({
       dir={isAr ? "rtl" : "ltr"}
     >
       <header
-        className={`relative z-20 shrink-0 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between md:items-center md:gap-4 ${
+        className={`relative z-20 shrink-0 flex flex-col gap-1.5 sm:flex-row sm:items-start sm:justify-between sm:gap-2 md:items-center md:gap-4 ${
           isImmersiveStep || isResult
             ? isProcessingStep
               ? "mb-0 px-3 py-1 sm:mb-1 sm:px-4 md:px-5"
-              : "mb-1 px-3 sm:px-4 md:px-5"
+              : isProductStep
+                ? "mb-0 flex-row items-center gap-2 px-2.5 py-0.5 sm:mb-1 sm:px-4 md:px-5"
+                : "mb-1 px-3 sm:px-4 md:px-5"
             : "mb-3 sm:mb-3 md:mb-4"
         }`}
       >
-        <div className="min-w-0 flex-1">
+        <div className={`min-w-0 flex-1 ${isProductStep ? "hidden sm:block" : ""}`}>
           <p
             className={`text-[8px] uppercase tracking-[0.3em] text-gold sm:text-[9px] sm:tracking-[0.35em] ${
               isProcessingStep ? "hidden sm:block" : ""
@@ -256,6 +318,7 @@ export default function FittingRoomClient({
           compact
           reachableSteps={reachableSteps}
           onStepClick={handleStepClick}
+          className={isProductStep ? "w-full sm:w-auto" : undefined}
         />
       </header>
 
@@ -325,6 +388,7 @@ export default function FittingRoomClient({
             {step === "photo" && selectedProduct ? (
               <PhotoCapture
                 avatars={avatars}
+                selectedProduct={selectedProduct}
                 personImageUrl={personImageUrl}
                 onPersonImageChange={setPersonImageUrl}
                 onError={handlePhotoError}
@@ -332,7 +396,11 @@ export default function FittingRoomClient({
             ) : null}
 
             {step === "processing" ? (
-              <ProcessingAnimation product={selectedProduct} personImageUrl={personImageUrl} />
+              <ProcessingAnimation
+                product={selectedProduct}
+                personImageUrl={personImageUrl}
+                generationProgress={generationProgress}
+              />
             ) : null}
 
             {step === "result" && selectedProduct && personImageUrl && resultUrl ? (

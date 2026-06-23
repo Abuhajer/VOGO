@@ -132,7 +132,7 @@ export default function StorySection() {
     >
       {/* Container holding layout */}
       <div 
-        className="container mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20"
+        className="container mx-auto px-4 sm:px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20"
         dir={locale === "ar" ? "rtl" : "ltr"}
       >
         {/* Sticky Editorial Column (Left on LTR, Right on RTL) */}

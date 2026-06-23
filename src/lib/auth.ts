@@ -6,12 +6,34 @@ import bcrypt from "bcryptjs";
 import { Role } from "@/types/db";
 import { getPrisma } from "@/lib/db";
 import { authConfig } from "@/lib/auth.config";
+import { linkGuestOrdersToUser } from "@/server/customer-orders";
 
 const prismaClient = getPrisma();
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   ...(prismaClient ? { adapter: PrismaAdapter(prismaClient) } : {}),
+  callbacks: {
+    ...authConfig.callbacks,
+    async jwt(params) {
+      const token = await authConfig.callbacks.jwt(params);
+
+      if (token.id && !token.picture && !params.user) {
+        const client = getPrisma();
+        if (client) {
+          const dbUser = await client.user.findUnique({
+            where: { id: token.id as string },
+            select: { image: true, name: true },
+          });
+          if (dbUser?.image) token.picture = dbUser.image;
+          if (dbUser?.name) token.name = dbUser.name;
+        }
+      }
+
+      return token;
+    },
+    session: authConfig.callbacks.session,
+  },
   providers: [
     Credentials({
       name: "credentials",
@@ -38,6 +60,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           id: user.id,
           email: user.email,
           name: user.name,
+          image: user.image,
           role: user.role as Role,
         };
       },
@@ -52,6 +75,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       : []),
   ],
   events: {
+    async signIn({ user, account }) {
+      if (account?.provider === "google" && user.id && user.email) {
+        await linkGuestOrdersToUser(user.id, user.email);
+      }
+    },
     async createUser({ user }) {
       const client = getPrisma();
       if (!client || !user.id) return;

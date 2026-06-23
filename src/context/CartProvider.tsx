@@ -12,16 +12,18 @@ import {
 import {
   CART_STORAGE_KEY,
   calcCartSubtotal,
+  resolveCartLineId,
   type CartItem,
 } from "@/lib/cart";
+import { refreshCartItemPrices } from "@/server/cart-pricing";
 
 type CartContextValue = {
   items: CartItem[];
   count: number;
   subtotal: number;
   addItem: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
-  removeItem: (productId: string) => void;
+  updateQuantity: (cartLineId: string, quantity: number) => void;
+  removeItem: (cartLineId: string) => void;
   clearCart: () => void;
 };
 
@@ -41,6 +43,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setHydrated(true);
   }, []);
 
+  const slugKey = useMemo(
+    () =>
+      items
+        .map((item) => item.slug)
+        .sort()
+        .join(","),
+    [items]
+  );
+
+  useEffect(() => {
+    if (!hydrated || !slugKey) return;
+
+    const slugs = slugKey.split(",");
+    void refreshCartItemPrices(slugs).then((priceMap) => {
+      setItems((current) =>
+        current.map((item) =>
+          priceMap[item.slug] != null ? { ...item, price: priceMap[item.slug]! } : item
+        )
+      );
+    });
+  }, [hydrated, slugKey]);
+
   useEffect(() => {
     if (!hydrated) return;
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
@@ -48,33 +72,38 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addItem = useCallback(
     (item: Omit<CartItem, "quantity">, quantity = 1) => {
+      const lineId = resolveCartLineId(item);
+      const withLineId = { ...item, cartLineId: lineId };
+
       setItems((current) => {
-        const existing = current.find((entry) => entry.productId === item.productId);
+        const existing = current.find((entry) => resolveCartLineId(entry) === lineId);
         if (existing) {
           return current.map((entry) =>
-            entry.productId === item.productId
+            resolveCartLineId(entry) === lineId
               ? { ...entry, quantity: entry.quantity + quantity }
               : entry
           );
         }
-        return [...current, { ...item, quantity }];
+        return [...current, { ...withLineId, quantity }];
       });
     },
     []
   );
 
-  const updateQuantity = useCallback((productId: string, quantity: number) => {
+  const updateQuantity = useCallback((cartLineId: string, quantity: number) => {
     setItems((current) =>
       current
         .map((entry) =>
-          entry.productId === productId ? { ...entry, quantity } : entry
+          resolveCartLineId(entry) === cartLineId ? { ...entry, quantity } : entry
         )
         .filter((entry) => entry.quantity > 0)
     );
   }, []);
 
-  const removeItem = useCallback((productId: string) => {
-    setItems((current) => current.filter((entry) => entry.productId !== productId));
+  const removeItem = useCallback((cartLineId: string) => {
+    setItems((current) =>
+      current.filter((entry) => resolveCartLineId(entry) !== cartLineId)
+    );
   }, []);
 
   const clearCart = useCallback(() => setItems([]), []);

@@ -1,5 +1,5 @@
 import {
-  getActiveImageProviderId,
+  resolveActiveImageProviderId,
   generateWithActiveProvider,
   tryOnMissingConfigMessage,
 } from "./providers/registry";
@@ -9,6 +9,7 @@ import { buildUnderlayerPromptSection, inferGarmentStyling } from "./garment-sty
 import {
   buildClothingOnlyLockPart,
   buildDimensionLockPart,
+  buildLocalKleinTryOnPrompt,
   buildMenswearTryOnInstructionPrompt,
   buildNvidiaKontextTryOnPrompt,
   buildNvidiaQwenTryOnPrompt,
@@ -17,6 +18,7 @@ import { saveUploadBuffer } from "./storage";
 import { TRY_ON_ENV } from "./env";
 import { isNvidiaQwenModel, nvidiaQwenSupportsMultiImage } from "./nvidiaCommon";
 import type { GenerateTryOnResponse, TryOnMultimodalPart } from "./types";
+import type { TryOnProgressCallback } from "./progress";
 
 export type RunTryOnInput = {
   personImageUrl: string;
@@ -26,10 +28,14 @@ export type RunTryOnInput = {
   productSlug?: string | null;
   productNameEn?: string | null;
   productDescEn?: string | null;
+  onProgress?: TryOnProgressCallback;
 };
 
 export async function runVirtualTryOn(input: RunTryOnInput): Promise<GenerateTryOnResponse> {
-  const providerId = getActiveImageProviderId();
+  const providerId = await resolveActiveImageProviderId();
+  const report = input.onProgress;
+  report?.({ percent: 3, phase: "prepare" });
+
   const personDims = await getPersonImageDimensions(input.personImageUrl);
 
   if (!personDims?.width || !personDims?.height) {
@@ -61,6 +67,7 @@ export async function runVirtualTryOn(input: RunTryOnInput): Promise<GenerateTry
     styling.coverage
   );
   const useNvidiaQwen = providerId === "nvidia" && isNvidiaQwenModel();
+  const useLocalKlein = providerId === "local";
   const nvidiaPrompt = useNvidiaQwen
     ? buildNvidiaQwenTryOnPrompt(
         garmentContext,
@@ -75,7 +82,17 @@ export async function runVirtualTryOn(input: RunTryOnInput): Promise<GenerateTry
         promptSections,
         styling.coverage
       );
-  const prompt = providerId === "nvidia" ? nvidiaPrompt : instructionPrompt;
+  const prompt =
+    providerId === "nvidia"
+      ? nvidiaPrompt
+      : useLocalKlein
+        ? buildLocalKleinTryOnPrompt(
+            garmentContext,
+            personDims,
+            promptSections,
+            styling.coverage
+          )
+        : instructionPrompt;
 
   const garmentImage = {
     url: input.garmentImageUrl,
@@ -102,18 +119,25 @@ export async function runVirtualTryOn(input: RunTryOnInput): Promise<GenerateTry
     nvidiaQwenSupportsMultiImage()
       ? [personImage, garmentImage]
       : [personImage];
+  const localImages = [personImage, garmentImage];
 
   const result = await generateWithActiveProvider({
     prompt,
     multimodalParts,
-    originalImages: providerId === "nvidia" ? nvidiaImages : geminiImages,
+    originalImages:
+      providerId === "local"
+        ? localImages
+        : providerId === "nvidia"
+          ? nvidiaImages
+          : geminiImages,
     targetDimensions: personDims,
     fallbackPrompt: instructionPrompt,
     fallbackImages: geminiImages,
     fallbackMultimodalParts: multimodalParts,
-  }).catch((err) => {
+    onProgress: report,
+  }).catch(async (err) => {
     if (err instanceof Error && err.message.includes("not configured")) {
-      throw new Error(tryOnMissingConfigMessage());
+      throw new Error(await tryOnMissingConfigMessage());
     }
     throw err;
   });
@@ -121,6 +145,8 @@ export async function runVirtualTryOn(input: RunTryOnInput): Promise<GenerateTry
   if (!result.url) {
     throw new Error("AI generation failed to return a valid image URL");
   }
+
+  report?.({ percent: 92, phase: "finalize" });
 
   const rawBuffer = await readImageBufferFromRef(result.url);
 
@@ -146,6 +172,8 @@ export async function runVirtualTryOn(input: RunTryOnInput): Promise<GenerateTry
     `tryon-${Date.now()}`,
     "image/jpeg"
   );
+
+  report?.({ percent: 100, phase: "finalize" });
 
   return {
     url: finalUrl,

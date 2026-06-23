@@ -11,6 +11,7 @@ import {
   saveUploadBuffer,
 } from "./storage";
 import { mimeFromPublicPath } from "./mime";
+import { startIndeterminateProgress } from "./progress";
 import type { GenerateTryOnOptions, GenerateTryOnResponse, TryOnImageInput } from "./types";
 
 type GeminiApiErrorBody = {
@@ -303,6 +304,9 @@ export async function generateWithGemini(
 
   const timeoutMs = TRY_ON_ENV.geminiRequestTimeoutMs;
   const maxAttempts = TRY_ON_ENV.imageHttp429MaxAttempts;
+  const onProgress = options.onProgress;
+
+  onProgress?.({ percent: 10, phase: "generate" });
 
   console.log(`[TryOn] ${providerLabel}: POST`, url.replace(/\?.*$/, ""), "model:", model);
 
@@ -312,6 +316,10 @@ export async function generateWithGemini(
     }
 
     let res: Response;
+    const stopCreep = startIndeterminateProgress(onProgress ?? (() => undefined), {
+      startPercent: 12,
+      capPercent: 88,
+    });
     try {
       res = await fetch(url, {
         method: "POST",
@@ -323,15 +331,19 @@ export async function generateWithGemini(
         signal: AbortSignal.timeout(timeoutMs),
       });
     } catch (err) {
+      stopCreep();
       const reason = err instanceof Error ? err.message : String(err);
       throw new Error(
         `${providerLabel} API request failed (${reason}). Check GEMINI_API_KEY, network/firewall, and GEMINI_REQUEST_TIMEOUT_MS (default ${TRY_ON_ENV.geminiRequestTimeoutMs}ms).`
       );
+    } finally {
+      stopCreep();
     }
 
     const text = await res.text();
 
     if (res.ok) {
+      onProgress?.({ percent: 90, phase: "finalize" });
       let json: unknown;
       try {
         json = JSON.parse(text);

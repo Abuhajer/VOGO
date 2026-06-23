@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getStaticShopProductsByCollection } from "@/lib/catalog/static-catalog";
 import { getShopCatalog } from "@/server/collections";
 import ShopCatalog from "@/components/shop/ShopCatalog";
+import PageShell from "@/components/layout/PageShell";
 import type { ShopProduct } from "@/lib/shop/filters";
 import type { CollectionSummary } from "@/server/collections";
 
@@ -78,16 +79,13 @@ export default async function ShopPage({
   }
 
   return (
-    <main
-      className="container mx-auto px-6 md:px-12 py-28 md:py-36"
-      dir={locale === "ar" ? "rtl" : "ltr"}
-    >
+    <PageShell dir={locale === "ar" ? "rtl" : "ltr"}>
       <Suspense fallback={<ShopCatalogFallback />}>
         <ShopCatalog
           collections={catalog.collections}
           products={catalog.products}
         />
       </Suspense>
-    </main>
+    </PageShell>
   );
 }

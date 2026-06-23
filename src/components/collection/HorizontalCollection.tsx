@@ -10,6 +10,7 @@ import ProductDetailModal from "./ProductDetailModal";
 import SectionLabel from "@/components/icons/SectionLabel";
 import { localizeProduct } from "@/lib/products";
 import { formatNumber } from "@/lib/format";
+import PriceDisplay from "@/components/shop/PriceDisplay";
 import type { CollectionCarouselProduct } from "@/types/catalog";
 
 type HorizontalCollectionProps = {
@@ -67,7 +68,7 @@ function CollectionCoverflowSlide({
           : "coverflow-carousel-card border-gold-glow/15 hover:border-gold/35"
       }`}
     >
-      <div className="relative h-full w-full bg-obsidian">
+      <div className="relative h-full w-full bg-[#0E0D12]">
         <Image
           src={product.imageSrc}
           alt={name}
@@ -82,28 +83,33 @@ function CollectionCoverflowSlide({
         {isCenter ? (
           <>
             <div
-              className="pointer-events-none absolute inset-x-0 bottom-0 h-[46%] bg-gradient-to-t from-void/95 via-void/55 to-transparent"
+              className="pointer-events-none absolute inset-x-0 bottom-0 h-[58%] bg-gradient-to-t from-[#050508]/96 via-[#050508]/62 to-transparent sm:h-[60%]"
               aria-hidden
             />
             <div
-              className="fitting-room-card-overlay absolute inset-x-0 bottom-0 z-10 flex flex-col items-center px-3 pb-2 pt-10 text-center sm:px-4 sm:pb-2.5 sm:pt-11"
+              className="collection-coverflow-overlay absolute inset-x-0 bottom-0 z-10 flex flex-col items-center justify-end gap-1 px-3 pb-2 pt-8 text-center sm:gap-1.5 sm:px-4 sm:pb-2.5 sm:pt-10"
               dir={isAr ? "rtl" : "ltr"}
             >
-              <p className="line-clamp-2 max-w-[92%] font-serif text-[10px] leading-snug text-ivory sm:text-[11px]">
+              <h3 className="carousel-card-title shrink-0 max-w-[94%] line-clamp-2">
                 {name}
-              </p>
-              <p className="mt-2 text-[9px] tabular-nums text-gold sm:mt-2.5 sm:text-[10px]">
-                {formatNumber(product.price, locale)} {currencyLabel}
-              </p>
+              </h3>
+              <PriceDisplay
+                price={product.price}
+                salePrice={product.salePrice}
+                locale={locale}
+                size="sm"
+                surface="on-image"
+                className="mt-0.5 shrink-0 justify-center sm:mt-1"
+              />
               <span
-                className={`mt-3 inline-flex items-center rounded-sm border border-gold/35 bg-void/55 px-2.5 py-1 text-[8px] font-semibold text-gold backdrop-blur-[2px] sm:mt-3.5 sm:px-3 sm:py-1 sm:text-[9px] ${
+                className={`carousel-card-cta mt-2 shrink-0 inline-flex items-center rounded-sm border px-2.5 py-1 text-[8px] font-semibold backdrop-blur-[2px] sm:mt-2.5 sm:px-3 sm:py-1 sm:text-[9px] ${
                   isAr ? "" : "uppercase tracking-[0.1em]"
                 }`}
               >
                 {viewLabel}
               </span>
               {slideTotal > 0 ? (
-                <p className="mt-2.5 text-[7px] tabular-nums tracking-[0.18em] text-ivory-faint/75 sm:mt-3 sm:text-[8px]">
+                <p className="carousel-card-counter mt-1.5 shrink-0 text-[7px] tabular-nums tracking-[0.18em] sm:mt-2 sm:text-[8px]">
                   {formatNumber(index + 1, locale)} / {formatNumber(slideTotal, locale)}
                 </p>
               ) : null}

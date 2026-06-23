@@ -30,34 +30,49 @@ export const JORDAN_COUNTRY_CODE = "962";
 export const BUSINESS_PHONE_DISPLAY = `+${JORDAN_COUNTRY_CODE} ${JORDAN_PHONE_NATIONAL}`;
 
 /** Phone numbers must stay LTR even inside Arabic RTL layouts. */
-export const PHONE_LTR_CLASS =
-  "dir-ltr text-start [unicode-bidi:isolate] tabular-nums";
+export const PHONE_LTR_CLASS = "text-left [unicode-bidi:isolate] tabular-nums";
 
 /** Force LTR rendering for mixed + / digit strings in RTL pages. */
 const LTR_MARK = "\u200E";
 
-export function getJordanCountryPrefix(locale: string): string {
-  const code =
-    locale === "ar"
-      ? toEasternArabicDigits(JORDAN_COUNTRY_CODE)
-      : JORDAN_COUNTRY_CODE;
-  return `${LTR_MARK}+${code}`;
+/** Map Eastern Arabic digits (٠–٩) to Western (0–9). */
+export function toWesternDigits(value: string): string {
+  return value.replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
 }
 
-export function getDisplayPhone(locale: string): string {
-  const national =
-    locale === "ar"
-      ? toEasternArabicDigits(JORDAN_PHONE_NATIONAL)
-      : JORDAN_PHONE_NATIONAL;
-
-  return `${getJordanCountryPrefix(locale)} ${national}`;
+/** Strip +962 / leading 0 for national input display. */
+export function stripJordanPhoneNational(value: string): string {
+  let digits = toWesternDigits(value).replace(/\D/g, "");
+  if (digits.startsWith(JORDAN_COUNTRY_CODE)) {
+    digits = digits.slice(JORDAN_COUNTRY_CODE.length);
+  }
+  if (digits.startsWith("0")) {
+    digits = digits.slice(1);
+  }
+  return digits;
 }
 
-export function getPhoneInputPlaceholder(locale: string): string {
-  const local =
-    locale === "ar"
-      ? toEasternArabicDigits(JORDAN_PHONE_LOCAL)
-      : JORDAN_PHONE_LOCAL;
+/** Format any phone for UI — Western digits, + on the left. */
+export function formatPhoneForDisplay(phone: string | null | undefined): string {
+  if (!phone?.trim()) return "";
+  const western = toWesternDigits(phone.trim()).replace(/\u200E/g, "");
+  return `${LTR_MARK}${western}`;
+}
 
-  return `${LTR_MARK}${local}`;
+/** Country code shown beside phone inputs — always Western LTR. */
+export function getPhoneCountryPrefix(): string {
+  return `${LTR_MARK}+${JORDAN_COUNTRY_CODE}`;
+}
+
+export function getJordanCountryPrefix(_locale?: string): string {
+  return `${LTR_MARK}+${JORDAN_COUNTRY_CODE}`;
+}
+
+export function getDisplayPhone(_locale?: string): string {
+  return `${LTR_MARK}+${JORDAN_COUNTRY_CODE} ${JORDAN_PHONE_NATIONAL}`;
+}
+
+/** Placeholder for phone inputs — always Western digits, LTR. */
+export function getPhoneInputPlaceholder(_locale?: string): string {
+  return `${LTR_MARK}${JORDAN_PHONE_LOCAL}`;
 }

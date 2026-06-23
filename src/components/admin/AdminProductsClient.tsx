@@ -3,14 +3,16 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
-import { Link } from "@/i18n/routing";
 import {
   type AdminProduct,
   deleteProduct,
   setProductActive,
 } from "@/server/admin-actions";
 import { localizeCollectionName } from "@/lib/collections";
+import AdminStatusBadge from "@/components/admin/AdminStatusBadge";
+import AdminTableScroll from "@/components/admin/AdminTableScroll";
 import ProductFormModal from "@/components/admin/ProductFormModal";
+import AdminProductViewModal from "@/components/admin/AdminProductViewModal";
 import Button from "@/components/ui/Button";
 import { useAppToast } from "@/hooks/useAppToast";
 import { formatNumber } from "@/lib/format";
@@ -30,7 +32,9 @@ export default function AdminProductsClient({ products, collections }: AdminProd
   const [rows, setRows] = useState(products);
   const [filter, setFilter] = useState<Filter>("all");
   const [formOpen, setFormOpen] = useState(false);
+  const [viewOpen, setViewOpen] = useState(false);
   const [editing, setEditing] = useState<AdminProduct | null>(null);
+  const [viewing, setViewing] = useState<AdminProduct | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const { adminSuccess, adminError } = useAppToast();
@@ -63,6 +67,11 @@ export default function AdminProductsClient({ products, collections }: AdminProd
     setFormOpen(true);
   }
 
+  function openView(product: AdminProduct) {
+    setViewing(product);
+    setViewOpen(true);
+  }
+
   function openEdit(product: AdminProduct) {
     setEditing(product);
     setFormOpen(true);
@@ -80,8 +89,16 @@ export default function AdminProductsClient({ products, collections }: AdminProd
   }
 
   function handleError(error: string) {
+    if (error === "validation") {
+      showToast(t("errorValidation"), "error");
+      return;
+    }
     if (error === "duplicate") {
       showToast(t("errorDuplicate"), "error");
+      return;
+    }
+    if (error === "upload") {
+      showToast(t("errorUpload"), "error");
       return;
     }
     showToast(t("error"), "error");
@@ -157,7 +174,7 @@ export default function AdminProductsClient({ products, collections }: AdminProd
           </Button>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-sm border border-gold-glow/15">
+        <AdminTableScroll hint={locale === "ar" ? "اسحب لعرض المزيد ←" : "Swipe to see more →"}>
           <table className="min-w-full text-sm">
             <thead className="bg-void/80 text-[11px] uppercase tracking-wider text-ivory-faint">
               <tr>
@@ -176,7 +193,7 @@ export default function AdminProductsClient({ products, collections }: AdminProd
                   className="border-t border-gold-glow/10 bg-obsidian/60 hover:bg-obsidian transition-colors"
                 >
                   <td className="px-4 py-4">
-                    <div className="flex items-center gap-4 min-w-[220px]">
+                    <div className="flex items-center gap-3 min-w-[11rem] sm:min-w-[220px] sm:gap-4">
                       <div className="relative h-16 w-12 rounded-sm overflow-hidden border border-gold-glow/10 shrink-0">
                         <Image
                           src={product.imageSrc}
@@ -206,24 +223,20 @@ export default function AdminProductsClient({ products, collections }: AdminProd
                     {formatNumber(product.price, locale)} {isArabic ? "د.أ" : "JOD"}
                   </td>
                   <td className="px-4 py-4">
-                    <span
-                      className={`inline-flex px-2.5 py-1 rounded-sm text-[10px] uppercase tracking-wider ${
-                        product.active
-                          ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20"
-                          : "bg-ivory-faint/10 text-ivory-faint border border-ivory-faint/20"
-                      }`}
-                    >
-                      {product.active ? t("active") : t("inactive")}
-                    </span>
+                    <AdminStatusBadge
+                      variant={product.active ? "active" : "inactive"}
+                      label={product.active ? t("active") : t("inactive")}
+                    />
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex flex-wrap justify-end gap-2">
-                      <Link
-                        href={`/shop/${product.slug}`}
+                      <button
+                        type="button"
+                        onClick={() => openView(product)}
                         className="px-3 py-2 text-[11px] border border-gold-glow/20 rounded-sm text-ivory-muted hover:text-gold"
                       >
                         {t("view")}
-                      </Link>
+                      </button>
                       <button
                         type="button"
                         onClick={() => openEdit(product)}
@@ -247,16 +260,27 @@ export default function AdminProductsClient({ products, collections }: AdminProd
               ))}
             </tbody>
           </table>
-        </div>
+        </AdminTableScroll>
       )}
 
       <ProductFormModal
+        key={editing?.id ?? "new"}
         open={formOpen}
         product={editing}
         collections={collections}
         onClose={() => setFormOpen(false)}
         onSaved={handleSaved}
         onError={handleError}
+      />
+
+      <AdminProductViewModal
+        open={viewOpen}
+        product={viewing}
+        onClose={() => setViewOpen(false)}
+        onEdit={(product) => {
+          setEditing(product);
+          setFormOpen(true);
+        }}
       />
 
       {confirmId ? (

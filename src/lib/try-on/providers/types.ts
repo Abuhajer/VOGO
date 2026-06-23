@@ -1,6 +1,9 @@
 import type { GenerateTryOnOptions, GenerateTryOnResponse } from "../types";
 
-export type ImageProviderId = "gemini" | "nvidia";
+export type ImageProviderId = "gemini" | "nvidia" | "local";
+
+/** Admin-selectable try-on backends (cloud Gemini vs local ComfyUI). */
+export type AdminTryOnProvider = "gemini" | "local";
 
 export interface ImageTransformProvider {
   readonly id: ImageProviderId;

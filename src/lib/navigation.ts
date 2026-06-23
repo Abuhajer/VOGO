@@ -9,8 +9,7 @@ export const STORE_LINKS = [
   { key: "shop" as const, href: "/shop" },
   { key: "fittingRoom" as const, href: "/fitting-room" },
   { key: "cart" as const, href: "/cart" },
-  { key: "account" as const, href: "/dashboard" },
-];
+] as const;
 
 export type NavSectionKey = (typeof NAV_SECTIONS)[number]["key"];
 export type StoreLinkKey = (typeof STORE_LINKS)[number]["key"];

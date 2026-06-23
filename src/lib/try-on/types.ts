@@ -4,6 +4,8 @@ export type TryOnImageInput = {
   mimeType?: string;
 };
 
+import type { TryOnProgressCallback } from "./progress";
+
 /** Ordered Gemini content: instruction text → person photo → garment reference. */
 export type TryOnMultimodalPart =
   | { type: "text"; text: string }
@@ -25,6 +27,7 @@ export type GenerateTryOnOptions = {
   fallbackPrompt?: string;
   fallbackImages?: TryOnImageInput[];
   fallbackMultimodalParts?: TryOnMultimodalPart[];
+  onProgress?: TryOnProgressCallback;
 };
 
 export type GenerateTryOnResponse = {
@@ -45,4 +48,8 @@ export type FittingRoomProduct = {
   descEn: string;
   imageSrc: string;
   price: number;
+  salePrice?: number;
+  saleBadgeEn?: string;
+  saleBadgeAr?: string;
+  collectionId?: string | null;
 };

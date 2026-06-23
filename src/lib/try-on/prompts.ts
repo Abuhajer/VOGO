@@ -147,6 +147,27 @@ export function buildDimensionLockPart(dims?: ImageDimensions | null): string {
   return `OUTPUT LOCK: The next image is the person photo at ${dims.width}×${dims.height} pixels. Your output MUST be exactly ${dims.width}×${dims.height} with ONLY the clothing inpainted to the catalog product. FORBIDDEN: zoom, crop, reframe, canvas resize, rotate, relight, background edits, face/body/pose/skin/hair edits, beautification, retouching, environment change.`;
 }
 
+/** Single text prompt for local FLUX Klein — mirrors Gemini multimodal order (locks → instruction). */
+export function buildLocalKleinTryOnPrompt(
+  garment: GarmentTextContext,
+  dims?: ImageDimensions | null,
+  extraSections?: string,
+  coverage?: GarmentCoverage
+): string {
+  const instruction = buildMenswearTryOnInstructionPrompt(
+    garment,
+    dims,
+    extraSections,
+    coverage
+  );
+  const imageNote =
+    "Reference images (in order): Image 1 = person photo (identity canvas — preserve face, hair, skin, pose, background exactly). Image 2 = catalog garment (color, cut, fabric only — ignore mannequin/background).";
+
+  return [buildClothingOnlyLockPart(), buildDimensionLockPart(dims), imageNote, instruction].join(
+    "\n\n"
+  );
+}
+
 /** Main try-on instruction — matches Cloth Change Platform flow (person image before garment). */
 export function buildMenswearTryOnInstructionPrompt(
   garment: GarmentTextContext,

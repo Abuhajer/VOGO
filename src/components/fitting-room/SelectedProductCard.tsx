@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useLocale, useTranslations } from "next-intl";
 import { localizeProduct } from "@/lib/products";
-import { formatNumber } from "@/lib/format";
+import PriceDisplay from "@/components/shop/PriceDisplay";
 import type { FittingRoomProduct } from "@/lib/try-on/types";
 
 type Props = {
@@ -36,9 +36,15 @@ export default function SelectedProductCard({ product, compact }: Props) {
       <div className="p-4 space-y-1">
         <p className="text-[9px] uppercase tracking-[0.25em] text-gold">{t("selectedGarment")}</p>
         <p className="font-serif text-base text-ivory leading-snug line-clamp-2">{name}</p>
-        <p className="text-sm text-gold">
-          {formatNumber(product.price, locale)} {isAr ? "د.أ" : "JOD"}
-        </p>
+        <div className="mt-0.5">
+          <PriceDisplay
+            price={product.price}
+            salePrice={product.salePrice}
+            locale={locale}
+            size="sm"
+            surface="default"
+          />
+        </div>
       </div>
     </div>
   );

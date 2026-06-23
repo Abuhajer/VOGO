@@ -3,6 +3,8 @@
 import { auth } from "@/lib/auth";
 import { buildRevenueTrend } from "@/lib/dashboard-charts";
 import { prisma } from "@/lib/db";
+import { isRevenueOrderStatus, REVENUE_ORDER_STATUS_FILTER } from "@/lib/order-revenue";
+import { linkGuestOrdersToUser } from "@/server/customer-orders";
 import { Role, OrderStatus } from "@/types/db";
 import type {
   AccountDashboardData,
@@ -48,10 +50,6 @@ function buildStatusBreakdown(
     .filter((segment) => segment.value > 0);
 }
 
-const REVENUE_STATUSES = {
-  status: { not: OrderStatus.CANCELLED },
-} as const;
-
 function mapOrderRow(order: {
   id: string;
   orderNumber: string;
@@ -86,12 +84,12 @@ export async function getAdminDashboardData(
   const [orders, revenue, customers, products, pendingOrders, weekOrders, allOrders, recentOrders] =
     await Promise.all([
       prisma.order.count(),
-      prisma.order.aggregate({ where: REVENUE_STATUSES, _sum: { total: true } }),
+      prisma.order.aggregate({ where: REVENUE_ORDER_STATUS_FILTER, _sum: { total: true } }),
       prisma.user.count({ where: { role: Role.CUSTOMER } }),
       prisma.product.count({ where: { active: true } }),
       prisma.order.count({ where: { status: OrderStatus.PENDING } }),
       prisma.order.findMany({
-        where: { createdAt: { gte: weekStart }, ...REVENUE_STATUSES },
+        where: { createdAt: { gte: weekStart }, ...REVENUE_ORDER_STATUS_FILTER },
         select: { total: true, createdAt: true },
       }),
       prisma.order.findMany({ select: { status: true } }),
@@ -107,7 +105,7 @@ export async function getAdminDashboardData(
   return {
     stats: {
       orders,
-      revenue: revenue._sum.total ?? 0,
+      revenue: revenue._sum?.total ?? 0,
       customers,
       products,
       pendingOrders,
@@ -132,6 +130,8 @@ export async function getAccountDashboardData(
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) throw new Error("User not found");
 
+  await linkGuestOrdersToUser(userId, user.email);
+
   const orders = await prisma.order.findMany({
     where: { userId },
     include: { items: true },
@@ -139,7 +139,7 @@ export async function getAccountDashboardData(
   });
 
   const totalSpent = orders
-    .filter((order) => order.status !== OrderStatus.CANCELLED)
+    .filter((order) => isRevenueOrderStatus(order.status))
     .reduce((sum, order) => sum + order.total, 0);
   const pendingCount = orders.filter((order) => order.status === OrderStatus.PENDING).length;
   const activeOrders = orders.filter((order) => order.status !== OrderStatus.CANCELLED);
@@ -148,8 +148,12 @@ export async function getAccountDashboardData(
     user: {
       name: user.name,
       email: user.email,
+      phone: user.phone,
+      image: user.image,
+      preferredLocale: user.preferredLocale ?? "ar",
       role: user.role,
       memberSince: user.createdAt.toISOString(),
+      hasPassword: Boolean(user.passwordHash),
     },
     stats: {
       orderCount: activeOrders.length,
@@ -158,5 +162,6 @@ export async function getAccountDashboardData(
     },
     statusBreakdown: buildStatusBreakdown(activeOrders, statusLabels),
     recentOrders: activeOrders.slice(0, 5).map(mapOrderRow),
+    allOrders: activeOrders.map(mapOrderRow),
   };
 }
